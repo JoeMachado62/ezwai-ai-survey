@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<!--
+  EZWAI AI Opportunities Assessment - WordPress Embed Version
+  This polished version integrates seamlessly with the Next.js application
+  while maintaining the original design aesthetics
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Opportunities Assessment - EZWAI</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #f5faff 0%, #ffffff 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Container */
+        #ezwai-survey-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #08b2b6 0%, #06999c 100%);
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(8, 178, 182, 0.2);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(8, 178, 182, 0.15);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #08b2b6, #06999c);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #08b2b6;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* iframe Container */
+        #ezwai-survey-container {
+            width: 100%;
+            min-height: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+            animation: slideUp 1s ease-out;
+        }
+
+        #ezwai-survey-frame {
+            width: 100%;
+            border: none;
+            min-height: 800px;
+            transition: height 0.3s ease;
+        }
+
+        /* Trust Badges */
+        .trust-section {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .trust-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            color: #08b2b6;
+            font-weight: 500;
+        }
+
+        .trust-icon {
+            width: 30px;
+            height: 30px;
+            background: #08b2b6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #ff6b11 0%, #ff5500 100%);
+            border-radius: 20px;
+            color: white;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(255, 107, 17, 0.2);
+        }
+
+        .cta-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .cta-text {
+            font-size: 16px;
+            margin-bottom: 25px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: white;
+            color: #ff6b11;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Loading Placeholder */
+        .loading-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #08b2b6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .trust-badges {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            #ezwai-survey-container {
+                min-height: 600px;
+            }
+
+            #ezwai-survey-frame {
+                min-height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="ezwai-survey-wrapper">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="hero-title">🚀 Discover Your AI Transformation Potential</h1>
+            <p class="hero-subtitle">
+                Get a personalized AI opportunities assessment tailored to your business. 
+                Our advanced analysis identifies automation opportunities, calculates ROI, 
+                and provides actionable recommendations.
+            </p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Smart Analysis</h3>
+                <p class="feature-description">
+                    AI-powered assessment that researches your industry and competitors in real-time
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Quick Wins</h3>
+                <p class="feature-description">
+                    Identify immediate automation opportunities you can implement within 30 days
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3 class="feature-title">ROI Calculator</h3>
+                <p class="feature-description">
+                    Get projected time savings and revenue impact with detailed financial analysis
+                </p>
+            </div>
+        </div>
+
+        <!-- Trust Section -->
+        <div class="trust-section">
+            <h2 class="trust-title">Why Business Leaders Trust EZWAI</h2>
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <div class="trust-icon">✓</div>
+                    <span>500+ Businesses Transformed</span>
+                </div>
+                <div class="trust-badge">
+                    <div class="trust-icon">✓</div>
+                    <span>Average 40% Efficiency Gain</span>
+                </div>
+                <div class="trust-badge">
+                    <div class="trust-icon">✓</div>
+                    <span>20+ Hours Saved Weekly</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Survey iframe Container -->
+        <div id="ezwai-survey-container">
+            <div class="loading-placeholder" id="loading-placeholder">
+                <div class="loading-spinner"></div>
+                <p>Loading AI Assessment Survey...</p>
+            </div>
+            <iframe 
+                id="ezwai-survey-frame"
+                src="https://your-deployed-url.vercel.app/embed"
+                style="display: none;"
+                allow="clipboard-write"
+                loading="lazy"
+                onload="handleIframeLoad()">
+            </iframe>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <h2 class="cta-title">Ready to Transform Your Business?</h2>
+            <p class="cta-text">
+                Join hundreds of companies leveraging AI to scale operations and boost revenue
+            </p>
+            <a href="#ezwai-survey-container" class="cta-button">Start Your Assessment</a>
+        </div>
+    </div>
+
+    <script>
+        // Handle iframe loading
+        function handleIframeLoad() {
+            const placeholder = document.getElementById('loading-placeholder');
+            const iframe = document.getElementById('ezwai-survey-frame');
+            
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            if (iframe) {
+                iframe.style.display = 'block';
+            }
+        }
+
+        // Auto-resize iframe based on content
+        window.addEventListener('message', function(e) {
+            if (e.data.type === 'EZWAI_IFRAME_HEIGHT') {
+                const iframe = document.getElementById('ezwai-survey-frame');
+                if (iframe) {
+                    iframe.style.height = e.data.height + 'px';
+                }
+            }
+        });
+
+        // Smooth scroll for CTA button
+        document.querySelector('.cta-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        // Error handling for iframe
+        window.addEventListener('error', function(e) {
+            if (e.target.id === 'ezwai-survey-frame') {
+                const placeholder = document.getElementById('loading-placeholder');
+                if (placeholder) {
+                    placeholder.innerHTML = `
+                        <p style="color: #ff6b11; font-weight: 600;">Unable to load assessment tool</p>
+                        <p style="margin-top: 10px;">Please check your connection or try again later.</p>
+                    `;
+                }
+            }
+        }, true);
+
+        // Update iframe source URL - IMPORTANT: Replace with your actual deployment URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.getElementById('ezwai-survey-frame');
+            // TODO: Replace with your actual Vercel deployment URL
+            // Example: iframe.src = 'https://ezwai-survey.vercel.app/embed';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+PRD — EZWAI “AI Opportunities Survey” (Next.js + Vercel + OpenAI Responses + GHL)
+0) One-liner
+A secure, embeddable Next.js app that generates business-specific AI questions and a final “AI Opportunities” report using OpenAI’s Responses API with web_search and Structured Outputs, then creates/updates a GoHighLevel contact and stores the survey+report as a Note. The app renders as a clean /embed page and is dropped into WordPress via <iframe>.
+________________________________________
+1) Goals & Non-Goals
+Goals
+•	Generate tailored questions (2 steps) + a concise summary using OpenAI Responses API (not Chat Completions), with web_search enabled and JSON-guaranteed Structured Outputs. OpenAI Platform+2OpenAI Platform+2
+•	Produce a final report (executive summary, quick wins, recommendations, competitive analysis, next steps) via Responses API + Structured Outputs. OpenAI Platform
+•	Create/Upsert a GHL contact and attach a note containing the full survey and the generated report. highlevel.stoplight.io+2highlevel.stoplight.io+2
+•	Deliver a branded, responsive UI with a minimal /embed surface to avoid double scroll; auto-resize the iframe via postMessage. MDN Web Docs
+•	Lock down secrets (OpenAI & GHL) server-side; never expose keys in the browser.
+Non-Goals (v1)
+•	PDF generation (can be a fast follow).
+•	Multi-tenant admin console (v2).
+•	OAuth to GHL (we’ll use an API token in env for now).
+________________________________________
+2) Success Metrics / Acceptance Criteria
+1.	Questions generation:
+o	When valid business inputs are submitted, /api/questions returns JSON that validates against the Questions schema (see §7). No fallback content.
+o	Web search is enabled on Responses calls. OpenAI Platform
+2.	Report generation:
+o	/api/report returns JSON that matches the Report schema (§7).
+o	(Optional) If web info is helpful, model is allowed to call web_search. OpenAI Platform
+3.	GHL contact + note:
+o	A contact appears in GHL (created or upserted) using LeadConnector endpoints, and a Note is attached containing the structured survey+report JSON. highlevel.stoplight.io+2highlevel.stoplight.io+2
+4.	Embedding:
+o	/embed scales to its content height; no inner scrollbar in the iframe; parent page height updates via postMessage. MDN Web Docs
+5.	Security:
+o	No API keys in client bundle.
+o	CSP header uses frame-ancestors so only approved domains can embed. MDN Web Docs
+________________________________________
+3) Users & Flows
+Personas
+•	Visitor/Lead: Completes short business intake; answers dynamic questions; sees final summary; submits contact details.
+•	Operator (you): Reviews contact + note in GHL; follows up.
+Core Flow
+1.	Visitor opens /embed.
+2.	Step 1: Business intake form (company name, site, industry, employees, revenue, tech stack, social usage, challenge).
+3.	App calls /api/questions → receives summary + ~6–10 dynamic questions (mixed multiple-choice and short text).
+4.	Step 2: Dynamic questions pages (2 groups), validation as needed.
+5.	Submit → app calls /api/report → receives structured report JSON.
+6.	App collects basic contact fields (first, last, email, phone), calls /api/ghl/contact to upsert and attach a note. highlevel.stoplight.io+1
+7.	Thank-you screen (optionally shows key report bullets).
+________________________________________
+4) Architecture
+•	Frontend: Next.js 14 (App Router) + React + TailwindCSS
+•	Server: Next.js Route Handlers under /app/api/*
+•	OpenAI: Responses API with tools: [{ type: "web_search" }] and response_format: { type: "json_schema" ... }. OpenAI Platform+2OpenAI Platform+2
+•	GHL: LeadConnector REST (/contacts create/upsert; /contacts/{id}/notes create). highlevel.stoplight.io+2highlevel.stoplight.io+2
+•	Embedding: /embed is a minimal shell that posts its height to the parent. frame-ancestors applied via CSP headers. MDN Web Docs+1
+________________________________________
+5) Repo Structure
+ezwai-ai-survey/
+├─ app/
+│  ├─ embed/page.tsx                 # embeddable survey UI
+│  ├─ layout.tsx                     # global layout
+│  ├─ globals.css
+│  └─ api/
+│     ├─ questions/route.ts          # POST -> OpenAI Responses (web_search + JSON schema)
+│     ├─ report/route.ts             # POST -> OpenAI Responses (web_search + JSON schema)
+│     └─ ghl/
+│        └─ contact/route.ts         # POST -> LeadConnector create/upsert + note
+├─ lib/
+│  ├─ openai.ts                      # typed call helper for Responses API
+│  ├─ schemas.ts                     # zod & JSON schemas for inputs/outputs
+│  ├─ validate.ts                    # zod validators
+│  ├─ rateLimit.ts                   # simple IP-based limiter
+├─ components/
+│  ├─ StepCard.tsx
+│  ├─ Field.tsx
+│  └─ LoadingDots.tsx
+├─ public/
+├─ next.config.mjs
+├─ tailwind.config.ts
+├─ tsconfig.json
+├─ package.json
+└─ README.md
+________________________________________
+6) Environment & Config
+•	Env Vars (Vercel Project Settings → Environment Variables):
+o	OPENAI_API_KEY — OpenAI secret (Responses API).
+o	OPENAI_MODEL — default gpt-4o-mini. OpenAI Platform
+o	GHL_TOKEN — LeadConnector API Bearer token.
+o	GHL_LOCATION_ID — target GHL location.
+o	ALLOWED_FRAME_ANCESTORS — space-separated list of parent origins (e.g., https://ezwai.com https://*.ezwai.com).
+•	CSP Header (Next config): set frame-ancestors to self and allowed WordPress origins. MDN Web Docs
+________________________________________
+7) Data Contracts (Schemas)
+7.1 Client → /api/questions (POST)
+type QuestionsInput = {
+  companyInfo: {
+    companyName: string; websiteURL?: string; industry: string;
+    employees?: string; revenue?: string;
+  };
+  techStack: {
+    crmSystem?: string; aiTools?: string; biggestChallenge?: string;
+  };
+  socialMedia: {
+    channels?: string[]; contentTime?: string;
+  };
+};
+7.2 /api/questions → Client (Structured Outputs)
+{
+  "summary": "string",
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "text": "string",
+      "options": ["A","B","C","D"]
+    },
+    { "type": "text", "text": "string" }
+  ]
+}
+JSON Schema for Responses response_format:
+{
+  "name": "QuestionsSchema",
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["summary", "questions"],
+    "properties": {
+      "summary": { "type": "string" },
+      "questions": {
+        "type": "array",
+        "minItems": 5,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "text"],
+          "properties": {
+            "type": { "type": "string", "enum": ["multiple_choice","text"] },
+            "text": { "type": "string" },
+            "options": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+(Model: Responses API with tools: web_search + response_format: { type: "json_schema" }.) OpenAI Platform+2OpenAI Platform+2
+7.3 Client → /api/report (POST)
+type ReportInput = {
+  companyInfo: QuestionsInput["companyInfo"];
+  techStack: QuestionsInput["techStack"];
+  socialMedia: QuestionsInput["socialMedia"];
+  aiSummary: string;
+  answers: Record<string, unknown>;
+};
+7.4 /api/report → Client (Structured Outputs)
+{
+  "executiveSummary": "string",
+  "quickWins": [
+    { "title": "string", "description": "string", "timeframe": "2-4 weeks", "impact": "Revenue +5%" }
+  ],
+  "recommendations": [
+    { "title": "string", "description": "string", "roi": "High/Med/Low" }
+  ],
+  "competitiveAnalysis": "string",
+  "nextSteps": ["Step 1", "Step 2", "Step 3"]
+}
+JSON Schema for Responses response_format:
+{
+  "name": "ReportSchema",
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["executiveSummary","quickWins","recommendations","competitiveAnalysis","nextSteps"],
+    "properties": {
+      "executiveSummary": { "type": "string" },
+      "quickWins": {
+        "type": "array",
+        "minItems": 2,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title","description","timeframe","impact"],
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "timeframe": { "type": "string" },
+            "impact": { "type": "string" }
+          }
+        }
+      },
+      "recommendations": {
+        "type": "array",
+        "minItems": 2,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title","description","roi"],
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "roi": { "type": "string" }
+          }
+        }
+      },
+      "competitiveAnalysis": { "type": "string" },
+      "nextSteps": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 5,
+        "items": { "type": "string" }
+      }
+    }
+  }
+}
+(Again: Responses API + web_search as needed + JSON schema.) OpenAI Platform+1
+7.5 Client → /api/ghl/contact (POST)
+type GhlContactInput = {
+  firstName: string; lastName: string; email: string; phone?: string;
+  tags?: string[];
+  companyInfo: QuestionsInput["companyInfo"];
+  techStack: QuestionsInput["techStack"];
+  socialMedia: QuestionsInput["socialMedia"];
+  answers: Record<string, unknown>;
+  report: Record<string, unknown>;
+};
+7.6 /api/ghl/contact → Client
+{ "ok": true, "contactId": "string" }
+________________________________________
+8) API Route Behavior (Server)
+8.1 /api/questions (POST)
+•	Validates input (zod).
+•	Calls OpenAI Responses:
+o	model: process.env.OPENAI_MODEL || "gpt-4o-mini"
+o	input: [{ role: "system", content: "...instructions..." }, { role: "user", content: dynamicPrompt }]
+o	tools: [{ type: "web_search" }]
+o	response_format: { type: "json_schema", json_schema: QuestionsSchema }
+•	Returns data.output_parsed (or equivalent) to client.
+(Use Responses API shape, not Chat Completions.) OpenAI Platform
+8.2 /api/report (POST)
+•	Same pattern as above, different prompt + ReportSchema.
+•	Allows web_search for competitive benchmarks. OpenAI Platform
+8.3 /api/ghl/contact (POST)
+•	Upsert or Create contact via LeadConnector. Prefer Upsert if you need merge logic; otherwise Create.
+o	POST https://services.leadconnectorhq.com/contacts/ (Create), or
+o	PUT https://services.leadconnectorhq.com/contacts/upsert (Upsert).
+o	Bearer GHL_TOKEN; header Version: 2021-07-28; optionally include LocationId. highlevel.stoplight.io+1
+•	If success, capture contact.id.
+•	Create Note: POST https://services.leadconnectorhq.com/contacts/{contactId}/notes with a JSON body containing the survey+report (stringified). highlevel.stoplight.io
+________________________________________
+9) Security & Compliance
+•	Secrets in server only. Never expose OPENAI_API_KEY or GHL_TOKEN to client.
+•	CSP: Set Content-Security-Policy: frame-ancestors 'self' https://your-domains... to restrict who can embed. MDN Web Docs
+•	Rate limiting: per-IP limiter (e.g., 5/min) on /api/*.
+•	Validation: zod for all inputs; reject if invalid.
+•	Timeouts & retries:
+o	OpenAI: 60s timeout; retry exponential backoff on 429/5xx, max 3.
+o	GHL: same; surface readable error.
+________________________________________
+10) UX / UI Requirements
+•	Brand: use your EZWAI palette (Aqua/Teal #08b2c6, Light Blue #b5feff, Orange #ff6b11) and clean, modern cards.
+•	Steps:
+1.	Business Intake → 2) Dynamic Questions (2 groups) → 3) Contact Info → 4) Summary screen.
+•	Validation: required fields; show inline errors.
+•	Loading states for OpenAI calls; disable buttons while waiting.
+•	Accessibility: labels/aria, keyboard nav, focus states.
+________________________________________
+11) Observability & Logging
+•	Server logs: request id, route, status, latency, error stacks.
+•	Redact PII in logs (emails, phones).
+•	Consider @vercel/analytics for page views only (no PII).
+________________________________________
+12) Performance Budgets
+•	Responses calls under 10–20K tokens per request.
+•	Serverless function target < 5s median (Hobby limit is generous, but keep fast).
+________________________________________
+13) Testing Plan
+•	Unit: zod validators; helper functions; schema guards.
+•	Integration: mock OpenAI & GHL; happy path & failure modes (429, 400).
+•	E2E: Playwright script that fills intake, receives questions, fills answers, generates report, submits GHL, then verifies 200 + mock.
+•	Manual: Point to a known website and confirm dynamic questions reference real context via web_search. OpenAI Platform
+________________________________________
+14) Example Implementations (TypeScript, Next.js Route Handlers)
+These are skeletons an AI agent can flesh out 1:1.
+lib/openai.ts
+export async function callResponses<T>({
+  input,
+  schema,
+  tools = [{ type: "web_search" }],
+  model = process.env.OPENAI_MODEL || "gpt-4o-mini",
+  temperature = 0.4
+}: {
+  input: any; schema: any; tools?: any[]; model?: string; temperature?: number;
+}): Promise<T> {
+  const r = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY!}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model,
+      input,
+      temperature,
+      tools,
+      response_format: { type: "json_schema", json_schema: schema }
+    })
+  });
+  if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
+  const data = await r.json();
+  // Prefer structured/parsed output per Responses API
+  const parsed = data.output_parsed || data.output?.[0]?.content?.[0]?.parsed;
+  if (!parsed) throw new Error("Missing output_parsed");
+  return parsed as T;
+}
+(Responses API + web_search + Structured Outputs.) OpenAI Platform+2OpenAI Platform+2
+app/api/questions/route.ts
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { callResponses } from "@/lib/openai";
+import { QuestionsJsonSchema, QuestionsInputZ } from "@/lib/schemas";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const input = QuestionsInputZ.parse(body);
+
+    const instructions = [
+      "You are an AI transformation consultant.",
+      "Use web_search when beneficial to ground recommendations.",
+      "Output MUST follow the provided JSON schema exactly."
+    ].join(" ");
+
+    const dynamicPrompt = `
+Business:
+${JSON.stringify(input, null, 2)}
+`;
+
+    const result = await callResponses({
+      input: [
+        { role: "system", content: instructions },
+        { role: "user", content: dynamicPrompt }
+      ],
+      schema: QuestionsJsonSchema
+    });
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
+app/api/report/route.ts
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { callResponses } from "@/lib/openai";
+import { ReportInputZ, ReportJsonSchema } from "@/lib/schemas";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const input = ReportInputZ.parse(body);
+
+    const prompt = `
+Create an AI Opportunities Report with these sections:
+- executiveSummary
+- quickWins (title, description, timeframe, impact)
+- recommendations (title, description, roi)
+- competitiveAnalysis
+- nextSteps (3-5)
+Context:
+${JSON.stringify(input, null, 2)}
+`;
+
+    const report = await callResponses({
+      input: prompt,
+      schema: ReportJsonSchema
+    });
+
+    return NextResponse.json(report);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
+app/api/ghl/contact/route.ts
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const InZ = z.object({
+  firstName: z.string(), lastName: z.string(), email: z.string().email(),
+  phone: z.string().optional(), tags: z.array(z.string()).optional(),
+  companyInfo: z.record(z.any()),
+  techStack: z.record(z.any()),
+  socialMedia: z.record(z.any()),
+  answers: z.record(z.any()),
+  report: z.record(z.any())
+});
+
+async function ghlFetch(path: string, init: RequestInit) {
+  const url = `https://services.leadconnectorhq.com${path}`;
+  const headers = {
+    Authorization: `Bearer ${process.env.GHL_TOKEN!}`,
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Version: "2021-07-28",
+    ...(process.env.GHL_LOCATION_ID ? { LocationId: process.env.GHL_LOCATION_ID } : {})
+  };
+  return fetch(url, { ...init, headers: { ...headers, ...(init.headers || {}) } });
+}
+
+export async function POST(req: Request) {
+  try {
+    const inb = InZ.parse(await req.json());
+
+    // Create contact (or switch to /contacts/upsert if desired)
+    const create = await ghlFetch("/contacts/", {
+      method: "POST",
+      body: JSON.stringify({
+        locationId: process.env.GHL_LOCATION_ID,
+        firstName: inb.firstName, lastName: inb.lastName,
+        email: inb.email, phone: inb.phone, tags: inb.tags || []
+        // customFields: [{ id: "YOUR_FIELD_ID", value: inb.companyInfo.companyName }]
+      })
+    });
+    if (!create.ok) throw new Error(`GHL create ${create.status}: ${await create.text()}`);
+    const cj = await create.json();
+    const contactId = cj?.contact?.id;
+    if (!contactId) throw new Error("No contactId returned");
+
+    const noteBody = [
+      "AI ASSESSMENT — Survey Input",
+      "```json",
+      JSON.stringify({ companyInfo: inb.companyInfo, techStack: inb.techStack, socialMedia: inb.socialMedia, answers: inb.answers }, null, 2),
+      "```",
+      "",
+      "AI OPPORTUNITIES — Report",
+      "```json",
+      JSON.stringify(inb.report, null, 2),
+      "```"
+    ].join("\n");
+
+    const note = await ghlFetch(`/contacts/${contactId}/notes`, {
+      method: "POST",
+      body: JSON.stringify({ body: noteBody, contactId })
+    });
+    if (!note.ok) throw new Error(`GHL note ${note.status}: ${await note.text()}`);
+
+    return NextResponse.json({ ok: true, contactId });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
+(Endpoints per LeadConnector docs: Create/Upsert Contact + Create Note.) highlevel.stoplight.io+2highlevel.stoplight.io+2
+________________________________________
+15) /embed page & Auto-Resize
+•	Minimal chrome, 100% width, reactive layout; send height to parent on load/resize.
+•	Parent (WordPress) listens for EZWAI_IFRAME_HEIGHT.
+Child (/embed) snippet:
+// inside app/embed/page.tsx
+"use client";
+import { useEffect } from "react";
+
+export default function Embed() {
+  useEffect(() => {
+    const send = () => {
+      const h = document.documentElement.scrollHeight;
+      window.parent?.postMessage({ type: "EZWAI_IFRAME_HEIGHT", height: h }, "*");
+    };
+    send();
+    const ro = new ResizeObserver(send);
+    ro.observe(document.documentElement);
+    window.addEventListener("load", send);
+    return () => { ro.disconnect(); window.removeEventListener("load", send); };
+  }, []);
+  // ... render steps UI here ...
+  return <main className="min-h-screen p-4">/* Survey UI */</main>;
+}
+(postMessage pattern for cross-origin iframe comms.) MDN Web Docs
+________________________________________
+16) Headers (CSP) — allow embedding only from your domains
+next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async headers() {
+    const ancestors = process.env.ALLOWED_FRAME_ANCESTORS || "'self'";
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: `frame-ancestors ${ancestors};` }
+        ]
+      }
+    ];
+  }
+};
+export default nextConfig;
+(frame-ancestors is the modern standard for controlling which parents may embed the page.) MDN Web Docs
+________________________________________
+17) Error States & UX Copy
+•	OpenAI error → “We couldn’t generate your questions right now. Please try again in a minute.” (Keep inputs cached; allow retry.)
+•	Report error → “We couldn’t finalize your report. Your answers are saved; try again.”
+•	GHL error → “We created your report but couldn’t save it to our CRM. Please submit again or contact support.”
+•	All errors log server-side with request id.
+________________________________________
+18) Deployment
+•	Vercel → Import GitHub repo → set env vars (OPENAI_API_KEY, GHL_TOKEN, GHL_LOCATION_ID, ALLOWED_FRAME_ANCESTORS).
+•	Add your WordPress domains to ALLOWED_FRAME_ANCESTORS.
+•	Ship to Hobby or Pro per your usage.
+•	Smoke test routes via curl before embedding.
+________________________________________
+19) Future Enhancements
+•	PDF export (server-side rendering + download link).
+•	Persist sessions to DB for analytics.
+•	Map answers to GHL Custom Field IDs (provide a config map once IDs are known). highlevel.stoplight.io
+•	Add reCAPTCHA/Turnstile on submit for bot defense.
+________________________________________
+20) WordPress Embed Snippet (final)
+Place this in Elementor/HTML widget on your WP page:
+<!-- EZWAI AI Survey -->
+<iframe id="ezwai-survey"
+        src="https://YOUR-APP.vercel.app/embed"
+        style="width:100%;border:0;"
+        scrolling="no"
+        loading="lazy"></iframe>
+
+<script>
+  (function(){
+    const iframe = document.getElementById("ezwai-survey");
+    function onMsg(e){
+      if (!e || !e.data) return;
+      if (e.data.type === "EZWAI_IFRAME_HEIGHT") {
+        iframe.style.height = (parseInt(e.data.height,10) || 1200) + "px";
+      }
+    }
+    window.addEventListener("message", onMsg);
+  })();
+</script>
+________________________________________
+21) Key References (for the agent)
+•	OpenAI Responses API (use input, not messages; response_format for Structured Outputs; add tools: [{type: "web_search"}] when needed). OpenAI Platform+2OpenAI Platform+2
+•	GHL (LeadConnector) API — Create/Upsert Contact, Create Note. highlevel.stoplight.io+2highlevel.stoplight.io+2
+•	CSP frame-ancestors (allow specific parents to embed). MDN Web Docs
+•	window.postMessage cross-origin messaging (for iframe auto-resize). MDN Web Docs
+

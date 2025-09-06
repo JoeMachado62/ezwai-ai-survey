@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ez-teal: #08b2c6;
+  --ez-orange: #ff6b11;
+  --ez-lb: #b5feff;
+  --ez-dark-teal: #06999c;
+  --ez-light-orange: #fff5ef;
+  --ez-light-teal: #e8f9fa;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-gradient-to-b from-[#f5faff] to-white text-slate-800;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* Container Styles */
+.container-ez {
+  @apply max-w-3xl mx-auto px-4 sm:px-6;
+}
+
+.card-ez {
+  @apply bg-white rounded-2xl p-6 sm:p-8;
+  box-shadow: 0 4px 12px rgba(8, 178, 182, 0.1);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Image Styles */
+.image-container {
+  @apply relative mx-auto mb-6 w-full max-w-md;
+  animation: slideDown 0.6s ease-out;
+}
+
+.image-frame {
+  @apply relative overflow-hidden rounded-2xl;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.image-frame img {
+  @apply w-full h-auto block;
+  animation: zoomIn 0.8s ease-out;
+}
+
+.image-shadow {
+  @apply absolute inset-0 bg-gradient-to-b from-transparent to-black/10 rounded-2xl;
+  transform: translateY(10px) scale(0.95);
+  filter: blur(20px);
+  opacity: 0.5;
+}
+
+/* Button Styles */
+.btn-ez {
+  @apply inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300;
+  background: linear-gradient(135deg, var(--ez-teal), var(--ez-dark-teal));
+  color: white;
+  box-shadow: 0 2px 4px rgba(8, 178, 182, 0.2);
+}
+
+.btn-ez:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 178, 182, 0.3);
+  background: linear-gradient(135deg, var(--ez-dark-teal), var(--ez-teal));
+}
+
+.btn-ez:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-ez.secondary { 
+  background: linear-gradient(135deg, var(--ez-orange), #ff5500);
+}
+
+.btn-ez.secondary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(255, 107, 17, 0.3);
+  background: linear-gradient(135deg, #ff5500, var(--ez-orange));
+}
+
+/* Form Elements */
+.label-ez { 
+  @apply block text-sm font-medium mb-2 text-slate-700; 
+}
+
+.input-ez { 
+  @apply w-full rounded-xl border-2 border-slate-200 px-4 py-3 transition-all duration-300;
+  @apply focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent;
+  @apply hover:border-slate-300;
+}
+
+.select-ez { 
+  @apply w-full rounded-xl border-2 border-slate-200 px-4 py-3 bg-white transition-all duration-300;
+  @apply focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent;
+  @apply hover:border-slate-300;
+}
+
+.textarea-ez { 
+  @apply w-full rounded-xl border-2 border-slate-200 px-4 py-3 min-h-[100px] transition-all duration-300;
+  @apply focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent resize-y;
+  @apply hover:border-slate-300;
+}
+
+/* Step Headers */
+.step-title { 
+  @apply text-2xl font-semibold mb-3 text-center;
+  background: linear-gradient(135deg, var(--ez-teal), var(--ez-dark-teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.step-sub { 
+  @apply text-base text-slate-600 mb-6 text-center; 
+}
+
+/* Testimonial Styles */
+.testimonial {
+  @apply mt-8 p-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl;
+  border-left: 4px solid var(--ez-teal);
+}
+
+.testimonial-text {
+  @apply text-sm italic text-slate-700 mb-3;
+  line-height: 1.6;
+}
+
+.testimonial-author {
+  @apply flex items-center gap-3;
+}
+
+.profile-image {
+  @apply w-10 h-10 rounded-full bg-gradient-to-br from-[var(--ez-teal)] to-[var(--ez-dark-teal)] text-white flex items-center justify-center font-semibold text-sm;
+}
+
+/* Choice Group Styles */
+.choice-group {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4 my-6;
+}
+
+.choice-card {
+  @apply p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all duration-300;
+  @apply hover:border-[var(--ez-orange)] hover:bg-[var(--ez-light-orange)] hover:shadow-md;
+  @apply hover:transform hover:scale-105;
+}
+
+.choice-card.selected {
+  @apply border-[var(--ez-teal)] bg-[var(--ez-light-teal)];
+  box-shadow: 0 0 0 3px rgba(8, 178, 198, 0.1);
+}
+
+/* Checkbox Styles */
+.checkbox-group {
+  @apply grid grid-cols-2 sm:grid-cols-3 gap-3 my-4;
+}
+
+.checkbox-item {
+  @apply flex items-center p-3 border-2 border-slate-200 rounded-lg cursor-pointer transition-all duration-300;
+  @apply hover:border-[var(--ez-orange)] hover:bg-[var(--ez-light-orange)];
+}
+
+.checkbox-item input[type="checkbox"] {
+  @apply mr-2 w-5 h-5;
+  accent-color: var(--ez-teal);
+}
+
+.checkbox-item.checked {
+  @apply border-[var(--ez-teal)] bg-[var(--ez-light-teal)];
+}
+
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.loading-spinner {
+  @apply w-16 h-16 border-4 border-slate-200 border-t-[var(--ez-teal)] rounded-full mx-auto;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  @apply text-xl font-semibold text-slate-800 text-center mt-4;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.loading-subtext {
+  @apply text-sm text-slate-600 text-center mt-2;
+}
+
+/* Loading Overlay with Animated Background */
+.loading-overlay {
+  @apply fixed inset-0 bg-gradient-to-br from-white/95 to-slate-50/95 backdrop-blur-sm z-50 flex items-center justify-center;
+}
+
+.loading-content {
+  @apply bg-white rounded-2xl p-8 shadow-2xl max-w-sm mx-4;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Progress Bar */
+.progress-bar {
+  @apply w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-6;
+}
+
+.progress-fill {
+  @apply h-full bg-gradient-to-r from-[var(--ez-teal)] to-[var(--ez-dark-teal)] rounded-full;
+  transition: width 0.5s ease-out;
+}
+
+/* Shadow Effects */
+.shadow-ez {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-ez-hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .card-ez {
+    @apply p-4;
+  }
+  
+  .step-title {
+    @apply text-xl;
+  }
+  
+  .checkbox-group {
+    @apply grid-cols-1;
+  }
+}
