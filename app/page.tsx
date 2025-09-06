@@ -69,47 +69,80 @@ export default function SurveyPage() {
     }));
   };
 
-  // Generate dynamic questions
+  // Generate dynamic questions with minimum loading time and retry logic
   const generateDynamicQuestions = async () => {
     setLoading(true);
     setCurrentStep(4);
     
-    try {
-      const response = await fetch("/api/questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyInfo: surveyData.companyInfo,
-          techStack: surveyData.techStack,
-          socialMedia: surveyData.socialMedia
-        })
-      });
+    const startTime = Date.now();
+    const minimumLoadingTime = 15000; // 15 seconds minimum
+    const maxRetryTime = 20000; // Retry after 20 seconds
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    const makeApiCall = async () => {
+      try {
+        const response = await fetch("/api/questions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyInfo: surveyData.companyInfo,
+            techStack: surveyData.techStack,
+            socialMedia: surveyData.socialMedia
+          }),
+          signal: AbortSignal.timeout(maxRetryTime) // Timeout after 20 seconds
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setDynamicQuestions(data.questions || []);
-        setCurrentStep(5); // Go to dynamic questions step 1
-      } else {
-        // Fallback questions
-        setDynamicQuestions([
-          {
-            type: "radio",
-            text: "What percentage of your work involves repetitive tasks?",
-            options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
-          },
-          {
-            type: "text",
-            text: "What's your most time-consuming daily task?"
-          }
-        ]);
-        setCurrentStep(5);
+        if (response.ok) {
+          const data = await response.json();
+          return { success: true, questions: data.questions || [] };
+        } else {
+          return { success: false };
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log("Request timed out, retrying...");
+        }
+        return { success: false, error };
       }
-    } catch (error) {
-      console.error("Error generating questions:", error);
-      setCurrentStep(5);
-    } finally {
-      setLoading(false);
+    };
+    
+    // Make initial API call
+    let result = await makeApiCall();
+    
+    // Retry logic if initial call fails or times out
+    while (!result.success && retryCount < maxRetries) {
+      retryCount++;
+      console.log(`Retrying API call (attempt ${retryCount + 1})...`);
+      result = await makeApiCall();
     }
+    
+    // Ensure minimum loading time
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime < minimumLoadingTime) {
+      await new Promise(resolve => setTimeout(resolve, minimumLoadingTime - elapsedTime));
+    }
+    
+    // Set questions and proceed
+    if (result.success && result.questions) {
+      setDynamicQuestions(result.questions);
+    } else {
+      // Fallback questions if all retries failed
+      setDynamicQuestions([
+        {
+          type: "radio",
+          text: "What percentage of your work involves repetitive tasks?",
+          options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
+        },
+        {
+          type: "text",
+          text: "What's your most time-consuming daily task?"
+        }
+      ]);
+    }
+    
+    setCurrentStep(5); // Go to dynamic questions step 1
+    setLoading(false);
   };
 
   // Generate report
@@ -435,12 +468,26 @@ export default function SurveyPage() {
           </div>
         </div>
 
-        {/* Loading Screen */}
+        {/* Loading Screen with Video */}
         <div className={`step ${currentStep === 4 ? "active" : ""}`}>
           <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <div className="loading-text">Analyzing Your Business...</div>
-            <div className="loading-subtext">Our AI is researching your industry and creating personalized questions</div>
+            <div style={{position: "relative", paddingTop: "56.25%", width: "100%", maxWidth: "800px", margin: "0 auto"}}>
+              <iframe 
+                src="https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=true&preload=true&responsive=true" 
+                loading="lazy" 
+                style={{
+                  border: 0,
+                  position: "absolute",
+                  top: 0,
+                  height: "100%",
+                  width: "100%"
+                }} 
+                allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" 
+                allowFullScreen={true}
+              />
+            </div>
+            <div className="loading-text" style={{marginTop: "30px"}}>Analyzing Your Business...</div>
+            <div className="loading-subtext">Our AI is performing deep research on your company, industry trends, and competitors to create highly personalized questions</div>
           </div>
         </div>
 

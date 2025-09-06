@@ -25,8 +25,11 @@ export async function callResponses<T>({
     }
   };
 
-  // Only add temperature for non-GPT-5 models (GPT-5 doesn't support it)
-  if (!model.includes('gpt-5')) {
+  // Add think_effort for GPT-5 models to enable deeper research
+  if (model.includes('gpt-5')) {
+    payload.think_effort = "high";  // Enable deep research and web search
+  } else {
+    // Only add temperature for non-GPT-5 models
     payload.temperature = 0.4;
   }
 
