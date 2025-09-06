@@ -3,17 +3,51 @@ import { ReportInputZ, ReportJsonSchema, type ReportResult } from "@/lib/schemas
 import { callResponses } from "@/lib/openai";
 import { checkRate } from "@/lib/rateLimit";
 
-const SYSTEM_PROMPT = `You are an AI Transformation Consultant.
-ALWAYS perform web_search before finalizing answers to find current industry benchmarks and AI success stories.
-Use diverse, reputable sources. Prefer items from the last 180 days.
-Return JSON that matches the provided schema exactly.
-Include 3-8 sources in the sources array.
-Create a comprehensive AI Opportunities Report with:
-1. Executive Summary - A high-level overview of AI opportunities
-2. Quick Wins - 2-3 immediate AI implementations with specific timeframes and impact
-3. Recommendations - 2-3 strategic AI initiatives with ROI assessment
-4. Competitive Analysis - How AI can improve their competitive position
-5. Next Steps - 3-5 concrete action items to begin their AI transformation`;
+const SYSTEM_PROMPT = `You are a senior AI Transformation Consultant creating a customized report for a specific client.
+
+YOUR APPROACH:
+1. Synthesize ALL provided data to understand their unique situation
+2. Research current AI solutions specific to their industry and challenges
+3. Provide recommendations scaled to their company size and revenue
+4. Focus on their stated biggest challenge as the primary opportunity
+5. Consider their current tech stack for integration recommendations
+
+REPORT REQUIREMENTS:
+
+1. EXECUTIVE SUMMARY:
+   - Reference their company name and industry
+   - Acknowledge their specific challenge
+   - Highlight 2-3 major AI opportunities unique to them
+
+2. QUICK WINS (2-3 immediate implementations):
+   - Must address their stated biggest challenge
+   - Include tools that integrate with their existing CRM if specified
+   - Provide specific tool names, not generic categories
+   - Include realistic timeframes for their company size
+   - Estimate impact based on their revenue level
+
+3. STRATEGIC RECOMMENDATIONS (2-3 long-term initiatives):
+   - Scale appropriately to their employee count and revenue
+   - Industry-specific AI solutions, not generic ones
+   - Include ROI projections relevant to their business size
+
+4. COMPETITIVE ANALYSIS:
+   - Research their specific industry competitors
+   - How AI adoption varies by company size in their sector
+   - Specific advantages they can gain
+
+5. NEXT STEPS (3-5 concrete actions):
+   - Prioritized based on their biggest challenge
+   - Specific to their tech stack and tools
+   - Actionable within their likely budget
+
+Use web_search to find:
+- Industry-specific AI adoption rates and success stories
+- Competitors in their exact market
+- AI tools that integrate with their specific CRM
+- Solutions for their stated challenge
+
+Return JSON with 5-8 sources from your research.`;
 
 export async function POST(req: Request) {
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0] || "unknown";
@@ -25,24 +59,44 @@ export async function POST(req: Request) {
     const body = await req.json();
     const input = ReportInputZ.parse(body);
 
-    const userPrompt = `Create an AI Opportunities Report from this context:
+    const userPrompt = `Create a personalized AI Opportunities Report for ${input.companyInfo.companyName || 'this company'}.
 
-Business Information:
-${JSON.stringify(input.companyInfo, null, 2)}
+==== CLIENT PROFILE ====
+Company: ${input.companyInfo.companyName || 'Not specified'}
+Website: ${input.companyInfo.websiteURL || 'Not provided'}
+Industry: ${input.companyInfo.industry || 'Not specified'}
+Size: ${input.companyInfo.employees || 'Unknown'} employees
+Annual Revenue: ${input.companyInfo.revenue || 'Not disclosed'}
 
-Tech Stack:
-${JSON.stringify(input.techStack, null, 2)}
+==== CURRENT STATE ====
+CRM System: ${input.techStack.crmSystem || 'None specified'}
+Existing AI Tools: ${input.techStack.aiTools || 'None currently'}
+Biggest Challenge: "${input.techStack.biggestChallenge || 'Not specified'}"
 
-Social Media:
-${JSON.stringify(input.socialMedia, null, 2)}
+==== MARKETING PROFILE ====
+Active Channels: ${input.socialMedia.channels?.join(', ') || 'None'}
+Content Time: ${input.socialMedia.contentTime || 'Not specified'} per week
+${input.socialMedia.channels?.length ? `This indicates opportunity for AI content generation on ${input.socialMedia.channels.join(' and ')}.` : ''}
 
-AI Assessment Summary:
-${input.aiSummary}
+==== AI READINESS ASSESSMENT ====
+${input.aiSummary || 'Assessment pending'}
 
-Survey Responses:
-${JSON.stringify(input.answers, null, 2)}
+==== DETAILED RESPONSES ====
+${Object.entries(input.answers || {}).map(([q, a]) => `Q: ${q}\nA: ${a}`).join('\n\n')}
 
-Generate a comprehensive report with specific, actionable recommendations tailored to this business.`;
+==== CRITICAL FOCUS AREAS ====
+1. PRIMARY: Solutions for "${input.techStack.biggestChallenge || 'operational efficiency'}"
+2. INTEGRATION: ${input.techStack.crmSystem ? `AI tools that work with ${input.techStack.crmSystem}` : 'Platform-agnostic solutions'}
+3. SCALE: Recommendations appropriate for ${input.companyInfo.employees || 'a company'} with ${input.companyInfo.revenue || 'their revenue level'}
+4. INDUSTRY: Specific to ${input.companyInfo.industry || 'their industry'} sector
+
+==== RESEARCH PRIORITIES ====
+- Search for "${input.companyInfo.companyName} ${input.companyInfo.industry}" to understand their market position
+- Find AI solutions for "${input.techStack.biggestChallenge}" in ${input.companyInfo.industry || 'their industry'}
+- Research "${input.techStack.crmSystem} AI integration" if CRM is specified
+- Look for ${input.companyInfo.industry} industry AI adoption rates and competitor analysis
+
+Create a report that feels like it was written specifically for THIS company, not a generic template.`;
 
     const result = await callResponses<ReportResult>({
       input: [
@@ -51,7 +105,8 @@ Generate a comprehensive report with specific, actionable recommendations tailor
       ],
       schema: ReportJsonSchema,
       tools: [{ type: "web_search" }],
-      model: process.env.OPENAI_MODEL_REPORT || process.env.OPENAI_MODEL || "gpt-5"
+      model: process.env.OPENAI_MODEL_REPORT || process.env.OPENAI_MODEL || "gpt-5",
+      think_effort: "high" // Enable deep analysis and research
     });
 
     return NextResponse.json(result, { status: 200 });

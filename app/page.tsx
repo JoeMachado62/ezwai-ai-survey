@@ -127,18 +127,81 @@ export default function SurveyPage() {
     if (result.success && result.questions) {
       setDynamicQuestions(result.questions);
     } else {
-      // Fallback questions if all retries failed
-      setDynamicQuestions([
-        {
+      // Personalized fallback questions based on collected data
+      const fallbackQuestions = [];
+      
+      // Industry-specific question
+      if (surveyData.companyInfo.industry) {
+        fallbackQuestions.push({
           type: "radio",
-          text: "What percentage of your work involves repetitive tasks?",
-          options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
-        },
-        {
+          text: `In the ${surveyData.companyInfo.industry} industry, which area would benefit most from AI automation?`,
+          options: [
+            "Customer service and support",
+            "Operations and logistics",
+            "Sales and marketing",
+            "Data analysis and reporting"
+          ]
+        });
+      }
+      
+      // Challenge-specific question
+      if (surveyData.techStack.biggestChallenge) {
+        fallbackQuestions.push({
           type: "text",
-          text: "What's your most time-consuming daily task?"
-        }
-      ]);
+          text: `Regarding your challenge with "${surveyData.techStack.biggestChallenge}", what specific tasks take the most time?`
+        });
+      }
+      
+      // CRM-specific question
+      if (surveyData.techStack.crmSystem) {
+        fallbackQuestions.push({
+          type: "radio",
+          text: `How effectively are you currently using ${surveyData.techStack.crmSystem} for automation?`,
+          options: [
+            "Not using any automation features",
+            "Basic automation only",
+            "Moderate automation usage",
+            "Extensive automation"
+          ]
+        });
+      }
+      
+      // Social media question if applicable
+      if (surveyData.socialMedia.channels && surveyData.socialMedia.channels.length > 0) {
+        fallbackQuestions.push({
+          type: "radio",
+          text: `For your ${surveyData.socialMedia.channels.join(', ')} content, what's your biggest pain point?`,
+          options: [
+            "Coming up with content ideas",
+            "Writing engaging posts",
+            "Creating visuals and graphics",
+            "Scheduling and consistency"
+          ]
+        });
+      }
+      
+      // Size-based question
+      if (surveyData.companyInfo.employees) {
+        fallbackQuestions.push({
+          type: "text",
+          text: `With ${surveyData.companyInfo.employees} employees, which departments struggle most with manual processes?`
+        });
+      }
+      
+      // Generic questions only if we need more
+      if (fallbackQuestions.length < 4) {
+        fallbackQuestions.push({
+          type: "radio",
+          text: "Which business process currently takes the most manual effort?",
+          options: ["Data entry", "Report generation", "Customer communication", "Internal coordination"]
+        });
+        fallbackQuestions.push({
+          type: "text",
+          text: "What's one task you wish could be automated today?"
+        });
+      }
+      
+      setDynamicQuestions(fallbackQuestions);
     }
     
     setCurrentStep(5); // Go to dynamic questions step 1

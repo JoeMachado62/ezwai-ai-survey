@@ -3,12 +3,14 @@ export async function callResponses<T>({
   input,
   schema,
   tools = [{ type: "web_search" }],
-  model = process.env.OPENAI_MODEL || "gpt-4o-mini"
+  model = process.env.OPENAI_MODEL || "gpt-4o-mini",
+  think_effort = "medium"
 }: {
   input: any;
   schema: any;
   tools?: any[];
   model?: string;
+  think_effort?: "low" | "medium" | "high";
 }): Promise<T> {
   // Build the request payload
   const payload: any = {
@@ -27,7 +29,7 @@ export async function callResponses<T>({
 
   // Add think_effort for GPT-5 models to enable deeper research
   if (model.includes('gpt-5')) {
-    payload.think_effort = "high";  // Enable deep research and web search
+    payload.think_effort = think_effort || "high";  // Use provided effort level or default to high
   } else {
     // Only add temperature for non-GPT-5 models
     payload.temperature = 0.4;

@@ -3,23 +3,30 @@ import { QuestionsInputZ, QuestionsJsonSchema, type QuestionsResult } from "@/li
 import { callResponses } from "@/lib/openai";
 import { checkRate } from "@/lib/rateLimit";
 
-const SYSTEM_PROMPT = `You are an AI Transformation Consultant analyzing a business for AI opportunities.
+const SYSTEM_PROMPT = `You are an expert AI Transformation Consultant conducting a deep analysis of a specific business.
 
-IMPORTANT: You MUST perform extensive web_search about:
-1. The specific company (search their website URL and company name)
-2. Their industry trends and AI adoption in their sector
-3. Competitors in their market and their AI usage
-4. Latest AI tools relevant to their tech stack and challenges
-5. Industry-specific pain points and AI solutions
+YOUR APPROACH:
+1. First, create a comprehensive profile of the business based on ALL provided information
+2. Research their specific company, industry, and competitive landscape
+3. Identify pain points based on their stated challenges and industry patterns
+4. Generate questions that directly address THEIR unique situation
 
-Use diverse, reputable sources from the last 180 days.
-Return JSON that matches the provided schema exactly.
-Place all discovered links in the sources array (minimum 5 sources).
+CRITICAL: Every question must be directly relevant to the specific data provided:
+- Company size informs scalability needs
+- Revenue level indicates budget capacity
+- Current CRM system determines integration requirements
+- Stated challenges guide solution priorities
+- Social media usage reveals content creation needs
+- Industry sector shapes regulatory and competitive considerations
 
-Generate 8-10 highly specific questions that will uncover deep AI opportunities.
-Questions MUST be tailored to their exact industry, company size, and current challenges.
-Include questions about their competitors, market position, and specific processes.
-Mix multiple-choice and open-text questions.`;
+QUESTION REQUIREMENTS:
+- 8-10 questions that feel like they were written specifically for THIS company
+- Reference their actual industry, tools, and challenges in the questions
+- Include competitor comparisons relevant to their market
+- Mix formats: multiple choice (with industry-specific options) and open text
+- Each question should uncover a specific AI opportunity
+
+Return JSON matching the schema with minimum 5 sources from web research.`;
 
 export async function POST(req: Request) {
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0] || "unknown";
@@ -31,32 +38,58 @@ export async function POST(req: Request) {
     const body = await req.json();
     const input = QuestionsInputZ.parse(body);
 
-    const userPrompt = `CRITICAL: Perform deep web research about this specific business before generating questions.
+    const userPrompt = `Analyze this specific business and create personalized AI assessment questions.
 
-Business Facts:
-Company Name: ${input.companyInfo.companyName}
-Website URL: ${input.companyInfo.websiteURL || 'Not provided'}
+==== BUSINESS PROFILE ====
+Company: ${input.companyInfo.companyName}
+Website: ${input.companyInfo.websiteURL || 'Not provided'}
 Industry: ${input.companyInfo.industry}
-Number of Employees: ${input.companyInfo.employees || 'Not specified'}
-Annual Revenue: ${input.companyInfo.revenue || 'Not specified'}
+Size: ${input.companyInfo.employees || 'Not specified'} employees
+Revenue: ${input.companyInfo.revenue || 'Not specified'} annually
 
-Current Technology Stack:
-CRM System: ${input.techStack.crmSystem || 'None specified'}
-Current AI Tools in Use: ${input.techStack.aiTools || 'None'}
-Biggest Business Challenge: ${input.techStack.biggestChallenge || 'Not specified'}
+==== CURRENT TECHNOLOGY ====
+CRM Platform: ${input.techStack.crmSystem || 'None'}
+Existing AI Tools: ${input.techStack.aiTools || 'None currently'}
+Primary Challenge: "${input.techStack.biggestChallenge || 'Not specified'}"
 
-Social Media & Marketing:
+==== MARKETING & CONTENT ====
 Active Channels: ${input.socialMedia.channels?.join(', ') || 'None'}
-Content Creation Time/Week: ${input.socialMedia.contentTime || 'Not specified'}
+Content Time Investment: ${input.socialMedia.contentTime || 'Not specified'} per week
 
-REQUIRED RESEARCH ACTIONS:
-1. Search the company website URL to understand their business model and services
-2. Research their industry for AI adoption trends and competitor analysis
-3. Identify specific AI solutions for their stated biggest challenge
-4. Find AI tools that integrate with their CRM system
-5. Research AI content creation tools for their social media channels
+==== YOUR ANALYSIS TASKS ====
+1. COMPANY RESEARCH:
+   - Search "${input.companyInfo.companyName}" ${input.companyInfo.websiteURL ? `and visit ${input.companyInfo.websiteURL}` : ''}
+   - Understand their business model, services, and market position
 
-Generate a comprehensive summary and 8-10 highly specific questions that will uncover deep AI transformation opportunities for THIS exact business.`;
+2. INDUSTRY ANALYSIS for "${input.companyInfo.industry}":
+   - Current AI adoption rates in ${input.companyInfo.industry}
+   - Top 3-5 competitors and their AI usage
+   - Industry-specific AI solutions and success stories
+
+3. CHALLENGE-SPECIFIC SOLUTIONS for "${input.techStack.biggestChallenge || 'operational efficiency'}":
+   - AI tools that directly address this challenge
+   - ROI examples from similar ${input.companyInfo.employees ? `${input.companyInfo.employees}-employee` : 'sized'} companies
+
+4. INTEGRATION OPPORTUNITIES:
+   ${input.techStack.crmSystem ? `- AI tools that integrate with ${input.techStack.crmSystem}` : '- CRM-agnostic AI solutions'}
+   ${input.socialMedia.channels?.length ? `- Content AI for ${input.socialMedia.channels.join(', ')}` : '- General automation opportunities'}
+
+==== OUTPUT REQUIREMENTS ====
+First provide a brief summary (2-3 sentences) synthesizing what you learned about THIS specific business.
+
+Then generate 8-10 questions where:
+- At least 2 questions reference their specific industry (${input.companyInfo.industry})
+- At least 1 question addresses their stated challenge (${input.techStack.biggestChallenge})
+- At least 1 question relates to their CRM (${input.techStack.crmSystem}) if specified
+- At least 1 question about their social media needs if they use social channels
+- Questions feel personalized, not generic
+- Multiple choice options are industry-relevant, not generic
+
+Example of a GOOD personalized question:
+"As a ${input.companyInfo.industry} company${input.companyInfo.employees ? ` with ${input.companyInfo.employees} employees` : ''}, which of these AI applications would most improve your ${input.techStack.biggestChallenge || 'operations'}?"
+
+Example of a BAD generic question:
+"What percentage of your work involves repetitive tasks?"`;
 
     const result = await callResponses<QuestionsResult>({
       input: [
@@ -65,7 +98,8 @@ Generate a comprehensive summary and 8-10 highly specific questions that will un
       ],
       schema: QuestionsJsonSchema,
       tools: [{ type: "web_search" }],
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini"
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      think_effort: "high" // Ensure deep thinking and research
     });
 
     return NextResponse.json(result, { status: 200 });
