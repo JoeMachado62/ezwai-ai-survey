@@ -1,565 +1,743 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import StepCard from "@/components/StepCard";
-import { TextField, TextArea, SelectField } from "@/components/Field";
-import LoadingDots from "@/components/LoadingDots";
-import LoadingOverlay from "@/components/LoadingOverlay";
-import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
 
-// Images from original design
-const images = {
-  intro: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68baffc29846a685cc4f2bb2.webp",
-  techStack: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687915b96ccf5645dba7e085.jpeg",
-  social: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb04c89846a6c43e4fd338.webp",
-  questions1: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91bb03232c933f450f.jpeg",
-  questions2: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91cac6682b0fc37eeb.jpeg",
-  finalCta: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d8f398f0686b47096.jpeg"
-};
+import { useState, useEffect, FormEvent } from "react";
 
-// Testimonials data
-const testimonials = [
-  {
-    text: "The AI assessment identified 12 automation opportunities we hadn't considered. We've already implemented 3 and saved 20 hours per week.",
-    author: "James Miller",
-    role: "Operations Director",
-    initial: "JM"
-  },
-  {
-    text: "We replaced 5 different tools with one AI-powered system that integrates with our existing CRM. Efficiency increased by 40%.",
-    author: "Sarah Kim",
-    role: "Tech Startup Founder",
-    initial: "SK"
-  },
-  {
-    text: "AI now creates 80% of our social media content. We went from posting twice a week to daily, and engagement tripled.",
-    author: "Rachel Thompson",
-    role: "Marketing Manager",
-    initial: "RT"
-  }
-];
-
-// Testimonial Component
-function Testimonial({ text, author, role, initial }: typeof testimonials[0]) {
-  return (
-    <div className="testimonial">
-      <div className="testimonial-text">{text}</div>
-      <div className="testimonial-author">
-        <div className="profile-image">{initial}</div>
-        <span>- {author}, {role}</span>
-      </div>
-    </div>
-  );
-}
-
-// Image Header Component  
-function ImageHeader({ src, alt }: { src: string; alt: string }) {
-  return (
-    <div className="image-container">
-      <div className="image-shadow"></div>
-      <div className="image-frame">
-        <img src={src} alt={alt} />
-      </div>
-    </div>
-  );
-}
-
-export default function Embed() {
-  const [step, setStep] = useState(0);
+export default function SurveyPage() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 7;
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("");
-
-  const [companyInfo, setCompanyInfo] = useState<QuestionsInput["companyInfo"]>({ 
-    companyName: "", 
-    websiteURL: "", 
-    industry: "", 
-    employees: "", 
-    revenue: "" 
-  });
+  const [statusMessage, setStatusMessage] = useState("");
+  const [dynamicQuestions, setDynamicQuestions] = useState<any[]>([]);
+  const [report, setReport] = useState<any>(null);
   
-  const [techStack, setTechStack] = useState<QuestionsInput["techStack"]>({ 
-    crmSystem: "", 
-    aiTools: "", 
-    biggestChallenge: "" 
+  // Survey data state
+  const [surveyData, setSurveyData] = useState({
+    companyInfo: {
+      companyName: "",
+      websiteURL: "",
+      industry: "",
+      employees: "",
+      revenue: ""
+    },
+    techStack: {
+      crmSystem: "",
+      aiTools: "",
+      biggestChallenge: ""
+    },
+    socialMedia: {
+      channels: [] as string[],
+      contentTime: ""
+    },
+    dynamicQuestions: {} as any,
+    contactInfo: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: ""
+    }
   });
-  
-  const [socialMedia, setSocialMedia] = useState<QuestionsInput["socialMedia"]>({ 
-    channels: [], 
-    contentTime: "" 
-  });
 
-  const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
-  const [summary, setSummary] = useState("");
-  const [qSources, setQSources] = useState<{title: string; url: string}[]>([]);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [report, setReport] = useState<ReportResult | null>(null);
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-
-  // Auto-resize iframe
+  // Update progress bar
   useEffect(() => {
-    const send = () => {
-      const h = document.documentElement.scrollHeight;
-      window.parent?.postMessage({ type: "EZWAI_IFRAME_HEIGHT", height: h }, "*");
-    };
-    send();
-    const ro = new ResizeObserver(send);
-    ro.observe(document.documentElement);
-    window.addEventListener("load", send);
-    return () => { 
-      ro.disconnect(); 
-      window.removeEventListener("load", send); 
-    };
-  }, []);
+    const progressBar = document.getElementById("progressBar");
+    if (progressBar) {
+      const progressPercentage = (currentStep / totalSteps) * 100;
+      progressBar.style.width = `${progressPercentage}%`;
+      progressBar.classList.add("active");
+      setTimeout(() => progressBar.classList.remove("active"), 1000);
+    }
+  }, [currentStep]);
 
-  const grouped = useMemo(() => {
-    const half = Math.ceil(questions.length / 2);
-    return [questions.slice(0, half), questions.slice(half)];
-  }, [questions]);
+  // Format phone number
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
 
-  async function generateQuestions() {
+  // Handle checkbox toggle
+  const handleCheckboxToggle = (value: string) => {
+    setSurveyData(prev => ({
+      ...prev,
+      socialMedia: {
+        ...prev.socialMedia,
+        channels: prev.socialMedia.channels.includes(value)
+          ? prev.socialMedia.channels.filter(ch => ch !== value)
+          : [...prev.socialMedia.channels, value]
+      }
+    }));
+  };
+
+  // Generate dynamic questions
+  const generateDynamicQuestions = async () => {
     setLoading(true);
-    setLoadingMessage("Analyzing your business + searching the web...");
+    setCurrentStep(4);
+    
     try {
       const response = await fetch("/api/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyInfo, techStack, socialMedia })
+        body: JSON.stringify({
+          companyInfo: surveyData.companyInfo,
+          techStack: surveyData.techStack,
+          socialMedia: surveyData.socialMedia
+        })
       });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+
+      if (response.ok) {
+        const data = await response.json();
+        setDynamicQuestions(data.questions || []);
+        setCurrentStep(5); // Go to dynamic questions step 1
+      } else {
+        // Fallback questions
+        setDynamicQuestions([
+          {
+            type: "radio",
+            text: "What percentage of your work involves repetitive tasks?",
+            options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
+          },
+          {
+            type: "text",
+            text: "What's your most time-consuming daily task?"
+          }
+        ]);
+        setCurrentStep(5);
       }
-      
-      const data: QuestionsResult = await response.json();
-      setSummary(data.summary);
-      setQuestions(data.questions);
-      setQSources(data.sources || []);
-      setStep(1);
     } catch (error) {
-      alert("Could not generate dynamic questions. Please try again.");
-      console.error(error);
+      console.error("Error generating questions:", error);
+      setCurrentStep(5);
     } finally {
       setLoading(false);
-      setLoadingMessage("");
     }
-  }
+  };
 
-  function renderQuestion(q: GeneratedQuestion, idx: number) {
-    const key = `q_${idx}`;
-    if (q.type === "multiple_choice" && q.options?.length) {
-      return (
-        <SelectField 
-          key={key} 
-          label={q.text} 
-          value={answers[key] || ""} 
-          onChange={e => setAnswers(a => ({ ...a, [key]: e.target.value }))}
-        >
-          <option value="" disabled>Choose an option</option>
-          {q.options.map((opt, i) => (
-            <option key={i} value={opt}>{opt}</option>
-          ))}
-        </SelectField>
-      );
-    }
-    return (
-      <TextArea 
-        key={key} 
-        label={q.text} 
-        value={answers[key] || ""} 
-        onChange={e => setAnswers(a => ({ ...a, [key]: e.target.value }))} 
-      />
-    );
-  }
-
-  async function buildReport() {
+  // Generate report
+  const generateReport = async () => {
     setLoading(true);
-    setLoadingMessage("Creating your report with fresh sources...");
+    
     try {
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          companyInfo, 
-          techStack, 
-          socialMedia, 
-          aiSummary: summary, 
-          answers 
-        })
+        body: JSON.stringify(surveyData)
       });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+
+      if (response.ok) {
+        const data = await response.json();
+        setReport(data);
       }
-      
-      const data: ReportResult = await response.json();
-      setReport(data);
-      setStep(3);
     } catch (error) {
-      alert("Could not finalize the report. Please try again.");
-      console.error(error);
+      console.error("Error generating report:", error);
     } finally {
       setLoading(false);
-      setLoadingMessage("");
     }
-  }
+  };
 
-  async function downloadPdf() {
-    if (!report) return;
-    try {
-      const response = await fetch("/api/report/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          report, 
-          companyName: companyInfo.companyName 
-        })
-      });
-      
-      if (!response.ok) {
-        alert("Could not generate PDF.");
-        return;
-      }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `AI_Opportunities_${companyInfo.companyName || "Report"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert("Could not download PDF.");
-      console.error(error);
-    }
-  }
-
-  async function saveToGHL() {
+  // Submit lead to GoHighLevel
+  const submitLead = async (e: FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    setLoadingMessage("Saving to CRM...");
+    
     try {
+      await generateReport();
+      
       const response = await fetch("/api/ghl/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          phone,
-          tags: ["AI Assessment Survey", companyInfo.industry].filter(Boolean),
-          companyInfo,
-          techStack,
-          socialMedia,
-          answers,
+          ...surveyData,
           report
         })
       });
-      
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "GHL error");
+
+      if (response.ok) {
+        setStatusMessage("Success! Your AI report has been generated and sent to your email.");
+        setCurrentStep(8); // Show report
+      } else {
+        setStatusMessage("There was an error submitting your information. Please try again.");
       }
-      
-      setStep(4);
-    } catch (error: any) {
-      alert(error.message || "Could not save to CRM.");
-      console.error(error);
+    } catch (error) {
+      console.error("Error submitting lead:", error);
+      setStatusMessage("There was an error submitting your information. Please try again.");
     } finally {
       setLoading(false);
-      setLoadingMessage("");
     }
-  }
+  };
 
   return (
-    <main className="min-h-screen py-6">
-      <LoadingOverlay show={loading} message={loadingMessage} />
-
-      {step === 0 && (
-        <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">
-          <ImageHeader src={images.intro} alt="AI Introduction" />
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField 
-              label="Company Name" 
-              value={companyInfo.companyName} 
-              onChange={e => setCompanyInfo({ ...companyInfo, companyName: e.target.value })} 
-              required 
-            />
-            <TextField 
-              label="Website URL" 
-              value={companyInfo.websiteURL || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, websiteURL: e.target.value })} 
-              placeholder="https://example.com" 
-            />
-            <TextField 
-              label="Industry" 
-              value={companyInfo.industry} 
-              onChange={e => setCompanyInfo({ ...companyInfo, industry: e.target.value })} 
-              required 
-            />
-            <TextField 
-              label="Employees" 
-              value={companyInfo.employees || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, employees: e.target.value })} 
-            />
-            <SelectField 
-              label="Annual Revenue" 
-              value={companyInfo.revenue || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, revenue: e.target.value })}
-            >
-              <option value="" disabled>Select range</option>
-              <option value="Under $100k">Under $100k</option>
-              <option value="$100k-$250k">$100k - $250k</option>
-              <option value="$250k-$500k">$250k - $500k</option>
-              <option value="$500k-$1M">$500k - $1M</option>
-              <option value="$1M-$5M">$1M - $5M</option>
-              <option value="$5M-$10M">$5M - $10M</option>
-              <option value="$10M-$25M">$10M - $25M</option>
-              <option value="Over $25M">Over $25M</option>
-            </SelectField>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            <TextField 
-              label="CRM (if any)" 
-              value={techStack.crmSystem || ""} 
-              onChange={e => setTechStack({ ...techStack, crmSystem: e.target.value })} 
-            />
-            <TextField 
-              label="AI Tools Currently Used" 
-              value={techStack.aiTools || ""} 
-              onChange={e => setTechStack({ ...techStack, aiTools: e.target.value })} 
-            />
-          </div>
-          
-          <TextArea 
-            label="Biggest Challenge" 
-            value={techStack.biggestChallenge || ""} 
-            onChange={e => setTechStack({ ...techStack, biggestChallenge: e.target.value })} 
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            <TextField 
-              label="Social Channels (comma-separated)" 
-              value={(socialMedia.channels || []).join(", ")} 
-              onChange={e => setSocialMedia({ 
-                ...socialMedia, 
-                channels: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
-              })} 
-            />
-            <TextField 
-              label="Weekly Content Time" 
-              value={socialMedia.contentTime || ""} 
-              onChange={e => setSocialMedia({ ...socialMedia, contentTime: e.target.value })} 
-            />
-          </div>
-
-          <div className="mt-6 flex items-center gap-3">
-            <button 
-              className="btn-ez" 
-              onClick={generateQuestions} 
-              disabled={loading || !companyInfo.companyName || !companyInfo.industry}
-            >
-              {loading ? <LoadingDots/> : "Continue"}
-            </button>
-          </div>
-          
-          <Testimonial {...testimonials[0]} />
-        </StepCard>
-      )}
-
-      {step === 1 && (
-        <StepCard 
-          title="Personalized Questions for Your Business" 
-          subtitle={summary ? summary : "Based on our analysis, we've identified key areas to explore"}
-        >
-          <ImageHeader src={images.questions1} alt="Dynamic Questions" />
-          {qSources?.length ? (
-            <div className="mb-4 text-sm text-slate-600">
-              <div className="font-semibold">Sources</div>
-              <ul className="list-disc ml-5">
-                {qSources.map((s, i) => (
-                  <li key={i}>
-                    <a className="underline" href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+    <>
+      <div className="container">
+        {/* Step 1: Company Information */}
+        <div className={`step ${currentStep === 1 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68baffc29846a685cc4f2bb2.webp" 
+                alt="AI Introduction"
+              />
             </div>
-          ) : null}
-          
-          {grouped[0].map(renderQuestion)}
-          
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(0)} disabled={loading}>
-              Back
-            </button>
-            <button className="btn-ez" onClick={() => setStep(2)} disabled={loading}>
-              Continue
-            </button>
           </div>
           
-          <Testimonial {...testimonials[1]} />
-        </StepCard>
-      )}
-
-      {step === 2 && (
-        <StepCard title="Let's Dive Deeper Into Your Processes" subtitle="These questions help us calculate your potential ROI from AI implementation">
-          <ImageHeader src={images.questions2} alt="Process Deep Dive" />
+          <h2>Let's Understand Your Business</h2>
+          <p>Tell us about your company to receive a customized AI opportunities assessment</p>
           
-          {grouped[1].map(renderQuestion)}
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(1)} disabled={loading}>
-              Back
-            </button>
-            <button className="btn-ez" onClick={buildReport} disabled={loading}>
-              {loading ? <LoadingDots/> : "Generate My Report"}
-            </button>
+          <label htmlFor="companyName">Company Name</label>
+          <input 
+            type="text" 
+            id="companyName" 
+            placeholder="Your Company Name" 
+            required
+            value={surveyData.companyInfo.companyName}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              companyInfo: { ...prev.companyInfo, companyName: e.target.value }
+            }))}
+          />
+          
+          <label htmlFor="websiteURL">Website URL</label>
+          <input 
+            type="text" 
+            id="websiteURL" 
+            placeholder="https://www.yourcompany.com"
+            value={surveyData.companyInfo.websiteURL}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              companyInfo: { ...prev.companyInfo, websiteURL: e.target.value }
+            }))}
+          />
+          
+          <label htmlFor="industry">Industry</label>
+          <select 
+            id="industry" 
+            required
+            value={surveyData.companyInfo.industry}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              companyInfo: { ...prev.companyInfo, industry: e.target.value }
+            }))}
+          >
+            <option value="" disabled>Select your industry</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="ecommerce">E-commerce</option>
+            <option value="manufacturing">Manufacturing</option>
+            <option value="professional_services">Professional Services</option>
+            <option value="real_estate">Real Estate</option>
+            <option value="finance">Finance & Banking</option>
+            <option value="retail">Retail</option>
+            <option value="hospitality">Hospitality</option>
+            <option value="education">Education</option>
+            <option value="logistics">Logistics & Transportation</option>
+            <option value="construction">Construction</option>
+            <option value="legal">Legal Services</option>
+            <option value="marketing">Marketing & Advertising</option>
+            <option value="technology">Technology</option>
+            <option value="nonprofit">Non-Profit</option>
+            <option value="other">Other</option>
+          </select>
+          
+          <label htmlFor="employees">Number of Employees</label>
+          <select 
+            id="employees" 
+            required
+            value={surveyData.companyInfo.employees}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              companyInfo: { ...prev.companyInfo, employees: e.target.value }
+            }))}
+          >
+            <option value="" disabled>Select employee count</option>
+            <option value="1-10">1-10</option>
+            <option value="11-50">11-50</option>
+            <option value="51-200">51-200</option>
+            <option value="201-500">201-500</option>
+            <option value="500+">500+</option>
+          </select>
+          
+          <label htmlFor="revenue">Annual Revenue</label>
+          <select 
+            id="revenue" 
+            required
+            value={surveyData.companyInfo.revenue}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              companyInfo: { ...prev.companyInfo, revenue: e.target.value }
+            }))}
+          >
+            <option value="" disabled>Select revenue range</option>
+            <option value="Under $500k">Under $500k</option>
+            <option value="$500k-$1M">$500k - $1M</option>
+            <option value="$1M-$5M">$1M - $5M</option>
+            <option value="$5M-$10M">$5M - $10M</option>
+            <option value="$10M-$50M">$10M - $50M</option>
+            <option value="Over $50M">Over $50M</option>
+          </select>
+          
+          <button 
+            className="btn"
+            onClick={() => {
+              if (!surveyData.companyInfo.companyName || !surveyData.companyInfo.industry || 
+                  !surveyData.companyInfo.employees || !surveyData.companyInfo.revenue) {
+                alert("Please fill in all required fields");
+                return;
+              }
+              setCurrentStep(2);
+            }}
+          >
+            Continue
+          </button>
+          
+          <div className="testimonial">
+            <div className="testimonial-text">
+              "The AI assessment identified 12 automation opportunities we hadn't considered. We've already implemented 3 and saved 20 hours per week."
+            </div>
+            <div className="testimonial-author">
+              <div className="profile-image">JM</div>
+              <span>- James Miller, Operations Director</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 2: Current Tech Stack */}
+        <div className={`step ${currentStep === 2 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687915b96ccf5645dba7e085.jpeg" 
+                alt="Tech Stack"
+              />
+            </div>
           </div>
           
-          <Testimonial {...testimonials[2]} />
-        </StepCard>
-      )}
-
-      {step === 3 && report && (
-        <StepCard title="Your AI Transformation Report is Ready!" subtitle="Enter your contact information to receive your personalized AI opportunities report">
-          <ImageHeader src={images.finalCta} alt="Final Call to Action" />
+          <h2>Your Current Technology Stack</h2>
+          <p>Understanding your existing tools helps us identify integration opportunities</p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField 
-              label="First Name" 
-              value={firstName} 
-              onChange={e => setFirstName(e.target.value)} 
-              required 
+          <label htmlFor="crmSystem">What CRM or business management software do you currently use?</label>
+          <input 
+            type="text" 
+            id="crmSystem" 
+            placeholder="None, Excel, Salesforce, HubSpot, etc."
+            value={surveyData.techStack.crmSystem}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              techStack: { ...prev.techStack, crmSystem: e.target.value }
+            }))}
+          />
+          
+          <label htmlFor="aiTools">What AI tools are you currently using in your workflows?</label>
+          <textarea 
+            id="aiTools" 
+            placeholder="ChatGPT, Claude, Jasper, None, etc. List all AI tools you're using"
+            value={surveyData.techStack.aiTools}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              techStack: { ...prev.techStack, aiTools: e.target.value }
+            }))}
+          />
+          
+          <label htmlFor="biggestChallenge">What's your biggest operational challenge right now?</label>
+          <textarea 
+            id="biggestChallenge" 
+            placeholder="Describe the main challenge that's slowing down your business"
+            value={surveyData.techStack.biggestChallenge}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              techStack: { ...prev.techStack, biggestChallenge: e.target.value }
+            }))}
+          />
+          
+          <button 
+            className="btn"
+            onClick={() => setCurrentStep(3)}
+          >
+            Continue
+          </button>
+          
+          <div className="testimonial">
+            <div className="testimonial-text">
+              "We replaced 5 different tools with one AI-powered system that integrates with our existing CRM. Efficiency increased by 40%."
+            </div>
+            <div className="testimonial-author">
+              <div className="profile-image">SK</div>
+              <span>- Sarah Kim, Tech Startup Founder</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Social Media Presence */}
+        <div className={`step ${currentStep === 3 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb04c89846a6c43e4fd338.webp" 
+                alt="Social Media AI"
+              />
+            </div>
+          </div>
+          
+          <h2>Your Digital Marketing Presence</h2>
+          <p>AI can transform your content creation and customer engagement</p>
+          
+          <label>Which social media marketing channels are you active on?</label>
+          <div className="checkbox-group">
+            {["YouTube", "Facebook", "Instagram", "Twitter/X", "LinkedIn", "Website Blog", "TikTok", "Other"].map(channel => (
+              <div 
+                key={channel}
+                className={`checkbox-item ${surveyData.socialMedia.channels.includes(channel) ? "checked" : ""}`}
+                onClick={() => handleCheckboxToggle(channel)}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={surveyData.socialMedia.channels.includes(channel)}
+                  onChange={() => {}}
+                />
+                <label>{channel}</label>
+              </div>
+            ))}
+          </div>
+          
+          <label htmlFor="contentTime">How many hours per week does your team spend on content creation and social media?</label>
+          <select 
+            id="contentTime" 
+            required
+            value={surveyData.socialMedia.contentTime}
+            onChange={(e) => setSurveyData(prev => ({
+              ...prev,
+              socialMedia: { ...prev.socialMedia, contentTime: e.target.value }
+            }))}
+          >
+            <option value="" disabled>Select time range</option>
+            <option value="Less than 5">Less than 5 hours</option>
+            <option value="5-10">5-10 hours</option>
+            <option value="10-20">10-20 hours</option>
+            <option value="20-40">20-40 hours</option>
+            <option value="Over 40">Over 40 hours</option>
+          </select>
+          
+          <button 
+            className="btn"
+            onClick={generateDynamicQuestions}
+          >
+            Continue
+          </button>
+          
+          <div className="testimonial">
+            <div className="testimonial-text">
+              "AI now creates 80% of our social media content. We went from posting twice a week to daily, and engagement tripled."
+            </div>
+            <div className="testimonial-author">
+              <div className="profile-image">RT</div>
+              <span>- Rachel Thompson, Marketing Manager</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Screen */}
+        <div className={`step ${currentStep === 4 ? "active" : ""}`}>
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Analyzing Your Business...</div>
+            <div className="loading-subtext">Our AI is researching your industry and creating personalized questions</div>
+          </div>
+        </div>
+
+        {/* Dynamic Questions Step 1 */}
+        <div className={`step ${currentStep === 5 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91bb03232c933f450f.jpeg" 
+                alt="Dynamic Questions"
+              />
+            </div>
+          </div>
+          
+          <h2>Personalized Questions for Your Business</h2>
+          <p>Based on our analysis, we've identified key areas to explore</p>
+          
+          <div id="dynamicQuestions1">
+            {dynamicQuestions.slice(0, Math.ceil(dynamicQuestions.length / 2)).map((q, idx) => (
+              <div key={idx} className="question-container">
+                <label>{q.text}</label>
+                {q.type === "radio" && (
+                  <div className="choice-group">
+                    {q.options?.map((opt: string) => (
+                      <div 
+                        key={opt}
+                        className={`choice ${surveyData.dynamicQuestions[`q${idx}`] === opt ? "selected" : ""}`}
+                        onClick={() => setSurveyData(prev => ({
+                          ...prev,
+                          dynamicQuestions: { ...prev.dynamicQuestions, [`q${idx}`]: opt }
+                        }))}
+                      >
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {q.type === "text" && (
+                  <input 
+                    type="text"
+                    value={surveyData.dynamicQuestions[`q${idx}`] || ""}
+                    onChange={(e) => setSurveyData(prev => ({
+                      ...prev,
+                      dynamicQuestions: { ...prev.dynamicQuestions, [`q${idx}`]: e.target.value }
+                    }))}
+                  />
+                )}
+                {q.type === "textarea" && (
+                  <textarea
+                    value={surveyData.dynamicQuestions[`q${idx}`] || ""}
+                    onChange={(e) => setSurveyData(prev => ({
+                      ...prev,
+                      dynamicQuestions: { ...prev.dynamicQuestions, [`q${idx}`]: e.target.value }
+                    }))}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <button 
+            className="btn"
+            onClick={() => setCurrentStep(6)}
+          >
+            Continue
+          </button>
+        </div>
+
+        {/* Dynamic Questions Step 2 */}
+        <div className={`step ${currentStep === 6 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91cac6682b0fc37eeb.jpeg" 
+                alt="Process Deep Dive"
+              />
+            </div>
+          </div>
+          
+          <h2>Let's Dive Deeper Into Your Processes</h2>
+          <p>These questions help us calculate your potential ROI from AI implementation</p>
+          
+          <div id="dynamicQuestions2">
+            {dynamicQuestions.slice(Math.ceil(dynamicQuestions.length / 2)).map((q, idx) => {
+              const actualIdx = idx + Math.ceil(dynamicQuestions.length / 2);
+              return (
+                <div key={actualIdx} className="question-container">
+                  <label>{q.text}</label>
+                  {q.type === "radio" && (
+                    <div className="choice-group">
+                      {q.options?.map((opt: string) => (
+                        <div 
+                          key={opt}
+                          className={`choice ${surveyData.dynamicQuestions[`q${actualIdx}`] === opt ? "selected" : ""}`}
+                          onClick={() => setSurveyData(prev => ({
+                            ...prev,
+                            dynamicQuestions: { ...prev.dynamicQuestions, [`q${actualIdx}`]: opt }
+                          }))}
+                        >
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {q.type === "text" && (
+                    <input 
+                      type="text"
+                      value={surveyData.dynamicQuestions[`q${actualIdx}`] || ""}
+                      onChange={(e) => setSurveyData(prev => ({
+                        ...prev,
+                        dynamicQuestions: { ...prev.dynamicQuestions, [`q${actualIdx}`]: e.target.value }
+                      }))}
+                    />
+                  )}
+                  {q.type === "textarea" && (
+                    <textarea
+                      value={surveyData.dynamicQuestions[`q${actualIdx}`] || ""}
+                      onChange={(e) => setSurveyData(prev => ({
+                        ...prev,
+                        dynamicQuestions: { ...prev.dynamicQuestions, [`q${actualIdx}`]: e.target.value }
+                      }))}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <button 
+            className="btn"
+            onClick={() => setCurrentStep(7)}
+          >
+            Continue
+          </button>
+        </div>
+
+        {/* Final Step: Contact Information */}
+        <div className={`step ${currentStep === 7 ? "active" : ""}`}>
+          <div className="image-container">
+            <div className="image-shadow"></div>
+            <div className="image-frame">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d8f398f0686b47096.jpeg" 
+                alt="Final Call to Action"
+              />
+            </div>
+          </div>
+          
+          <h2>Your AI Transformation Report is Ready!</h2>
+          <p>Enter your contact information to receive your personalized AI opportunities report</p>
+          
+          <form onSubmit={submitLead}>
+            <label htmlFor="firstName">First Name</label>
+            <input 
+              type="text" 
+              id="firstName" 
+              placeholder="First Name" 
+              required
+              value={surveyData.contactInfo.firstName}
+              onChange={(e) => setSurveyData(prev => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, firstName: e.target.value }
+              }))}
             />
-            <TextField 
-              label="Last Name" 
-              value={lastName} 
-              onChange={e => setLastName(e.target.value)} 
-              required 
+            
+            <label htmlFor="lastName">Last Name</label>
+            <input 
+              type="text" 
+              id="lastName" 
+              placeholder="Last Name" 
+              required
+              value={surveyData.contactInfo.lastName}
+              onChange={(e) => setSurveyData(prev => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, lastName: e.target.value }
+              }))}
             />
-            <TextField 
-              label="Email" 
+            
+            <label htmlFor="email">Email Address</label>
+            <input 
               type="email" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
+              id="email" 
+              placeholder="email@company.com" 
+              required
+              value={surveyData.contactInfo.email}
+              onChange={(e) => setSurveyData(prev => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, email: e.target.value }
+              }))}
             />
-            <TextField 
-              label="Phone" 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)} 
+            
+            <label htmlFor="phone">Phone Number</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              placeholder="(555) 555-5555" 
+              required
+              value={surveyData.contactInfo.phone}
+              onChange={(e) => setSurveyData(prev => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, phone: formatPhoneNumber(e.target.value) }
+              }))}
             />
-          </div>
-
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(2)} disabled={loading}>
-              Back
+            
+            <button type="submit" className="btn" disabled={loading}>
+              {loading ? "Generating Report..." : "Get My AI Report"}
             </button>
-            <button 
-              className="btn-ez" 
-              onClick={saveToGHL} 
-              disabled={loading || !firstName || !lastName || !email}
-            >
-              {loading ? <LoadingDots/> : "Get My AI Report"}
-            </button>
-          </div>
+          </form>
           
           <p className="small-text">
             By submitting your information, you agree to receive your personalized AI opportunities report and follow-up consultation. 
             We respect your privacy and will never share your information with third parties.
           </p>
-
-          {report.sources?.length ? (
-            <div className="mt-6 text-sm text-slate-600">
-              <div className="font-semibold">Report Sources</div>
-              <ul className="list-disc ml-5">
-                {report.sources.map((s, i) => (
-                  <li key={i}>
-                    <a className="underline" href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          
+          {statusMessage && (
+            <div id="statusMessage" className={statusMessage.includes("Success") ? "statusMessage success" : "statusMessage error"}>
+              {statusMessage}
             </div>
-          ) : null}
-        </StepCard>
-      )}
+          )}
+        </div>
 
-      {step === 4 && (
-        <StepCard title="Success! Your AI Report is Ready" subtitle="Your personalized AI opportunities assessment has been saved">
-          <div className="report-section">
-            <div className="report-header">
-              <div className="report-title">AI Opportunities Report</div>
-              <div className="report-subtitle">Prepared for {companyInfo.companyName}</div>
-            </div>
-            
-            {report && (
-              <div className="report-content">
-                <div className="report-section-title">Executive Summary</div>
-                <div className="report-item">
-                  <div className="report-item-description">{report.executiveSummary}</div>
-                </div>
-                
-                <div className="report-section-title">Quick Wins - Implement Within 30 Days</div>
-                {report.quickWins.map((win, i) => (
-                  <div key={i} className="report-item">
-                    <div className="report-item-title">{win.title}</div>
-                    <div className="report-item-description">
-                      {win.description}<br/>
-                      <strong>Timeframe:</strong> {win.timeframe}<br/>
-                      <strong>Impact:</strong> {win.impact}
-                    </div>
-                  </div>
-                ))}
-                
-                <div className="report-section-title">Strategic Recommendations</div>
-                {report.recommendations.map((rec, i) => (
-                  <div key={i} className="report-item">
-                    <div className="report-item-title">{rec.title}</div>
-                    <div className="report-item-description">
-                      {rec.description}<br/>
-                      <strong>Expected ROI:</strong> {rec.roi}
-                    </div>
-                  </div>
-                ))}
-                
-                <div className="report-section-title">Competitive Analysis</div>
-                <div className="report-item">
-                  <div className="report-item-description">{report.competitiveAnalysis}</div>
-                </div>
-                
-                <div className="report-section-title">Your Next Steps</div>
-                <div className="report-item">
-                  <div className="report-item-description">
-                    <ol>
-                      {report.nextSteps.map((step, i) => (
-                        <li key={i}>{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
+        {/* Report Display Section */}
+        <div className={`step ${currentStep === 8 ? "active" : ""}`}>
+          {report && (
+            <div className="report-section">
+              <div className="report-header">
+                <h1 className="report-title">Your AI Opportunities Report</h1>
+                <p className="report-subtitle">Personalized recommendations for {surveyData.companyInfo.companyName}</p>
               </div>
-            )}
-          </div>
-          
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez" onClick={downloadPdf} disabled={!report || loading}>
-              Download Report as PDF
-            </button>
-          </div>
-          
-          <p className="text-sm text-slate-600 mt-4">Thank you! Our team will reach out with personalized guidance on implementing these recommendations.</p>
-        </StepCard>
-      )}
-    </main>
+              
+              <div className="report-content">
+                {report.executive_summary && (
+                  <>
+                    <h2 className="report-section-title">Executive Summary</h2>
+                    <div className="report-item">
+                      <div className="report-item-description">{report.executive_summary}</div>
+                    </div>
+                  </>
+                )}
+                
+                {report.quick_wins && report.quick_wins.length > 0 && (
+                  <>
+                    <h2 className="report-section-title">Quick Wins (Implement in 30 Days)</h2>
+                    {report.quick_wins.map((win: any, idx: number) => (
+                      <div key={idx} className="report-item">
+                        <div className="report-item-title">{win.title}</div>
+                        <div className="report-item-description">{win.description}</div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                
+                {report.strategic_recommendations && report.strategic_recommendations.length > 0 && (
+                  <>
+                    <h2 className="report-section-title">Strategic Recommendations</h2>
+                    {report.strategic_recommendations.map((rec: any, idx: number) => (
+                      <div key={idx} className="report-item">
+                        <div className="report-item-title">{rec.title}</div>
+                        <div className="report-item-description">{rec.description}</div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+              
+              <button 
+                className="btn"
+                onClick={async () => {
+                  const response = await fetch("/api/report/pdf", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ report, companyInfo: surveyData.companyInfo })
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `AI_Report_${surveyData.companyInfo.companyName}.pdf`;
+                    a.click();
+                  }
+                }}
+              >
+                Download Report as PDF
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="progress-container">
+        <div className="progress-bar" id="progressBar"></div>
+      </div>
+    </>
   );
 }
