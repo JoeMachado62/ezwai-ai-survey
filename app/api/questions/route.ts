@@ -98,8 +98,7 @@ Example of a BAD generic question:
       ],
       schema: QuestionsJsonSchema,
       tools: [{ type: "web_search" }],
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      think_effort: "high" // Ensure deep thinking and research
+      model: process.env.OPENAI_MODEL || "gpt-5-mini"  // Use GPT-5-mini for fast, cost-optimized reasoning
     });
 
     return NextResponse.json(result, { status: 200 });

@@ -40,12 +40,12 @@ npm run lint
 ### Key API Routes
 
 1. **`/api/questions`** - Generates dynamic survey questions
-   - Uses GPT-4o-mini (fast model) via Responses API
+   - Uses GPT-5-mini (fast, cost-optimized model) via Responses API
    - Enforces web search for current information
    - Returns structured JSON with questions and sources
 
 2. **`/api/report`** - Creates AI Opportunities report
-   - Uses GPT-5 (deep reasoning model) via Responses API
+   - Uses GPT-5 (full model for complex reasoning) via Responses API
    - Generates executive summary, quick wins, recommendations
    - Includes competitive analysis with web-sourced benchmarks
 
@@ -94,8 +94,8 @@ Required in `.env.local` for development or Vercel environment:
 ```
 # GPT-5 Models
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini        # Fast model for questions
-OPENAI_MODEL_REPORT=gpt-5       # Deep model for reports
+OPENAI_MODEL=gpt-5-mini          # Fast, cost-optimized model for questions
+OPENAI_MODEL_REPORT=gpt-5        # Full model for complex reasoning in reports
 
 # GoHighLevel
 GHL_TOKEN=lc_xxx_bearer_token

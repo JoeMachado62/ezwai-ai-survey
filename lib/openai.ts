@@ -3,14 +3,14 @@ export async function callResponses<T>({
   input,
   schema,
   tools = [{ type: "web_search" }],
-  model = process.env.OPENAI_MODEL || "gpt-4o-mini",
-  think_effort = "medium"
+  model = process.env.OPENAI_MODEL || "gpt-5-mini",
+  reasoning_effort = "high"
 }: {
   input: any;
   schema: any;
   tools?: any[];
   model?: string;
-  think_effort?: "low" | "medium" | "high";
+  reasoning_effort?: "minimal" | "medium" | "high";
 }): Promise<T> {
   // Build the request payload
   const payload: any = {
@@ -27,12 +27,14 @@ export async function callResponses<T>({
     }
   };
 
-  // Add think_effort for GPT-5 models to enable deeper research
+  // Add reasoning effort for GPT-5 models to enable deeper analysis
   if (model.includes('gpt-5')) {
-    payload.think_effort = think_effort || "high";  // Use provided effort level or default to high
-  } else {
-    // Only add temperature for non-GPT-5 models
-    payload.temperature = 0.4;
+    payload.reasoning = { effort: reasoning_effort || "high" };  // Use GPT-5 reasoning parameter
+    // Can also add text.verbosity if needed
+    payload.text = {
+      ...payload.text,
+      verbosity: "medium"  // Balance between detail and conciseness
+    };
   }
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -76,6 +78,7 @@ export async function callResponsesWithRetry<T>(
     schema: any;
     tools?: any[];
     model?: string;
+    reasoning_effort?: "minimal" | "medium" | "high";
   },
   retries = 2
 ): Promise<T> {

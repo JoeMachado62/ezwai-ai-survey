@@ -105,8 +105,7 @@ Create a report that feels like it was written specifically for THIS company, no
       ],
       schema: ReportJsonSchema,
       tools: [{ type: "web_search" }],
-      model: process.env.OPENAI_MODEL_REPORT || process.env.OPENAI_MODEL || "gpt-5",
-      think_effort: "high" // Enable deep analysis and research
+      model: process.env.OPENAI_MODEL_REPORT || "gpt-5"  // Use full GPT-5 for complex reasoning and broad knowledge
     });
 
     return NextResponse.json(result, { status: 200 });
