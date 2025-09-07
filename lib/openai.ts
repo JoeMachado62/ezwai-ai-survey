@@ -70,7 +70,7 @@ export async function callResponses<T>({
   schema: any;
   tools?: any[];
   model?: string;
-  reasoning_effort?: "minimal" | "medium" | "high";
+  reasoning_effort?: "minimal" | "low" | "medium" | "high";
 }): Promise<T> {
   // Build the request payload
   const payload: any = {
@@ -189,7 +189,7 @@ export async function callResponsesWithRetry<T>(
     schema: any;
     tools?: any[];
     model?: string;
-    reasoning_effort?: "minimal" | "medium" | "high";
+    reasoning_effort?: "minimal" | "low" | "medium" | "high";
   },
   retries = 2
 ): Promise<T> {

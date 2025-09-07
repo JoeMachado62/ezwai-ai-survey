@@ -110,33 +110,31 @@ Create a report that feels like it was written specifically for THIS company, no
             title: "Automate Customer Support with AI",
             description: `Implement an AI chatbot integrated with ${input.techStack.crmSystem || 'your CRM'} to handle 60% of routine customer inquiries automatically`,
             timeframe: "2-4 weeks",
-            expectedImpact: "30% reduction in support response time, 50% cost savings"
+            impact: "30% reduction in support response time, 50% cost savings"
           },
           {
             title: "AI-Powered Content Generation",
             description: `Leverage AI tools to create content for ${input.socialMedia.channels?.join(', ') || 'your social media channels'}, reducing the ${input.socialMedia.contentTime || '10+'} hours per week you currently spend`,
             timeframe: "1-2 weeks", 
-            expectedImpact: "75% reduction in content creation time"
+            impact: "75% reduction in content creation time"
           },
           {
             title: "Intelligent Document Processing",
             description: "Use AI to extract data from documents, invoices, and forms automatically",
             timeframe: "3-4 weeks",
-            expectedImpact: "80% faster document processing"
+            impact: "80% faster document processing"
           }
         ],
         recommendations: [
           {
             title: "Implement Predictive Analytics Platform",
             description: `Deploy machine learning models tailored to ${input.companyInfo.industry} to forecast trends and optimize operations`,
-            estimatedROI: "25-35% improvement in forecast accuracy",
-            implementationComplexity: "Medium"
+            roi: "25-35% improvement in forecast accuracy"
           },
           {
             title: "AI-Driven Process Automation",
             description: `Create an automation strategy specifically targeting: "${input.techStack.biggestChallenge}"`,
-            estimatedROI: "40% reduction in manual processing time",
-            implementationComplexity: "Low to Medium"
+            roi: "40% reduction in manual processing time"
           }
         ],
         competitiveAnalysis: `In the ${input.companyInfo.industry || 'your'} industry, AI early adopters are gaining 20-40% efficiency improvements. Companies of your size (${input.companyInfo.employees || 'similar employee count'}) are particularly well-positioned to implement AI quickly and see immediate ROI. Your current use of ${input.techStack.crmSystem || 'existing systems'} provides a solid foundation for AI integration.`,
@@ -148,10 +146,10 @@ Create a report that feels like it was written specifically for THIS company, no
           "Start with Quick Win #1 for immediate impact"
         ],
         sources: [
-          `Analysis based on ${input.companyInfo.companyName} business profile`,
-          `${input.companyInfo.industry} industry AI adoption trends 2024`,
-          "McKinsey Global AI Survey 2024",
-          "Gartner AI Implementation Guide for SMBs"
+          { title: `Analysis based on ${input.companyInfo.companyName} business profile`, url: "https://example.com/analysis" },
+          { title: `${input.companyInfo.industry} industry AI adoption trends 2024`, url: "https://example.com/industry-trends" },
+          { title: "McKinsey Global AI Survey 2024", url: "https://www.mckinsey.com/ai-survey" },
+          { title: "Gartner AI Implementation Guide for SMBs", url: "https://www.gartner.com/ai-guide" }
         ]
       };
       
@@ -181,17 +179,20 @@ Create a report that feels like it was written specifically for THIS company, no
           title: "Start with AI Automation",
           description: "Begin your AI journey with simple automation tools",
           timeframe: "2-4 weeks",
-          expectedImpact: "20% efficiency improvement"
+          impact: "20% efficiency improvement"
         }],
         recommendations: [{
           title: "Develop AI Strategy",
           description: "Create a comprehensive AI adoption plan for your organization",
-          estimatedROI: "30% operational improvement",
-          implementationComplexity: "Medium"
+          roi: "30% operational improvement"
         }],
         competitiveAnalysis: "AI adoption in your industry is accelerating rapidly.",
         nextSteps: ["Contact us for detailed analysis", "Review industry-specific AI tools"],
-        sources: ["Industry research", "AI market analysis"]
+        sources: [
+          { title: "Industry research", url: "https://example.com/research" },
+          { title: "AI market analysis", url: "https://example.com/market-analysis" },
+          { title: "AI implementation best practices", url: "https://example.com/best-practices" }
+        ]
       };
       
       return NextResponse.json(fallbackReport, { status: 200 });
