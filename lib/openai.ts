@@ -102,8 +102,9 @@ export async function callResponses<T>({
   // ALWAYS use Responses API for GPT-5 models
   const apiEndpoint = "https://api.openai.com/v1/responses";
   const controller = new AbortController();
-  // Set timeout to 18 seconds for dev, can be longer in production
-  const timeoutId = setTimeout(() => controller.abort(), 18000); // 18 second timeout
+  // Vercel has 10 second timeout on hobby tier, use 9 seconds to be safe
+  const timeoutMs = process.env.VERCEL ? 9000 : 18000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
     const response = await fetch(apiEndpoint, {
@@ -175,7 +176,13 @@ export async function callResponses<T>({
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       // Return fallback response on timeout
-      console.warn('OpenAI API timeout - returning fallback questions');
+      console.warn(`OpenAI API timeout after ${timeoutMs}ms - returning fallback questions`);
+      return getFallbackQuestions() as T;
+    }
+    console.error('OpenAI API error:', error.message);
+    // Return fallback on any error in production
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Returning fallback due to API error in production');
       return getFallbackQuestions() as T;
     }
     throw error;
