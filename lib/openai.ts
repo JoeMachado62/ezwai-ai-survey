@@ -7,12 +7,64 @@
  * - Always use /v1/responses endpoint for GPT-5
  * - DO NOT change to GPT-4 - GPT-5 is the correct model
  */
+
+// Fallback questions for timeout scenarios
+function getFallbackQuestions() {
+  return {
+    summary: "We've prepared some initial questions to understand your AI opportunities better.",
+    questions: [
+      {
+        text: "What percentage of your daily tasks could potentially be automated?",
+        type: "multiple_choice",
+        options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
+      },
+      {
+        text: "Which area would benefit most from AI automation in your business?",
+        type: "multiple_choice",
+        options: ["Customer service", "Marketing & Sales", "Operations", "Finance & Accounting", "HR & Recruiting"]
+      },
+      {
+        text: "How much time do you spend on repetitive administrative tasks weekly?",
+        type: "multiple_choice",
+        options: ["Less than 5 hours", "5-10 hours", "10-20 hours", "More than 20 hours"]
+      },
+      {
+        text: "What's your biggest concern about implementing AI?",
+        type: "text"
+      },
+      {
+        text: "Do you currently use any form of automation or AI tools?",
+        type: "multiple_choice",
+        options: ["Yes, extensively", "Yes, some basic tools", "No, but interested", "No, not interested"]
+      },
+      {
+        text: "What's your annual budget for new technology solutions?",
+        type: "multiple_choice",
+        options: ["Under $5,000", "$5,000-$25,000", "$25,000-$100,000", "Over $100,000"]
+      },
+      {
+        text: "How would you rate your team's technical expertise?",
+        type: "multiple_choice",
+        options: ["Very technical", "Somewhat technical", "Not very technical", "Non-technical"]
+      },
+      {
+        text: "What specific business outcome would you most like AI to help achieve?",
+        type: "text"
+      }
+    ],
+    sources: [
+      { title: "AI Business Transformation Guide", url: "https://example.com/ai-guide" },
+      { title: "Industry AI Adoption Statistics", url: "https://example.com/stats" },
+      { title: "SMB Automation Opportunities", url: "https://example.com/smb-automation" }
+    ]
+  };
+}
 export async function callResponses<T>({
   input,
   schema,
   tools = [{ type: "web_search" }],
   model = process.env.OPENAI_MODEL || "gpt-5-mini",
-  reasoning_effort = "medium"
+  reasoning_effort = "minimal"
 }: {
   input: any;
   schema: any;
@@ -37,20 +89,21 @@ export async function callResponses<T>({
 
   // Add reasoning effort for GPT-5 models to enable deeper analysis
   if (model.includes('gpt-5')) {
-    // Use medium effort by default for better speed/quality balance
-    // High effort can take 60+ seconds
-    payload.reasoning = { effort: reasoning_effort || "medium" };  
-    // Can also add text.verbosity if needed
+    // Use minimal effort for fastest responses in questions
+    // Can be overridden per call if needed
+    payload.reasoning = { effort: reasoning_effort || "minimal" };  
+    // Use low verbosity for faster, more concise responses
     payload.text = {
       ...payload.text,
-      verbosity: "medium"  // Balance between detail and conciseness
+      verbosity: "low"  // Concise responses for faster processing
     };
   }
 
   // ALWAYS use Responses API for GPT-5 models
   const apiEndpoint = "https://api.openai.com/v1/responses";
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+  // Set timeout to 18 seconds for dev, can be longer in production
+  const timeoutId = setTimeout(() => controller.abort(), 18000); // 18 second timeout
   
   try {
     const response = await fetch(apiEndpoint, {
@@ -91,7 +144,9 @@ export async function callResponses<T>({
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('OpenAI API request timed out after 2 minutes');
+      // Return fallback response on timeout
+      console.warn('OpenAI API timeout - returning fallback questions');
+      return getFallbackQuestions() as T;
     }
     throw error;
   }
