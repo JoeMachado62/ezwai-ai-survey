@@ -9,7 +9,7 @@ if (!process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY not set - using placeholder images");
 }
 
-// Generate image using Gemini API
+// Generate image using Gemini 2.5 Flash Image Preview
 async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Fallback images if API is not configured
   const placeholderImages = [
@@ -21,51 +21,75 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
 
   // Check if Gemini API key is configured
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    console.log('Gemini API key not configured, using placeholders');
     const index = section.title.length % placeholderImages.length;
     return placeholderImages[index];
   }
 
   try {
-    // Call Gemini API using the Vertex AI REST endpoint
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    // Use Gemini 2.5 Flash Image Preview for actual image generation
+    console.log(`Generating image for: ${section.title}`);
+    
+    // Construct the proper API endpoint for Gemini
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Create a professional business visualization for: ${section.imagePrompt}. 
+                   Style: Modern, professional, abstract business imagery with a color palette of deep blues (#08b2c6), teal (#b5feff), and accent orange (#ff6b11). 
+                   Clean, minimalist design suitable for a corporate report. 
+                   No text or words in the image, only visual elements.
+                   High quality, detailed, photorealistic rendering.`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.8,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+          responseMimeType: "application/json",
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Generate a professional business visualization for: ${section.imagePrompt}. Style: Modern, professional, abstract business imagery with blue and teal color scheme.`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.9,
-            topK: 1,
-            topP: 1,
-            maxOutputTokens: 2048,
-          }
-        })
-      }
-    );
+        // Critical: Tell Gemini to return an image
+        config: {
+          responseModalities: ["IMAGE", "TEXT"]
+        }
+      })
+    });
 
     if (!response.ok) {
-      console.error('Gemini API error:', await response.text());
-      throw new Error('Gemini API request failed');
+      const error = await response.text();
+      console.error('Gemini 2.5 Flash Image Preview API error:', error);
+      throw new Error('Image generation failed');
     }
 
     const data = await response.json();
     
-    // For text-to-image, we'd need to use a different endpoint or service
-    // For now, return a placeholder as Gemini doesn't directly generate images
-    // You would integrate with Imagen API or similar here
-    console.log('Gemini response received, using placeholder image');
-    const index = section.title.length % placeholderImages.length;
-    return placeholderImages[index];
+    // Extract image from the response structure
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      const parts = data.candidates[0].content.parts;
+      
+      // Find the image part in the response
+      for (const part of parts) {
+        if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('image/')) {
+          console.log(`Successfully generated image for: ${section.title}`);
+          // Return as base64 data URL
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+    }
+    
+    console.warn(`No image found in Gemini response for: ${section.title}`);
+    throw new Error('No image in response');
     
   } catch (error) {
-    console.error(`Error calling Gemini API for section "${section.title}":`, error);
+    console.error(`Error generating image for section "${section.title}":`, error);
+    // Return a fallback image on error
     const index = section.title.length % placeholderImages.length;
     return placeholderImages[index];
   }
