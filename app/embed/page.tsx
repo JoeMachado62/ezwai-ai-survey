@@ -66,7 +66,7 @@ function ImageHeader({ src, alt }: { src: string; alt: string }) {
 export default function Embed() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingPhase, setLoadingPhase] = useState<"questions" | "report" | undefined>();
 
   const [companyInfo, setCompanyInfo] = useState<QuestionsInput["companyInfo"]>({ 
     companyName: "", 
@@ -121,7 +121,7 @@ export default function Embed() {
 
   async function generateQuestions() {
     setLoading(true);
-    setLoadingMessage("Analyzing your business + searching the web...");
+    setLoadingPhase("questions");
     try {
       const response = await fetch("/api/questions", {
         method: "POST",
@@ -144,7 +144,7 @@ export default function Embed() {
       console.error(error);
     } finally {
       setLoading(false);
-      setLoadingMessage("");
+      setLoadingPhase(undefined);
     }
   }
 
@@ -177,7 +177,7 @@ export default function Embed() {
 
   async function buildReport() {
     setLoading(true);
-    setLoadingMessage("Creating your report with fresh sources...");
+    setLoadingPhase("report");
     try {
       const response = await fetch("/api/report", {
         method: "POST",
@@ -204,7 +204,7 @@ export default function Embed() {
       console.error(error);
     } finally {
       setLoading(false);
-      setLoadingMessage("");
+      setLoadingPhase(undefined);
     }
   }
 
@@ -242,7 +242,6 @@ export default function Embed() {
 
   async function saveToGHL() {
     setLoading(true);
-    setLoadingMessage("Saving to CRM...");
     try {
       const response = await fetch("/api/ghl/contact", {
         method: "POST",
@@ -272,13 +271,12 @@ export default function Embed() {
       console.error(error);
     } finally {
       setLoading(false);
-      setLoadingMessage("");
     }
   }
 
   return (
     <main className="min-h-screen py-6">
-      <LoadingOverlay show={loading} message={loadingMessage} />
+      <LoadingOverlay show={loading} phase={loadingPhase} companyInfo={companyInfo} />
 
       {step === 0 && (
         <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">

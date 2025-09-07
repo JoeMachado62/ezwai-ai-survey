@@ -454,6 +454,22 @@ select {
   line-height: 1.6;
 }
 
+/* Animation for loading narrative */
+@keyframes ezFadeSlide { 
+  from { 
+    opacity: 0; 
+    transform: translateY(6px);
+  } 
+  to { 
+    opacity: 1; 
+    transform: none;
+  }
+}
+
+.ez-fade { 
+  animation: ezFadeSlide 0.35s ease forwards;
+}
+
 /* Mobile responsive */
 @media (max-width: 640px) {
   .container {
