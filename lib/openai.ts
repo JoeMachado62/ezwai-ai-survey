@@ -64,7 +64,7 @@ export async function callResponses<T>({
   schema,
   tools = [{ type: "web_search" }],
   model = process.env.OPENAI_MODEL || "gpt-5-mini",
-  reasoning_effort = "minimal"
+  reasoning_effort = "low"
 }: {
   input: any;
   schema: any;
@@ -89,9 +89,9 @@ export async function callResponses<T>({
 
   // Add reasoning effort for GPT-5 models to enable deeper analysis
   if (model.includes('gpt-5')) {
-    // Use minimal effort for fastest responses in questions
-    // Can be overridden per call if needed
-    payload.reasoning = { effort: reasoning_effort || "minimal" };  
+    // Use low effort for web_search compatibility while keeping speed
+    // Web_search requires at least "low" reasoning effort
+    payload.reasoning = { effort: reasoning_effort || "low" };  
     // Use low verbosity for faster, more concise responses
     payload.text = {
       ...payload.text,
