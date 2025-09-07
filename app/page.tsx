@@ -621,41 +621,43 @@ export default function SurveyPage() {
             <div className="loading-text" style={{marginTop: "40px", textAlign: "center"}}>
               {loadingPhase === "questions" ? "Generating your custom questions" : loadingPhase === "report" ? "Deep research for your final report" : "Analyzing Your Business..."}
             </div>
-            {loadingPhase && surveyData.companyInfo.companyName ? (
-              <LoadingNarrative
-                lines={loadingPhase === "questions" ? [
-                  "Reading your business basics…",
-                  "Noting goals and challenges to focus our discovery…",
-                  "Checking recent {industry} trends and best practices…",
-                  "Looking at tools that fit your current stack…",
-                  "Skimming {websiteHost} for extra context…",
-                  "Turning findings into tailored, non-generic questions…",
-                  "Balancing quick wins with deeper strategy…",
-                  "Tightening wording so answers are easy to give…",
-                  "Double-checking with fresh sources before finalizing…",
-                  "Finalizing your custom questions…",
-                ] : [
-                  "Collecting your answers and context…",
-                  "Running a deeper web scan for today's {industry} landscape…",
-                  "Comparing solutions that match your size and tech stack…",
-                  "Estimating effort vs. impact to spot quick wins…",
-                  "Drafting an actionable 90-day plan…",
-                  "Writing a plain-English executive summary…",
-                  "Outlining recommended automations and safeguards…",
-                  "Adding competitive and market notes from recent sources…",
-                  "Turning insights into step-by-step next actions…",
-                  "Packaging everything into your AI Opportunities Report…",
-                ]}
-                ctx={{
-                  company: surveyData.companyInfo.companyName,
-                  industry: surveyData.companyInfo.industry,
-                  websiteURL: surveyData.companyInfo.websiteURL
-                }}
-                intervalMs={loadingPhase === "questions" ? 1800 : 2200}
-              />
-            ) : (
-              <div className="loading-subtext" style={{textAlign: "center", maxWidth: "600px"}}>Our AI is performing deep research on your company, industry trends, and competitors to create highly personalized questions</div>
-            )}
+            <div className="loading-subtext" style={{textAlign: "center", maxWidth: "600px", marginTop: "20px"}}>
+              {loadingPhase ? (
+                <LoadingNarrative
+                  lines={loadingPhase === "questions" ? [
+                    "Reading your business basics…",
+                    "Noting goals and challenges to focus our discovery…",
+                    "Checking recent {industry} trends and best practices…",
+                    "Looking at tools that fit your current stack…",
+                    "Skimming {websiteHost} for extra context…",
+                    "Turning findings into tailored, non-generic questions…",
+                    "Balancing quick wins with deeper strategy…",
+                    "Tightening wording so answers are easy to give…",
+                    "Double-checking with fresh sources before finalizing…",
+                    "Finalizing your custom questions…",
+                  ] : [
+                    "Collecting your answers and context…",
+                    "Running a deeper web scan for today's {industry} landscape…",
+                    "Comparing solutions that match your size and tech stack…",
+                    "Estimating effort vs. impact to spot quick wins…",
+                    "Drafting an actionable 90-day plan…",
+                    "Writing a plain-English executive summary…",
+                    "Outlining recommended automations and safeguards…",
+                    "Adding competitive and market notes from recent sources…",
+                    "Turning insights into step-by-step next actions…",
+                    "Packaging everything into your AI Opportunities Report…",
+                  ]}
+                  ctx={{
+                    company: surveyData.companyInfo.companyName || "your business",
+                    industry: surveyData.companyInfo.industry || "your industry",
+                    websiteURL: surveyData.companyInfo.websiteURL || ""
+                  }}
+                  intervalMs={loadingPhase === "questions" ? 1800 : 2200}
+                />
+              ) : (
+                "Our AI is performing deep research on your company, industry trends, and competitors to create highly personalized questions"
+              )}
+            </div>
           </div>
         </div>
 
