@@ -125,22 +125,52 @@ export async function callResponses<T>({
 
     const data = await response.json();
     
-    // Extract the text from the message output
-    // Structure: output[1] is the message, content[0].text contains the response
-    const messageOutput = data.output?.find((o: any) => o.type === 'message');
-    const textContent = messageOutput?.content?.[0]?.text;
+    // Try multiple response structures based on test results
+    let parsed = data.output_parsed || 
+                data.output?.[0]?.content?.[0]?.parsed ||
+                data.output?.[0]?.content?.parsed;
+                
+    // If no parsed output, try to extract from text
+    if (!parsed && data.output?.[0]?.content?.[0]?.text) {
+      try {
+        parsed = JSON.parse(data.output[0].content[0].text);
+      } catch (e) {
+        // Not JSON, try to find message output
+        const messageOutput = data.output?.find((o: any) => o.type === 'message');
+        const textContent = messageOutput?.content?.[0]?.text;
+        if (textContent) {
+          try {
+            parsed = JSON.parse(textContent);
+          } catch (e2) {
+            throw new Error(`Failed to parse JSON response: ${textContent}`);
+          }
+        }
+      }
+    }
     
-    if (!textContent) {
-      throw new Error("No text output in response");
+    // If still no parsed output, check output array structure
+    if (!parsed && data.output && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (item.type === 'message' && item.content) {
+          const content = Array.isArray(item.content) ? item.content[0] : item.content;
+          if (content?.text) {
+            try {
+              parsed = JSON.parse(content.text);
+              break;
+            } catch (e) {
+              // Continue to next item
+            }
+          }
+        }
+      }
     }
-
-    // Parse the JSON text
-    try {
-      const parsed = JSON.parse(textContent);
-      return parsed as T;
-    } catch (e) {
-      throw new Error(`Failed to parse JSON response: ${textContent}`);
+    
+    if (!parsed) {
+      console.error('Response structure:', JSON.stringify(data, null, 2).substring(0, 500));
+      throw new Error("Could not extract parsed output from response");
     }
+    
+    return parsed as T;
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
