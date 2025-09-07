@@ -680,7 +680,7 @@ export default function SurveyPage() {
             {dynamicQuestions.slice(0, Math.ceil(dynamicQuestions.length / 2)).map((q, idx) => (
               <div key={idx} className="question-container">
                 <label>{q.text}</label>
-                {q.type === "radio" && (
+                {(q.type === "radio" || q.type === "multiple_choice") && (
                   <div className="choice-group">
                     {q.options?.map((opt: string) => (
                       <div 
@@ -748,7 +748,7 @@ export default function SurveyPage() {
               return (
                 <div key={actualIdx} className="question-container">
                   <label>{q.text}</label>
-                  {q.type === "radio" && (
+                  {(q.type === "radio" || q.type === "multiple_choice") && (
                     <div className="choice-group">
                       {q.options?.map((opt: string) => (
                         <div 
