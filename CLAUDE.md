@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: GPT-5 IS AVAILABLE - DO NOT CHANGE TO GPT-4 ⚠️
+
+**IMPORTANT**: GPT-5 models ARE available and working via the Responses API:
+- `gpt-5-mini` - Fast, cost-optimized model for questions
+- `gpt-5` - Full model for complex reasoning and reports
+- These models use the `/v1/responses` endpoint (NOT chat/completions)
+- DO NOT fallback to GPT-4 - GPT-5 is the correct model to use
+
 ## Project Overview
 
 EZWAI AI Opportunities Survey - A Next.js application that generates business-specific AI questions and reports using OpenAI's GPT-5 Responses API with web search capabilities, integrated with GoHighLevel (GHL) CRM.
