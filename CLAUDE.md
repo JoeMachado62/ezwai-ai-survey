@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 MANDATORY: READ ALL .MD FILES BEFORE MAKING ANY CODE CHANGES 🚨
+
+**BEFORE modifying ANY code in this project:**
+1. Read this CLAUDE.md file completely
+2. Read the GPT5 API Documentation.md file
+3. Read any other .md documentation files in the project
+4. Only then proceed with code changes
+
 ## ⚠️ CRITICAL: GPT-5 IS AVAILABLE - DO NOT CHANGE TO GPT-4 ⚠️
 
 **IMPORTANT**: GPT-5 models ARE available and working via the Responses API:
@@ -9,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `gpt-5` - Full model for complex reasoning and reports
 - These models use the `/v1/responses` endpoint (NOT chat/completions)
 - DO NOT fallback to GPT-4 - GPT-5 is the correct model to use
+- The documentation in GPT5 API Documentation.md confirms these models are available
 
 ## Project Overview
 
