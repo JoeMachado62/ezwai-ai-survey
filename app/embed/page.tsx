@@ -4,7 +4,10 @@ import StepCard from "@/components/StepCard";
 import { TextField, TextArea, SelectField } from "@/components/Field";
 import LoadingDots from "@/components/LoadingDots";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import EnhancedReport from "@/components/report/EnhancedReport";
+import LoadingSpinner from "@/components/report/LoadingSpinner";
 import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
+import type { ReportSection } from "@/lib/report-types";
 
 // Images from original design
 const images = {
@@ -97,6 +100,11 @@ export default function Embed() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  
+  // Enhanced report state
+  const [enhancedReport, setEnhancedReport] = useState<ReportSection[] | null>(null);
+  const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+  const [visualError, setVisualError] = useState<string | null>(null);
 
   // Auto-resize iframe
   useEffect(() => {
@@ -208,75 +216,223 @@ export default function Embed() {
     }
   }
 
-  async function downloadPdf() {
+  // Simple text download for fallback mode
+  function downloadTextReport() {
     if (!report) return;
-    try {
-      const response = await fetch("/api/report/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          report, 
-          companyName: companyInfo.companyName 
-        })
-      });
-      
-      if (!response.ok) {
-        alert("Could not generate PDF.");
-        return;
-      }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `AI_Opportunities_${companyInfo.companyName || "Report"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert("Could not download PDF.");
-      console.error(error);
-    }
+    
+    const textContent = `
+AI OPPORTUNITIES REPORT
+Prepared for: ${companyInfo.companyName}
+
+` +
+      `EXECUTIVE SUMMARY\n${report.executiveSummary}\n\n` +
+      `QUICK WINS\n${report.quickWins.map(w => `- ${w.title}: ${w.description}`).join('\n')}\n\n` +
+      `RECOMMENDATIONS\n${report.recommendations.map(r => `- ${r.title}: ${r.description}`).join('\n')}\n\n` +
+      `COMPETITIVE ANALYSIS\n${report.competitiveAnalysis}\n\n` +
+      `NEXT STEPS\n${report.nextSteps.join('\n')}\n`;
+    
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AI_Report_${companyInfo.companyName || 'Your_Business'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
-  async function saveToGHL() {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/ghl/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          phone,
-          tags: ["AI Assessment Survey", companyInfo.industry].filter(Boolean),
-          companyInfo,
-          techStack,
-          socialMedia,
-          answers,
-          report
-        })
+  // Transform ReportResult to ReportSection[] format
+  function transformReportToSections(report: ReportResult): Omit<ReportSection, 'imageUrl'>[] {
+    const sections: Omit<ReportSection, 'imageUrl'>[] = [];
+    
+    // Executive Summary section
+    sections.push({
+      title: "Executive Summary",
+      mainContent: report.executiveSummary,
+      imagePrompt: `Create a professional, abstract business visualization representing AI transformation opportunities for a ${companyInfo.industry} company. Use modern, tech-inspired design with subtle blue and teal gradients.`,
+      pullQuote: "Your AI transformation journey starts here",
+      keyTakeaways: [
+        `Tailored for ${companyInfo.companyName}`,
+        `${report.quickWins.length} immediate opportunities identified`,
+        `Industry-specific recommendations`
+      ]
+    });
+    
+    // Quick Wins section
+    if (report.quickWins.length > 0) {
+      sections.push({
+        title: "Quick Wins - 30 Day Implementation",
+        mainContent: report.quickWins.map(win => 
+          `**${win.title}**\n${win.description}\n*Timeframe: ${win.timeframe} | Impact: ${win.impact}*`
+        ).join('\n\n'),
+        imagePrompt: `Illustrate quick, achievable AI implementations with upward trending graphs and checkmarks. Modern business style with orange accents for urgency and action.`,
+        statistic: {
+          value: `${report.quickWins.length}`,
+          description: "Immediate AI opportunities"
+        },
+        keyTakeaways: report.quickWins.map(win => win.title)
       });
-      
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "GHL error");
+    }
+    
+    // Strategic Recommendations section
+    if (report.recommendations.length > 0) {
+      sections.push({
+        title: "Strategic AI Roadmap",
+        mainContent: report.recommendations.map(rec => 
+          `**${rec.title}**\n${rec.description}\n*Expected ROI: ${rec.roi}*`
+        ).join('\n\n'),
+        imagePrompt: `Design a futuristic roadmap visualization showing AI integration phases, with interconnected nodes and a pathway to digital transformation. Use professional blue tones.`,
+        pullQuote: report.recommendations[0]?.roi || "Significant ROI potential",
+        keyTakeaways: report.recommendations.map(rec => rec.title)
+      });
+    }
+    
+    // Competitive Analysis section
+    sections.push({
+      title: "Competitive Intelligence",
+      mainContent: report.competitiveAnalysis,
+      imagePrompt: `Create a competitive landscape visualization with abstract representations of market positioning and AI adoption levels. Use data-driven design elements with teal highlights.`,
+      statistic: {
+        value: "20-40%",
+        description: "Average efficiency gain from AI adoption"
+      }
+    });
+    
+    // Next Steps section
+    sections.push({
+      title: "Your Implementation Roadmap",
+      mainContent: "Here's your personalized action plan:\n\n" + report.nextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n'),
+      imagePrompt: `Illustrate a clear action plan with numbered steps ascending like stairs, leading to a bright, tech-enabled future. Professional style with EZWAI brand colors.`,
+      keyTakeaways: report.nextSteps.slice(0, 3)
+    });
+    
+    return sections;
+  }
+  
+  
+  async function processContactAndGenerateVisualReport() {
+    if (!report) {
+      alert('Report data is missing. Please try again.');
+      return;
+    }
+    
+    setLoading(true);
+    setLoadingPhase('report' as any);
+    
+    try {
+      // Step 1: Save contact to GHL (non-blocking - we'll continue even if this fails)
+      try {
+        const ghlResponse = await fetch("/api/ghl/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            phone,
+            tags: ["AI Assessment Survey", companyInfo.industry].filter(Boolean),
+            companyInfo,
+            techStack,
+            socialMedia,
+            answers,
+            report
+          })
+        });
+        
+        if (!ghlResponse.ok) {
+          console.error('GHL save failed but continuing with report generation');
+        }
+      } catch (ghlError) {
+        console.error('GHL contact save error (non-fatal):', ghlError);
+        // Continue with report generation even if GHL fails
       }
       
-      setStep(4);
+      // Step 2: Transform and generate enhanced visual report
+      setIsGeneratingVisuals(true);
+      const reportSections = transformReportToSections(report);
+      
+      // Step 3: Call image generation API
+      const imageResponse = await fetch('/api/report/generate-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportData: reportSections })
+      });
+      
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json();
+        throw new Error(errorData.error || 'Failed to generate visual report');
+      }
+      
+      const imageData = await imageResponse.json();
+      setEnhancedReport(imageData.enhancedReport);
+      
+      // Success - show the enhanced report
+      setStep(5);
+      
     } catch (error: any) {
-      alert(error.message || "Could not save to CRM.");
-      console.error(error);
+      console.error('Visual report generation error:', error);
+      // Fallback to basic text report if visual generation fails
+      alert('Using text-only report view. Visual enhancements unavailable.');
+      setStep(4);
     } finally {
       setLoading(false);
+      setLoadingPhase(undefined);
+      setIsGeneratingVisuals(false);
     }
   }
 
+  // Handle closing the enhanced report and starting over
+  const handleCloseReport = () => {
+    // Reset all state to start fresh
+    setStep(0);
+    setEnhancedReport(null);
+    setReport(null);
+    setAnswers({});
+    setQuestions([]);
+    setSummary("");
+    setQSources([]);
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhone("");
+    setCompanyInfo({ 
+      companyName: "", 
+      websiteURL: "", 
+      industry: "", 
+      employees: "", 
+      revenue: "" 
+    });
+    setTechStack({ 
+      crmSystem: "", 
+      aiTools: "", 
+      biggestChallenge: "" 
+    });
+    setSocialMedia({ 
+      channels: [], 
+      contentTime: "" 
+    });
+  };
+  
+  // Show loading spinner during visual generation
+  if (isGeneratingVisuals && !loading) {
+    return <LoadingSpinner />;
+  }
+  
+  // Show enhanced report if available
+  if (enhancedReport && step === 5) {
+    return (
+      <EnhancedReport 
+        sections={enhancedReport}
+        businessName={companyInfo.companyName || 'Your Business'}
+        onClose={handleCloseReport}
+      />
+    );
+  }
+  
   return (
     <main className="min-h-screen py-6">
-      <LoadingOverlay show={loading} phase={loadingPhase} companyInfo={companyInfo} />
+      <LoadingOverlay show={loading || isGeneratingVisuals} phase={isGeneratingVisuals ? 'report' : loadingPhase} companyInfo={companyInfo} />
 
       {step === 0 && (
         <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">
@@ -399,7 +555,15 @@ export default function Embed() {
             <button className="btn-ez secondary" onClick={() => setStep(0)} disabled={loading}>
               Back
             </button>
-            <button className="btn-ez" onClick={() => setStep(2)} disabled={loading}>
+            <button className="btn-ez" onClick={() => {
+              // Validate that at least half the questions are answered
+              const answeredCount = Object.keys(answers).filter(key => answers[key]?.trim()).length;
+              if (answeredCount < Math.floor(questions.length / 2)) {
+                alert(`Please answer at least ${Math.floor(questions.length / 2)} questions to continue.`);
+                return;
+              }
+              setStep(2);
+            }} disabled={loading}>
               Continue
             </button>
           </div>
@@ -463,16 +627,16 @@ export default function Embed() {
             </button>
             <button 
               className="btn-ez" 
-              onClick={saveToGHL} 
+              onClick={processContactAndGenerateVisualReport} 
               disabled={loading || !firstName || !lastName || !email}
             >
-              {loading ? <LoadingDots/> : "Get My AI Report"}
+              {loading ? <LoadingDots/> : "Generate My Visual AI Report"}
             </button>
           </div>
           
           <p className="small-text">
-            By submitting your information, you agree to receive your personalized AI opportunities report and follow-up consultation. 
-            We respect your privacy and will never share your information with third parties.
+            By clicking the button above, you'll receive a visually enhanced AI report with custom-generated imagery. 
+            We'll also save your contact for follow-up consultation. Your privacy is protected.
           </p>
 
           {report.sources?.length ? (
@@ -493,7 +657,7 @@ export default function Embed() {
       )}
 
       {step === 4 && (
-        <StepCard title="Success! Your AI Report is Ready" subtitle="Your personalized AI opportunities assessment has been saved">
+        <StepCard title="Text Report Ready (Fallback Mode)" subtitle="Visual generation unavailable - showing text version">
           <div className="report-section">
             <div className="report-header">
               <div className="report-title">AI Opportunities Report</div>
@@ -550,12 +714,20 @@ export default function Embed() {
           </div>
           
           <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez" onClick={downloadPdf} disabled={!report || loading}>
-              Download Report as PDF
+            <button className="btn-ez secondary" onClick={() => {
+              setStep(3);
+              setEnhancedReport(null);
+            }}>
+              Try Again
+            </button>
+            <button className="btn-ez" onClick={downloadTextReport} disabled={!report}>
+              Download Text Report
             </button>
           </div>
           
-          <p className="text-sm text-slate-600 mt-4">Thank you! Our team will reach out with personalized guidance on implementing these recommendations.</p>
+          <p className="text-sm text-slate-600 mt-4">
+            Note: Visual enhancements couldn't be generated. You can download the text version above or try again.
+          </p>
         </StepCard>
       )}
     </main>

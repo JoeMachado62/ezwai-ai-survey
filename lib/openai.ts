@@ -30,7 +30,8 @@ function getFallbackQuestions() {
       },
       {
         text: "What's your biggest concern about implementing AI?",
-        type: "text"
+        type: "text",
+        options: []
       },
       {
         text: "Do you currently use any form of automation or AI tools?",
@@ -49,7 +50,8 @@ function getFallbackQuestions() {
       },
       {
         text: "What specific business outcome would you most like AI to help achieve?",
-        type: "text"
+        type: "text",
+        options: []
       }
     ],
     sources: [
@@ -59,6 +61,7 @@ function getFallbackQuestions() {
     ]
   };
 }
+
 export async function callResponses<T>({
   input,
   schema,
@@ -72,18 +75,15 @@ export async function callResponses<T>({
   model?: string;
   reasoning_effort?: "minimal" | "low" | "medium" | "high";
 }): Promise<T> {
-  // Build the request payload
+  // Build the request payload according to GPT-5 documentation
   const payload: any = {
     model,
     input,
     tools,
     tool_choice: "auto",
-    text: {
-      format: {
-        name: schema.name,
-        type: "json_schema",
-        schema: schema.schema
-      }
+    response_format: { 
+      type: "json_schema", 
+      json_schema: schema  // Pass the whole schema object
     }
   };
 
@@ -91,12 +91,7 @@ export async function callResponses<T>({
   if (model.includes('gpt-5')) {
     // Use low effort for web_search compatibility while keeping speed
     // Web_search requires at least "low" reasoning effort
-    payload.reasoning = { effort: reasoning_effort || "low" };  
-    // Use low verbosity for faster, more concise responses
-    payload.text = {
-      ...payload.text,
-      verbosity: "low"  // Concise responses for faster processing
-    };
+    payload.reasoning = { effort: reasoning_effort || "low" };
   }
 
   // ALWAYS use Responses API for GPT-5 models
@@ -121,12 +116,13 @@ export async function callResponses<T>({
 
     if (!response.ok) {
       const error = await response.text();
+      console.error(`OpenAI API Error Response: ${error}`);
       throw new Error(`OpenAI Responses API ${response.status}: ${error}`);
     }
 
     const data = await response.json();
     
-    // Try multiple response structures based on test results
+    // According to GPT-5 docs: data.output_parsed || data.output?.[0]?.content?.[0]?.parsed
     let parsed = data.output_parsed || 
                 data.output?.[0]?.content?.[0]?.parsed ||
                 data.output?.[0]?.content?.parsed;
@@ -143,7 +139,8 @@ export async function callResponses<T>({
           try {
             parsed = JSON.parse(textContent);
           } catch (e2) {
-            throw new Error(`Failed to parse JSON response: ${textContent}`);
+            console.error(`Failed to parse JSON from text: ${textContent.substring(0, 200)}`);
+            throw new Error(`Failed to parse JSON response`);
           }
         }
       }
@@ -167,7 +164,7 @@ export async function callResponses<T>({
     }
     
     if (!parsed) {
-      console.error('Response structure:', JSON.stringify(data, null, 2).substring(0, 500));
+      console.error('Response structure:', JSON.stringify(data, null, 2).substring(0, 1000));
       throw new Error("Could not extract parsed output from response");
     }
     
@@ -204,6 +201,7 @@ export async function callResponsesWithRetry<T>(
     return await callResponses<T>(params);
   } catch (error: any) {
     if (retries > 0 && (error.message.includes("429") || error.message.includes("5"))) {
+      console.log(`Retrying after error: ${error.message}. Retries left: ${retries}`);
       await new Promise(resolve => setTimeout(resolve, 500 * (3 - retries)));
       return callResponsesWithRetry<T>(params, retries - 1);
     }
