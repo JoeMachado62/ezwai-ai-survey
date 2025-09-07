@@ -3,7 +3,7 @@ export async function callResponses<T>({
   input,
   schema,
   tools = [{ type: "web_search" }],
-  model = process.env.OPENAI_MODEL || "gpt-5-mini",
+  model = process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
   reasoning_effort = "medium"
 }: {
   input: any;
@@ -39,12 +39,56 @@ export async function callResponses<T>({
     };
   }
 
-  // Add timeout for long-running GPT-5 requests
+  // Determine which API endpoint to use based on model
+  const apiEndpoint = model.includes('gpt-5') 
+    ? "https://api.openai.com/v1/responses"  // Use Responses API for GPT-5
+    : "https://api.openai.com/v1/chat/completions"; // Use Chat API for GPT-4
+  
+  // Adjust payload for Chat Completions API if not using GPT-5
+  if (!model.includes('gpt-5')) {
+    // Convert to chat completions format
+    const chatPayload = {
+      model,
+      messages: input,
+      temperature: 0.7,
+      response_format: { type: "json_object" }
+    };
+    
+    const response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(chatPayload)
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API ${response.status}: ${error}`);
+    }
+    
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error("No content in response");
+    }
+    
+    try {
+      const parsed = JSON.parse(content);
+      return parsed as T;
+    } catch (e) {
+      throw new Error(`Failed to parse JSON response: ${content}`);
+    }
+  }
+  
+  // Original Responses API code for GPT-5
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
   
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
