@@ -33,6 +33,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
+  // Check if GHL credentials are configured
+  if (!process.env.GHL_TOKEN || !process.env.GHL_LOCATION_ID) {
+    console.error("GHL credentials missing:", {
+      hasToken: !!process.env.GHL_TOKEN,
+      hasLocationId: !!process.env.GHL_LOCATION_ID
+    });
+    // Return success to not block the user flow
+    return NextResponse.json({ 
+      ok: true, 
+      contactId: "mock-" + Date.now(),
+      warning: "GHL integration not configured" 
+    }, { status: 200 });
+  }
+
   try {
     const inb = InZ.parse(await req.json());
 
@@ -51,6 +65,18 @@ export async function POST(req: Request) {
 
     if (!create.ok) {
       const t = await create.text();
+      console.error(`GHL API error ${create.status}:`, t);
+      
+      // If authentication fails, don't block the user
+      if (create.status === 401) {
+        console.error("GHL authentication failed - token may be expired or invalid");
+        return NextResponse.json({ 
+          ok: true, 
+          contactId: "auth-failed-" + Date.now(),
+          warning: "GHL authentication failed - contact not created" 
+        }, { status: 200 });
+      }
+      
       throw new Error(`GHL create ${create.status}: ${t}`);
     }
     
