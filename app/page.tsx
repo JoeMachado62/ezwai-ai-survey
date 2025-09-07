@@ -213,18 +213,49 @@ export default function SurveyPage() {
     setLoading(true);
     
     try {
+      // Create aiSummary from the dynamic questions that were generated
+      const aiSummary = dynamicQuestions.length > 0 
+        ? `Generated ${dynamicQuestions.length} personalized questions for ${surveyData.companyInfo.companyName || 'the company'} in the ${surveyData.companyInfo.industry || 'their'} industry, focusing on ${surveyData.techStack.biggestChallenge || 'operational improvements'}.`
+        : "AI assessment pending";
+      
+      // Combine all answers from both dynamic questions and contact info
+      const allAnswers = {
+        ...surveyData.dynamicQuestions,
+        companyName: surveyData.companyInfo.companyName,
+        industry: surveyData.companyInfo.industry,
+        employees: surveyData.companyInfo.employees,
+        revenue: surveyData.companyInfo.revenue,
+        crmSystem: surveyData.techStack.crmSystem,
+        aiTools: surveyData.techStack.aiTools,
+        biggestChallenge: surveyData.techStack.biggestChallenge,
+        socialChannels: surveyData.socialMedia.channels?.join(', '),
+        contentTime: surveyData.socialMedia.contentTime
+      };
+      
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(surveyData)
+        body: JSON.stringify({
+          companyInfo: surveyData.companyInfo,
+          techStack: surveyData.techStack,
+          socialMedia: surveyData.socialMedia,
+          aiSummary: aiSummary,
+          answers: allAnswers
+        })
       });
 
       if (response.ok) {
         const data = await response.json();
         setReport(data);
+        return data; // Return the report for use in submitLead
+      } else {
+        const errorText = await response.text();
+        console.error("Report API error:", errorText);
+        return null;
       }
     } catch (error) {
       console.error("Error generating report:", error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -234,16 +265,32 @@ export default function SurveyPage() {
   const submitLead = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setStatusMessage("");
     
     try {
-      await generateReport();
+      // Generate the report first
+      const generatedReport = await generateReport();
       
+      if (!generatedReport) {
+        setStatusMessage("Failed to generate AI report. Please try again.");
+        setLoading(false);
+        return;
+      }
+      
+      // Submit to GoHighLevel with all required data
       const response = await fetch("/api/ghl/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...surveyData,
-          report
+          firstName: surveyData.contactInfo.firstName,
+          lastName: surveyData.contactInfo.lastName,
+          email: surveyData.contactInfo.email,
+          phone: surveyData.contactInfo.phone,
+          companyInfo: surveyData.companyInfo,
+          techStack: surveyData.techStack,
+          socialMedia: surveyData.socialMedia,
+          answers: surveyData.dynamicQuestions,
+          report: generatedReport
         })
       });
 
@@ -251,7 +298,9 @@ export default function SurveyPage() {
         setStatusMessage("Success! Your AI report has been generated and sent to your email.");
         setCurrentStep(8); // Show report
       } else {
-        setStatusMessage("There was an error submitting your information. Please try again.");
+        const errorText = await response.text();
+        console.error("GHL API error:", errorText);
+        setStatusMessage("Failed to save contact. Please check your information and try again.");
       }
     } catch (error) {
       console.error("Error submitting lead:", error);
@@ -533,8 +582,24 @@ export default function SurveyPage() {
 
         {/* Loading Screen with Video */}
         <div className={`step ${currentStep === 4 ? "active" : ""}`}>
-          <div className="loading-container">
-            <div style={{position: "relative", paddingTop: "56.25%", width: "100%", maxWidth: "800px", margin: "0 auto"}}>
+          <div className="loading-container" style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "500px",
+            padding: "20px"
+          }}>
+            <div style={{
+              position: "relative",
+              paddingTop: "56.25%",
+              width: "90%",
+              maxWidth: "900px",
+              margin: "0 auto",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)"
+            }}>
               <iframe 
                 src="https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=true&preload=true&responsive=true" 
                 loading="lazy" 
@@ -542,6 +607,7 @@ export default function SurveyPage() {
                   border: 0,
                   position: "absolute",
                   top: 0,
+                  left: 0,
                   height: "100%",
                   width: "100%"
                 }} 
@@ -549,8 +615,8 @@ export default function SurveyPage() {
                 allowFullScreen={true}
               />
             </div>
-            <div className="loading-text" style={{marginTop: "30px"}}>Analyzing Your Business...</div>
-            <div className="loading-subtext">Our AI is performing deep research on your company, industry trends, and competitors to create highly personalized questions</div>
+            <div className="loading-text" style={{marginTop: "40px", textAlign: "center"}}>Analyzing Your Business...</div>
+            <div className="loading-subtext" style={{textAlign: "center", maxWidth: "600px"}}>Our AI is performing deep research on your company, industry trends, and competitors to create highly personalized questions</div>
           </div>
         </div>
 
