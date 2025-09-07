@@ -11,53 +11,53 @@
 // Fallback questions for timeout scenarios
 function getFallbackQuestions() {
   return {
-    summary: "We've prepared some initial questions to understand your AI opportunities better.",
+    summary: "We've prepared targeted questions to identify specific AI automation opportunities in your business.",
     questions: [
       {
-        text: "What percentage of your daily tasks could potentially be automated?",
-        type: "multiple_choice",
-        options: ["Less than 25%", "25-50%", "50-75%", "More than 75%"]
-      },
-      {
-        text: "Which area would benefit most from AI automation in your business?",
-        type: "multiple_choice",
-        options: ["Customer service", "Marketing & Sales", "Operations", "Finance & Accounting", "HR & Recruiting"]
-      },
-      {
-        text: "How much time do you spend on repetitive administrative tasks weekly?",
-        type: "multiple_choice",
-        options: ["Less than 5 hours", "5-10 hours", "10-20 hours", "More than 20 hours"]
-      },
-      {
-        text: "What's your biggest concern about implementing AI?",
+        text: "Describe your most time-consuming recurring process that involves collecting, organizing, or analyzing information (e.g., lead qualification, proposal creation, data entry, reporting).",
         type: "text",
         options: []
       },
       {
-        text: "Do you currently use any form of automation or AI tools?",
+        text: "What specific customer communication tasks currently require manual effort from your team?",
         type: "multiple_choice",
-        options: ["Yes, extensively", "Yes, some basic tools", "No, but interested", "No, not interested"]
+        options: ["Initial inquiries & lead response", "Appointment scheduling & follow-ups", "Customer support & FAQ responses", "Onboarding new clients", "Progress updates & status reports", "Multiple of the above"]
       },
       {
-        text: "What's your annual budget for new technology solutions?",
+        text: "Which of these content creation activities takes the most time in your business?",
         type: "multiple_choice",
-        options: ["Under $5,000", "$5,000-$25,000", "$25,000-$100,000", "Over $100,000"]
+        options: ["Writing proposals, quotes, or contracts", "Creating social media posts", "Email campaigns & newsletters", "Blog posts or articles", "Product descriptions or marketing copy", "Client reports or presentations"]
       },
       {
-        text: "How would you rate your team's technical expertise?",
-        type: "multiple_choice",
-        options: ["Very technical", "Somewhat technical", "Not very technical", "Non-technical"]
-      },
-      {
-        text: "What specific business outcome would you most like AI to help achieve?",
+        text: "Describe a specific task you do repeatedly that involves following the same steps or decision-making process each time.",
         type: "text",
         options: []
+      },
+      {
+        text: "What information do you wish you could automatically extract or organize from documents, emails, or websites?",
+        type: "text",
+        options: []
+      },
+      {
+        text: "Which manual process costs you the most money in staff time or lost opportunities?",
+        type: "multiple_choice",
+        options: ["Manual data entry and organization", "Responding to customer inquiries", "Creating custom content or documents", "Qualifying and following up with leads", "Scheduling and coordination tasks", "Research and competitive analysis"]
+      },
+      {
+        text: "If you could automate one workflow that currently requires multiple team members or tools, what would it be?",
+        type: "text",
+        options: []
+      },
+      {
+        text: "What specific business metrics would improve if you saved 10+ hours per week on manual tasks?",
+        type: "multiple_choice",
+        options: ["Revenue growth from more sales time", "Customer satisfaction from faster response", "Team productivity and capacity", "Cost reduction from efficiency", "Better quality/consistency of output", "Ability to handle more clients/projects"]
       }
     ],
     sources: [
-      { title: "AI Business Transformation Guide", url: "https://example.com/ai-guide" },
-      { title: "Industry AI Adoption Statistics", url: "https://example.com/stats" },
-      { title: "SMB Automation Opportunities", url: "https://example.com/smb-automation" }
+      { title: "AI Business Process Automation Guide", url: "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai-the-next-productivity-frontier" },
+      { title: "Small Business AI Adoption Study 2024", url: "https://www.salesforce.com/news/stories/ai-small-business-research/" },
+      { title: "ROI of Business Process Automation", url: "https://blog.hubspot.com/service/what-is-business-process-automation" }
     ]
   };
 }
@@ -97,8 +97,8 @@ export async function callResponses<T>({
   // ALWAYS use Responses API for GPT-5 models
   const apiEndpoint = "https://api.openai.com/v1/responses";
   const controller = new AbortController();
-  // Vercel has 10 second timeout on hobby tier, use 9 seconds to be safe
-  const timeoutMs = process.env.VERCEL ? 9000 : 18000;
+  // Use reasonable timeouts - give GPT-5 enough time for web search
+  const timeoutMs = process.env.VERCEL ? 12000 : 20000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {

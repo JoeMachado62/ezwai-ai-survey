@@ -69,7 +69,11 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         {companyInfo && (
           <LoadingNarrative
             lines={phase === "questions" ? questionLines : reportLines}
-            ctx={companyInfo}
+            ctx={{
+              company: companyInfo.companyName,
+              industry: companyInfo.industry,
+              websiteURL: companyInfo.websiteURL
+            }}
             intervalMs={phase === "questions" ? 1800 : 2200}
           />
         )}
