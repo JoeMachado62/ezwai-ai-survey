@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EZWAI AI Opportunities Survey - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #08b2c6 0%, #b5feff 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #08b2c6;
+            box-shadow: 0 0 0 3px rgba(8, 178, 198, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #08b2c6 0%, #0897a8 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(8, 178, 198, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        /* Video container for loading */
+        .video-container {
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto 30px;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .loading-text {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .loading-status {
+            font-size: 1em;
+            opacity: 0.9;
+            font-style: italic;
+            animation: pulse 2s ease-in-out infinite;
+            color: #b5feff;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .questions-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #08b2c6;
+        }
+
+        /* Enhanced Report Styles */
+        .enhanced-report {
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .report-section {
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .section-header {
+            position: relative;
+            height: 400px;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            padding: 40px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%);
+        }
+
+        .section-number {
+            position: relative;
+            color: #ff6b11;
+            font-size: 4em;
+            font-weight: bold;
+            margin-right: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .section-title {
+            position: relative;
+            color: white;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .section-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            padding: 0 20px;
+        }
+
+        .main-content {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .main-content p {
+            margin-bottom: 20px;
+        }
+
+        .sidebar {
+            space-y: 30px;
+        }
+
+        .pull-quote {
+            font-size: 1.8em;
+            font-style: italic;
+            color: #ff6b11;
+            border-left: 4px solid #08b2c6;
+            padding-left: 20px;
+            margin: 30px 0;
+        }
+
+        .key-stat {
+            background: linear-gradient(135deg, #08b2c6 0%, #b5feff 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .key-stat .value {
+            font-size: 3em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .key-stat .label {
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .key-takeaways {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-top: 4px solid #ff6b11;
+            margin: 20px 0;
+        }
+
+        .key-takeaways h3 {
+            color: #ff6b11;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .key-takeaways ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-takeaways li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .key-takeaways li:last-child {
+            border-bottom: none;
+        }
+
+        .key-takeaways li::before {
+            content: '✓';
+            color: #08b2c6;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        /* Grid layout for form fields */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Progress indicator */
+        .progress-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #08b2c6, #b5feff);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .section-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                height: 250px;
+                padding: 20px;
+            }
+            
+            .section-title {
+                font-size: 1.8em;
+            }
+            
+            .section-number {
+                font-size: 3em;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .button-group {
+                display: none;
+            }
+            
+            .progress-bar {
+                display: none;
+            }
+            
+            .section-header {
+                page-break-inside: avoid;
+            }
+            
+            .report-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <h1>🚀 AI Opportunities Assessment</h1>
+            <p>Discover how AI can transform your business</p>
+        </div>
+
+        <div class="content">
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 20%"></div>
+            </div>
+
+            <!-- Step 1: Business Information -->
+            <div class="step active" id="step1">
+                <h2>Tell Us About Your Business</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="companyName">Company Name *</label>
+                        <input type="text" id="companyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="industry">Industry *</label>
+                        <input type="text" id="industry" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="websiteURL">Website URL</label>
+                        <input type="url" id="websiteURL" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="employees">Number of Employees</label>
+                        <input type="text" id="employees" placeholder="e.g., 10-50">
+                    </div>
+                    <div class="form-group">
+                        <label for="revenue">Annual Revenue</label>
+                        <select id="revenue">
+                            <option value="">Select range</option>
+                            <option value="Under $100k">Under $100k</option>
+                            <option value="$100k-$500k">$100k - $500k</option>
+                            <option value="$500k-$1M">$500k - $1M</option>
+                            <option value="$1M-$5M">$1M - $5M</option>
+                            <option value="$5M-$25M">$5M - $25M</option>
+                            <option value="Over $25M">Over $25M</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="crmSystem">Current CRM System</label>
+                        <input type="text" id="crmSystem" placeholder="e.g., Salesforce, HubSpot">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="biggestChallenge">What's Your Biggest Business Challenge? *</label>
+                    <textarea id="biggestChallenge" required placeholder="Describe the main challenge you're facing..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="aiTools">Current AI Tools (if any)</label>
+                    <input type="text" id="aiTools" placeholder="e.g., ChatGPT, Jasper, None">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="socialChannels">Social Media Channels</label>
+                        <input type="text" id="socialChannels" placeholder="e.g., LinkedIn, Facebook, Instagram">
+                    </div>
+                    <div class="form-group">
+                        <label for="contentTime">Weekly Content Time</label>
+                        <input type="text" id="contentTime" placeholder="e.g., 5 hours">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="generateQuestions()">
+                        Generate My Custom Questions
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Dynamic Questions -->
+            <div class="step" id="step2">
+                <h2>Your Personalized AI Assessment</h2>
+                <p id="questionsSummary" style="font-style: italic; margin-bottom: 20px;"></p>
+                <div id="questionsContainer" class="questions-container"></div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
+                    <button class="btn btn-primary" onclick="goToStep(3)">Continue</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Contact Information -->
+            <div class="step" id="step3">
+                <h2>Get Your Visual AI Opportunities Report</h2>
+                <p style="margin-bottom: 20px;">You'll receive a comprehensive report with custom visualizations for each recommendation.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
+                    <button class="btn btn-primary" onclick="generateEnhancedReport()">
+                        Generate My Visual AI Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Enhanced Report -->
+            <div class="step" id="step4">
+                <div id="reportContainer" class="enhanced-report"></div>
+                
+                <div class="button-group" style="margin-top: 40px;">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        Print/Save as PDF
+                    </button>
+                    <button class="btn btn-secondary" onclick="startOver()">
+                        Start New Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading" id="loadingOverlay">
+        <div class="loading-content">
+            <!-- YouTube Video -->
+            <div class="video-container">
+                <iframe 
+                    src="https://www.youtube.com/embed/hTbtSjNPsUk?autoplay=1&mute=1&loop=1&playlist=hTbtSjNPsUk&controls=0&showinfo=0&rel=0&modestbranding=1" 
+                    allow="autoplay; encrypted-media"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="loading-text" id="loadingText">Processing your request...</div>
+            <div class="loading-status" id="loadingStatus">GPT-5 is analyzing your business...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_CONFIG = {
+            baseUrl: window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000' 
+                : window.location.origin,
+            endpoints: {
+                config: '/api/config',
+                ghl: '/api/ghl/contact'
+            }
+        };
+
+        // State management
+        let state = {
+            currentStep: 1,
+            apiKeys: null,
+            companyInfo: {},
+            questions: [],
+            answers: {},
+            report: null,
+            enhancedReport: null
+        };
+
+        // Dynamic loading messages for questions
+        const questionLoadingMessages = [
+            "Reading your business basics...",
+            "Noting goals and challenges to focus our discovery...",
+            "Checking recent {industry} trends and best practices...",
+            "Looking at tools that fit your current stack...",
+            "Researching {company} for extra context...",
+            "Turning findings into tailored, non-generic questions...",
+            "Balancing quick wins with deeper strategy...",
+            "Tightening wording so answers are easy to give...",
+            "Double-checking with fresh sources before finalizing...",
+            "Finalizing your custom questions..."
+        ];
+
+        // Dynamic loading messages for report
+        const reportLoadingMessages = [
+            "Collecting your answers and context...",
+            "Running a deeper web scan for today's {industry} landscape...",
+            "Comparing solutions that match your size and tech stack...",
+            "Estimating effort vs. impact to spot quick wins...",
+            "Drafting an actionable 90-day plan...",
+            "Writing a plain-English executive summary...",
+            "Outlining recommended automations and safeguards...",
+            "Adding competitive and market notes from recent sources...",
+            "Turning insights into step-by-step next actions...",
+            "Generating custom visualizations for each section...",
+            "Packaging everything into your AI Opportunities Report..."
+        ];
+
+        let messageIndex = 0;
+        let messageInterval;
+
+        // Initialize the app
+        async function init() {
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.config}`);
+                if (!response.ok) throw new Error('Failed to load configuration');
+                
+                state.apiKeys = await response.json();
+                console.log('App initialized successfully');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                alert('Failed to initialize app. Please refresh and try again.');
+            }
+        }
+
+        // Start loading animation with rotating messages
+        function startLoading(text = 'Processing your request...', messages = reportLoadingMessages) {
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('loadingText').textContent = text;
+            
+            messageIndex = 0;
+            const updateMessage = () => {
+                let message = messages[messageIndex % messages.length];
+                // Replace placeholders with actual values
+                message = message.replace('{company}', state.companyInfo.companyName || 'your business');
+                message = message.replace('{industry}', state.companyInfo.industry || 'your industry');
+                
+                document.getElementById('loadingStatus').textContent = message;
+                messageIndex++;
+            };
+            
+            updateMessage(); // Show first message immediately
+            messageInterval = setInterval(updateMessage, 2200);
+        }
+
+        // Stop loading animation
+        function stopLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            clearInterval(messageInterval);
+        }
+
+        // Navigate between steps
+        function goToStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            state.currentStep = step;
+            
+            const progress = (step / 4) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+
+        // Generate custom questions using GPT-5
+        async function generateQuestions() {
+            // Gather form data
+            state.companyInfo = {
+                companyName: document.getElementById('companyName').value,
+                industry: document.getElementById('industry').value,
+                websiteURL: document.getElementById('websiteURL').value,
+                employees: document.getElementById('employees').value,
+                revenue: document.getElementById('revenue').value,
+                crmSystem: document.getElementById('crmSystem').value,
+                biggestChallenge: document.getElementById('biggestChallenge').value,
+                aiTools: document.getElementById('aiTools').value,
+                socialChannels: document.getElementById('socialChannels').value,
+                contentTime: document.getElementById('contentTime').value
+            };
+
+            // Validate required fields
+            if (!state.companyInfo.companyName || !state.companyInfo.industry || !state.companyInfo.biggestChallenge) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            startLoading('Generating personalized questions for your business...', questionLoadingMessages);
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/responses', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${state.apiKeys.openaiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-5-mini',
+                        input: [
+                            {
+                                role: 'system',
+                                content: `You are an expert AI Transformation Consultant conducting a deep analysis of a specific business.
+                                         Generate 8-10 questions that directly address THEIR unique situation.
+                                         Questions must be specific to their industry, challenges, and tools.
+                                         Mix multiple choice and open-ended questions.
+                                         Each question should uncover a specific AI opportunity.`
+                            },
+                            {
+                                role: 'user',
+                                content: `Analyze this business and create personalized AI assessment questions:
+                                         
+                                         Company: ${state.companyInfo.companyName}
+                                         Industry: ${state.companyInfo.industry}
+                                         Website: ${state.companyInfo.websiteURL || 'Not provided'}
+                                         Size: ${state.companyInfo.employees || 'Not specified'} employees
+                                         Revenue: ${state.companyInfo.revenue || 'Not specified'}
+                                         CRM: ${state.companyInfo.crmSystem || 'None'}
+                                         Current AI: ${state.companyInfo.aiTools || 'None'}
+                                         Main Challenge: "${state.companyInfo.biggestChallenge}"
+                                         Social Media: ${state.companyInfo.socialChannels || 'None'}
+                                         Content Time: ${state.companyInfo.contentTime || 'Not specified'}
+                                         
+                                         Research their company, industry, and competitive landscape.
+                                         Generate questions that directly address their specific situation.`
+                            }
+                        ],
+                        tools: [{ type: 'web_search' }],
+                        tool_choice: 'auto',
+                        reasoning: { effort: 'low' },
+                        response_format: {
+                            type: 'json_schema',
+                            json_schema: {
+                                name: 'Questions',
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        summary: { type: 'string' },
+                                        questions: {
+                                            type: 'array',
+                                            minItems: 8,
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    text: { type: 'string' },
+                                                    type: { type: 'string', enum: ['text', 'multiple_choice'] },
+                                                    options: { type: 'array', items: { type: 'string' } }
+                                                },
+                                                required: ['text', 'type']
+                                            }
+                                        },
+                                        sources: {
+                                            type: 'array',
+                                            minItems: 3,
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    title: { type: 'string' },
+                                                    url: { type: 'string' }
+                                                },
+                                                required: ['title', 'url']
+                                            }
+                                        }
+                                    },
+                                    required: ['summary', 'questions', 'sources']
+                                }
+                            }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const result = data.output_parsed || data.output?.[0]?.content?.[0]?.parsed;
+                
+                if (!result || !result.questions) {
+                    throw new Error('Invalid response format');
+                }
+
+                state.questions = result.questions;
+                displayQuestions(result);
+                goToStep(2);
+
+            } catch (error) {
+                console.error('Error generating questions:', error);
+                useFallbackQuestions();
+            } finally {
+                stopLoading();
+            }
+        }
+
+        // Display generated questions
+        function displayQuestions(result) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            if (result.summary) {
+                document.getElementById('questionsSummary').textContent = result.summary;
+            }
+
+            state.questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+
+                const label = document.createElement('label');
+                label.textContent = q.text;
+                label.style.display = 'block';
+                label.style.marginBottom = '10px';
+                card.appendChild(label);
+
+                if (q.type === 'multiple_choice' && q.options) {
+                    const select = document.createElement('select');
+                    select.id = `q_${index}`;
+                    select.innerHTML = '<option value="">Choose an option</option>';
+                    q.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        select.appendChild(option);
+                    });
+                    card.appendChild(select);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.id = `q_${index}`;
+                    textarea.rows = 3;
+                    card.appendChild(textarea);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        // Enhanced fallback questions
+        function useFallbackQuestions() {
+            const fallback = {
+                summary: `Based on your ${state.companyInfo.industry} business and challenge with "${state.companyInfo.biggestChallenge}", we've prepared targeted questions to identify AI opportunities.`,
+                questions: [
+                    {
+                        text: `In your ${state.companyInfo.industry} business, which specific repetitive task takes the most time each week?`,
+                        type: 'text'
+                    },
+                    {
+                        text: "Describe the most time-consuming process that involves collecting, organizing, or analyzing information",
+                        type: 'text'
+                    },
+                    {
+                        text: "What manual data entry tasks does your team do repeatedly? Be specific about the source and destination.",
+                        type: 'text'
+                    },
+                    {
+                        text: "How many hours per week does your team spend on tasks that follow the same pattern every time?",
+                        type: 'multiple_choice',
+                        options: ["Less than 5 hours", "5-10 hours", "10-20 hours", "More than 20 hours"]
+                    },
+                    {
+                        text: `Regarding "${state.companyInfo.biggestChallenge}", which specific steps could be automated?`,
+                        type: 'text'
+                    },
+                    {
+                        text: "Which customer questions do you answer over and over? List the top 3.",
+                        type: 'text'
+                    },
+                    {
+                        text: "What information do you wish you could automatically extract from documents, emails, or websites?",
+                        type: 'text'
+                    },
+                    {
+                        text: "If AI could eliminate ONE workflow completely, which would save you the most time and money?",
+                        type: 'text'
+                    },
+                    {
+                        text: "What decisions do you make based on data that could be automated with clear rules?",
+                        type: 'text'
+                    },
+                    {
+                        text: "Which of your competitors might already be using AI for competitive advantage?",
+                        type: 'text'
+                    }
+                ]
+            };
+
+            state.questions = fallback.questions;
+            displayQuestions(fallback);
+            goToStep(2);
+        }
+
+        // Transform report to visual sections
+        function transformReportToSections(report) {
+            const sections = [];
+            
+            // Executive Summary
+            sections.push({
+                title: "Executive Summary",
+                mainContent: report.executiveSummary,
+                imagePrompt: `Professional abstract visualization of AI transformation for ${state.companyInfo.industry} company, modern tech-inspired design with blue and teal gradients`,
+                pullQuote: "Your AI transformation journey starts here",
+                keyTakeaways: [
+                    `Tailored for ${state.companyInfo.companyName}`,
+                    `${report.quickWins.length} immediate opportunities identified`,
+                    `Industry-specific recommendations`
+                ]
+            });
+            
+            // Quick Wins
+            if (report.quickWins.length > 0) {
+                sections.push({
+                    title: "Quick Wins - 30 Day Implementation",
+                    mainContent: report.quickWins.map(win => 
+                        `<strong>${win.title}</strong><br>${win.description}<br><em>Timeframe: ${win.timeframe} | Impact: ${win.impact}</em>`
+                    ).join('<br><br>'),
+                    imagePrompt: `Upward trending graphs and checkmarks representing quick AI implementations, modern business style with orange accents`,
+                    statistic: {
+                        value: report.quickWins.length,
+                        description: "Immediate AI opportunities"
+                    },
+                    keyTakeaways: report.quickWins.map(win => win.title)
+                });
+            }
+            
+            // Strategic Recommendations
+            if (report.recommendations.length > 0) {
+                sections.push({
+                    title: "Strategic AI Roadmap",
+                    mainContent: report.recommendations.map(rec => 
+                        `<strong>${rec.title}</strong><br>${rec.description}<br><em>Expected ROI: ${rec.roi}</em>`
+                    ).join('<br><br>'),
+                    imagePrompt: `Futuristic roadmap visualization with interconnected nodes showing AI integration phases, professional blue tones`,
+                    pullQuote: report.recommendations[0]?.roi || "Significant ROI potential",
+                    keyTakeaways: report.recommendations.map(rec => rec.title)
+                });
+            }
+            
+            // Competitive Analysis
+            sections.push({
+                title: "Competitive Intelligence",
+                mainContent: report.competitiveAnalysis,
+                imagePrompt: `Competitive landscape visualization with market positioning and AI adoption levels, data-driven design with teal highlights`,
+                statistic: {
+                    value: "20-40%",
+                    description: "Average efficiency gain from AI"
+                }
+            });
+            
+            // Next Steps
+            sections.push({
+                title: "Your Implementation Roadmap",
+                mainContent: "<ol>" + report.nextSteps.map(step => `<li>${step}</li>`).join('') + "</ol>",
+                imagePrompt: `Clear action plan with numbered steps ascending like stairs to a bright tech-enabled future, EZWAI brand colors`,
+                keyTakeaways: report.nextSteps.slice(0, 3)
+            });
+            
+            return sections;
+        }
+
+        // Generate enhanced report with images
+        async function generateEnhancedReport() {
+            // Collect answers
+            state.questions.forEach((q, index) => {
+                const element = document.getElementById(`q_${index}`);
+                if (element) {
+                    state.answers[`q_${index}`] = element.value;
+                }
+            });
+
+            // Collect contact info
+            const contactInfo = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value
+            };
+
+            if (!contactInfo.firstName || !contactInfo.lastName || !contactInfo.email) {
+                alert('Please fill in all required contact fields');
+                return;
+            }
+
+            startLoading('Creating your visual AI opportunities report...', reportLoadingMessages);
+
+            try {
+                // Step 1: Generate the text report using GPT-5
+                console.log('Generating report with GPT-5...');
+                const reportResponse = await fetch('https://api.openai.com/v1/responses', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${state.apiKeys.openaiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-5',
+                        input: [
+                            {
+                                role: 'system',
+                                content: `You are a senior AI Transformation Consultant creating a customized report.
+                                         Synthesize ALL provided data to understand their unique situation.
+                                         Research current AI solutions specific to their industry and challenges.
+                                         Provide recommendations scaled to their company size and revenue.
+                                         Focus on their stated biggest challenge as the primary opportunity.`
+                            },
+                            {
+                                role: 'user',
+                                content: `Create a personalized AI Opportunities Report for ${state.companyInfo.companyName}:
+                                         
+                                         COMPANY PROFILE:
+                                         ${JSON.stringify(state.companyInfo, null, 2)}
+                                         
+                                         ASSESSMENT ANSWERS:
+                                         ${JSON.stringify(state.answers, null, 2)}
+                                         
+                                         PRIMARY FOCUS: Solutions for "${state.companyInfo.biggestChallenge}"
+                                         
+                                         Research their industry, find competitor AI adoption rates, and provide:
+                                         - Executive summary referencing their company and challenge
+                                         - 3-5 quick wins (with specific tools, not generic categories)
+                                         - 2-3 strategic recommendations (scaled to their size/revenue)
+                                         - Competitive analysis for their specific industry
+                                         - 5 concrete next steps prioritized by their challenge`
+                            }
+                        ],
+                        tools: [{ type: 'web_search' }],
+                        tool_choice: 'auto',
+                        reasoning: { effort: 'medium' },
+                        response_format: {
+                            type: 'json_schema',
+                            json_schema: {
+                                name: 'Report',
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        executiveSummary: { type: 'string' },
+                                        quickWins: {
+                                            type: 'array',
+                                            minItems: 3,
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    title: { type: 'string' },
+                                                    description: { type: 'string' },
+                                                    timeframe: { type: 'string' },
+                                                    impact: { type: 'string' }
+                                                },
+                                                required: ['title', 'description', 'timeframe', 'impact']
+                                            }
+                                        },
+                                        recommendations: {
+                                            type: 'array',
+                                            minItems: 2,
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    title: { type: 'string' },
+                                                    description: { type: 'string' },
+                                                    roi: { type: 'string' }
+                                                },
+                                                required: ['title', 'description', 'roi']
+                                            }
+                                        },
+                                        competitiveAnalysis: { type: 'string' },
+                                        nextSteps: { 
+                                            type: 'array', 
+                                            minItems: 5,
+                                            items: { type: 'string' } 
+                                        },
+                                        sources: {
+                                            type: 'array',
+                                            minItems: 3,
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    title: { type: 'string' },
+                                                    url: { type: 'string' }
+                                                },
+                                                required: ['title', 'url']
+                                            }
+                                        }
+                                    },
+                                    required: ['executiveSummary', 'quickWins', 'recommendations', 'competitiveAnalysis', 'nextSteps', 'sources']
+                                }
+                            }
+                        }
+                    })
+                });
+
+                if (!reportResponse.ok) {
+                    throw new Error(`Report generation failed: ${reportResponse.status}`);
+                }
+
+                const reportData = await reportResponse.json();
+                state.report = reportData.output_parsed || reportData.output?.[0]?.content?.[0]?.parsed;
+
+                if (!state.report) {
+                    throw new Error('Invalid report format');
+                }
+
+                console.log('Report generated successfully');
+
+                // Step 2: Transform report to visual sections
+                const sections = transformReportToSections(state.report);
+                
+                // Step 3: Generate images for each section using DALL-E 3
+                console.log('Generating custom images with DALL-E 3...');
+                
+                // Option 1: Use backend endpoint (better for production)
+                const useBackend = true; // Set to false to use direct API calls
+                
+                if (useBackend) {
+                    try {
+                        // Call our backend which handles image generation
+                        const imageResponse = await fetch(`${API_CONFIG.baseUrl}/api/report/generate-images`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reportData: sections })
+                        });
+                        
+                        if (imageResponse.ok) {
+                            const imageData = await imageResponse.json();
+                            sections = imageData.enhancedReport;
+                            console.log('Images generated successfully via backend');
+                        } else {
+                            console.warn('Backend image generation failed, using direct API');
+                            await generateImagesDirectly(sections);
+                        }
+                    } catch (error) {
+                        console.error('Backend error, falling back to direct API:', error);
+                        await generateImagesDirectly(sections);
+                    }
+                } else {
+                    // Option 2: Generate images directly from browser
+                    await generateImagesDirectly(sections);
+                }
+                
+                state.enhancedReport = sections;
+
+                // Step 4: Save to GHL in background
+                saveToGHL(contactInfo).catch(console.error);
+
+                // Step 5: Display the enhanced report
+                displayEnhancedReport();
+                goToStep(4);
+
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('Failed to generate report. Please try again.');
+            } finally {
+                stopLoading();
+            }
+        }
+
+        // Display enhanced report with visuals
+        function displayEnhancedReport() {
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = '';
+
+            // Add report title
+            const title = document.createElement('h1');
+            title.style.textAlign = 'center';
+            title.style.color = '#08b2c6';
+            title.style.marginBottom = '40px';
+            title.innerHTML = `AI Opportunities Report<br><small style="font-size: 0.5em; color: #666;">Prepared for ${state.companyInfo.companyName}</small>`;
+            container.appendChild(title);
+
+            // Display each section with visuals
+            state.enhancedReport.forEach((section, index) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'report-section';
+                
+                // Section header with image
+                const header = document.createElement('div');
+                header.className = 'section-header';
+                header.style.backgroundImage = `url('${section.imageUrl}')`;
+                header.innerHTML = `
+                    <span class="section-number">${index + 1}</span>
+                    <h2 class="section-title">${section.title}</h2>
+                `;
+                sectionDiv.appendChild(header);
+                
+                // Section content
+                const content = document.createElement('div');
+                content.className = 'section-content';
+                
+                // Main content column
+                const mainCol = document.createElement('div');
+                mainCol.className = 'main-content';
+                mainCol.innerHTML = section.mainContent;
+                
+                // Sidebar column
+                const sidebar = document.createElement('div');
+                sidebar.className = 'sidebar';
+                
+                // Add pull quote if exists
+                if (section.pullQuote) {
+                    const quote = document.createElement('div');
+                    quote.className = 'pull-quote';
+                    quote.textContent = section.pullQuote;
+                    sidebar.appendChild(quote);
+                }
+                
+                // Add statistic if exists
+                if (section.statistic) {
+                    const stat = document.createElement('div');
+                    stat.className = 'key-stat';
+                    stat.innerHTML = `
+                        <span class="value">${section.statistic.value}</span>
+                        <span class="label">${section.statistic.description}</span>
+                    `;
+                    sidebar.appendChild(stat);
+                }
+                
+                // Add key takeaways if exist
+                if (section.keyTakeaways && section.keyTakeaways.length > 0) {
+                    const takeaways = document.createElement('div');
+                    takeaways.className = 'key-takeaways';
+                    takeaways.innerHTML = '<h3>Key Takeaways</h3><ul>';
+                    section.keyTakeaways.forEach(item => {
+                        takeaways.innerHTML += `<li>${item}</li>`;
+                    });
+                    takeaways.innerHTML += '</ul>';
+                    sidebar.appendChild(takeaways);
+                }
+                
+                content.appendChild(mainCol);
+                if (sidebar.children.length > 0) {
+                    content.appendChild(sidebar);
+                }
+                
+                sectionDiv.appendChild(content);
+                container.appendChild(sectionDiv);
+            });
+
+            // Add footer
+            const footer = document.createElement('div');
+            footer.style.textAlign = 'center';
+            footer.style.marginTop = '60px';
+            footer.style.padding = '40px';
+            footer.style.background = '#f8f9fa';
+            footer.style.borderRadius = '12px';
+            footer.innerHTML = `
+                <h3 style="color: #08b2c6; margin-bottom: 20px;">Ready to Transform Your Business with AI?</h3>
+                <p style="font-size: 1.1em; margin-bottom: 10px;">This report was generated specifically for ${state.companyInfo.companyName}</p>
+                <p style="color: #666;">Our team will contact you shortly to discuss implementation.</p>
+            `;
+            container.appendChild(footer);
+        }
+
+        // Save to GoHighLevel
+        async function saveToGHL(contactInfo) {
+            try {
+                await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.ghl}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...contactInfo,
+                        companyInfo: state.companyInfo,
+                        answers: state.answers,
+                        report: state.report,
+                        tags: ['AI Assessment Survey', state.companyInfo.industry].filter(Boolean)
+                    })
+                });
+                console.log('Contact saved to GHL');
+            } catch (error) {
+                console.error('GHL save error (non-fatal):', error);
+            }
+        }
+
+        // Start over
+        function startOver() {
+            state = {
+                currentStep: 1,
+                apiKeys: state.apiKeys,
+                companyInfo: {},
+                questions: [],
+                answers: {},
+                report: null,
+                enhancedReport: null
+            };
+            
+            document.querySelectorAll('input, textarea, select').forEach(field => {
+                field.value = '';
+            });
+            
+            goToStep(1);
+        }
+
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>
