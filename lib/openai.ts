@@ -97,8 +97,15 @@ export async function callResponses<T>({
   // ALWAYS use Responses API for GPT-5 models
   const apiEndpoint = "https://api.openai.com/v1/responses";
   const controller = new AbortController();
-  // Use reasonable timeouts - give GPT-5 enough time for web search
-  const timeoutMs = process.env.VERCEL ? 12000 : 20000;
+  
+  // CRITICAL: Extended timeout for GPT-5 with web search and reasoning
+  // Vercel Hobby has 10s function limit, but we'll set higher and handle gracefully
+  // GPT-5 with web search can take 15-30 seconds
+  const timeoutMs = process.env.VERCEL 
+    ? 25000  // 25 seconds on Vercel (will fail on hobby at 10s, but works on Pro)
+    : 45000; // 45 seconds for local development
+    
+  console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
@@ -172,14 +179,16 @@ export async function callResponses<T>({
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      // Return fallback response on timeout
-      console.warn(`OpenAI API timeout after ${timeoutMs}ms - returning fallback questions`);
+      // More informative timeout message
+      console.warn(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search needs more time`);
+      console.warn('Consider upgrading to Vercel Pro for longer timeouts (up to 300s)');
+      console.warn('Returning enhanced fallback questions...');
       return getFallbackQuestions() as T;
     }
     console.error('OpenAI API error:', error.message);
     // Return fallback on any error in production
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('Returning fallback due to API error in production');
+    if (process.env.NODE_ENV === 'production' || error.message.includes('503')) {
+      console.warn('API unavailable or error - using enhanced fallback questions');
       return getFallbackQuestions() as T;
     }
     throw error;

@@ -489,6 +489,11 @@ select {
 
 .ez-fade { 
   animation: ezFadeSlide 0.35s ease forwards;
+  font-size: 14px;
+  color: #475569;
+  font-style: italic;
+  margin-top: 10px;
+  min-height: 20px;
 }
 
 /* Mobile responsive */

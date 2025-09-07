@@ -37,6 +37,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const input = QuestionsInputZ.parse(body);
+    
+    console.log(`[Questions API] Starting generation for ${input.companyInfo.companyName}...`);
+    console.log(`[Questions API] Industry: ${input.companyInfo.industry}, Challenge: ${input.techStack.biggestChallenge}`);
 
     const userPrompt = `Analyze this specific business and create personalized AI assessment questions.
 
@@ -91,6 +94,8 @@ Example of a GOOD personalized question:
 Example of a BAD generic question:
 "What percentage of your work involves repetitive tasks?"`;
 
+    const startTime = Date.now();
+    
     const result = await callResponses<QuestionsResult>({
       input: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -100,6 +105,9 @@ Example of a BAD generic question:
       tools: [{ type: "web_search" }],
       model: process.env.OPENAI_MODEL || "gpt-5-mini"  // Use GPT-5-mini for fast, cost-optimized reasoning
     });
+    
+    const duration = Date.now() - startTime;
+    console.log(`[Questions API] Successfully generated ${result.questions?.length || 0} questions in ${duration/1000}s`);
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
