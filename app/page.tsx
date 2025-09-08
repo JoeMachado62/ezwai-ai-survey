@@ -554,7 +554,7 @@ export default function Page() {
 
       case 4:
         return reportData ? (
-          <EnhancedReport data={reportData} />
+          <EnhancedReport report={reportData} />
         ) : (
           <StepCard
             title="Generating Your Report"
