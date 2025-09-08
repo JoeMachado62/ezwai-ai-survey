@@ -61,6 +61,59 @@ export async function POST(req: Request) {
         const t = await create.text();
         console.error(`GHL API error ${create.status}:`, t);
         
+        // Handle duplicate contact error specifically
+        if (create.status === 400 && t.includes("duplicated contacts")) {
+          try {
+            const errorData = JSON.parse(t);
+            const existingContactId = errorData?.meta?.contactId;
+            if (existingContactId) {
+              console.log(`Contact already exists with ID: ${existingContactId}, updating instead`);
+              // Continue with the existing contact ID to add notes
+              const contactId = existingContactId;
+              
+              // Create note with survey and report for existing contact
+              const noteBody = [
+                "AI ASSESSMENT — Survey Input (Updated)",
+                "```json",
+                JSON.stringify({ 
+                  companyInfo: inb.companyInfo, 
+                  techStack: inb.techStack, 
+                  socialMedia: inb.socialMedia, 
+                  answers: inb.answers 
+                }, null, 2),
+                "```",
+                "",
+                "AI OPPORTUNITIES — Report",
+                "```json",
+                JSON.stringify(inb.report, null, 2),
+                "```"
+              ].join("\n");
+
+              const note = await ghlFetch(`/contacts/${contactId}/notes`, {
+                method: "POST",
+                body: JSON.stringify({ 
+                  body: noteBody, 
+                  contactId
+                })
+              });
+
+              if (!note.ok) {
+                const noteError = await note.text();
+                console.error(`GHL note creation failed for existing contact ${note.status}: ${noteError}`);
+              }
+
+              return NextResponse.json({ 
+                ok: true, 
+                contactId,
+                updated: true,
+                message: "Existing contact updated with new survey data" 
+              }, { status: 200 });
+            }
+          } catch (parseError) {
+            console.error("Failed to parse duplicate contact error:", parseError);
+          }
+        }
+        
         // If authentication fails, log but don't block the user
         if (create.status === 401) {
           console.error("GHL authentication failed - token may be expired or invalid");
