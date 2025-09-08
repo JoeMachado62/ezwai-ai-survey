@@ -50,7 +50,16 @@ const KeyTakeaways: React.FC<{ items: string[] }> = ({ items }) => (
  * and styling impactful paragraphs to create a magazine-like feel.
  */
 const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
-  const paragraphs = content.split('\n').filter(p => p.trim() !== '');
+  // Function to clean up citation artifacts from GPT-5 Responses API
+  const cleanCitations = (text: string): string => {
+    // Remove citation patterns like citeturn3search2*, citeturn0news12*, etc.
+    return text.replace(/cite[a-z0-9]+\*/g, '');
+  };
+  
+  // Clean the content before processing
+  const cleanedContent = cleanCitations(content);
+  const paragraphs = cleanedContent.split('\n').filter(p => p.trim() !== '');
+  
   // Regex to find stats, percentages, monetary values, etc.
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
   
@@ -88,19 +97,22 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         return (
           <p key={pIndex} className="mb-4">
             {parts.map((part, i) => {
-              if (part.match(statRegex)) {
+              // Clean any remaining citation artifacts in individual parts
+              const cleanPart = cleanCitations(part);
+              
+              if (cleanPart.match(statRegex)) {
                 return (
                   <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
-                    {part}
+                    {cleanPart}
                   </span>
                 );
               }
               // Process bold markdown in regular text
-              const processedPart = part.replace(boldRegex, '<strong>$1</strong>');
-              if (processedPart !== part) {
+              const processedPart = cleanPart.replace(boldRegex, '<strong>$1</strong>');
+              if (processedPart !== cleanPart) {
                 return <span key={i} dangerouslySetInnerHTML={{ __html: processedPart }} />;
               }
-              return part;
+              return cleanPart;
             })}
           </p>
         );

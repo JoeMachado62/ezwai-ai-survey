@@ -56,13 +56,26 @@ body {
 }
 
 .step-card-title {
-  font-size: 2rem;
+  font-size: 2.5rem;        /* was 2rem */
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .step-card-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+/* Classes used by components/stepcard.tsx */
+.step-title {
+  font-size: 2.5rem;        /* requested size */
+  font-weight: 700;         /* bold */
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.step-sub {
   font-size: 1.125rem;
   color: var(--text-secondary);
 }
@@ -414,6 +427,11 @@ body {
   }
   
   .step-card-title {
+    font-size: 2.5rem;
+  }
+  
+  /* Scale step-title down on small screens */
+  .step-title {
     font-size: 1.5rem;
   }
   
