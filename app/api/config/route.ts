@@ -12,7 +12,8 @@ export async function GET(req: Request) {
     "http://localhost:3000",
     "https://ezwai.com",
     "https://www.ezwai.com",
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""
+    process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : "",
+    process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : ""
   ].filter(Boolean);
 
   // Basic CORS check

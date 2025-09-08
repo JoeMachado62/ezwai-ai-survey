@@ -1,6 +1,6 @@
 /**
  * Alternative approach for handling long-running GPT-5 API calls
- * Uses polling to work around Vercel's timeout limitations
+ * Optimized for Railway deployment with extended timeouts
  */
 
 // Store for in-progress requests

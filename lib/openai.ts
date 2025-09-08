@@ -103,11 +103,10 @@ export async function callResponses<T>({
   const controller = new AbortController();
   
   // CRITICAL: Extended timeout for GPT-5 with web search and reasoning
-  // Vercel Hobby has 10s function limit, but we'll set higher and handle gracefully
-  // GPT-5 with web search can take 15-30 seconds
-  const timeoutMs = process.env.VERCEL 
-    ? 25000  // 25 seconds on Vercel (will fail on hobby at 10s, but works on Pro)
-    : 45000; // 45 seconds for local development
+  // Railway supports up to 5 minutes timeout, GPT-5 with web search can take 30-60 seconds
+  const timeoutMs = process.env.RAILWAY_ENVIRONMENT 
+    ? 120000  // 2 minutes on Railway (production)
+    : 60000; // 60 seconds for local development
     
   console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
   
@@ -203,7 +202,7 @@ export async function callResponses<T>({
     if (error.name === 'AbortError') {
       // More informative timeout message
       console.warn(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search needs more time`);
-      console.warn('Consider upgrading to Vercel Pro for longer timeouts (up to 300s)');
+      console.warn('API call exceeded timeout - increasing timeout may help');
       console.warn('Returning enhanced fallback questions...');
       return getFallbackQuestions() as T;
     }
