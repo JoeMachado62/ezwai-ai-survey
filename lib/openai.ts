@@ -81,9 +81,13 @@ export async function callResponses<T>({
     input,
     tools,
     tool_choice: "auto",
-    response_format: { 
-      type: "json_schema", 
-      json_schema: schema  // Pass the whole schema object
+    text: {
+      format: {
+        type: "json_schema",
+        name: schema.name || "DefaultSchema",
+        schema: schema.schema || schema,
+        strict: true
+      }
     }
   };
 
