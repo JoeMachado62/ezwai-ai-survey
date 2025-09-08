@@ -4,21 +4,25 @@
 import { NextResponse } from 'next/server';
 import type { ReportSection } from '@/lib/report-types';
 
-// Ensure the API key is loaded from environment variables
+// Ensure the API keys are loaded from environment variables
 if (!process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY not set - using placeholder images");
 }
+if (!process.env.OPENAI_API_KEY) {
+  console.warn("OPENAI_API_KEY not set - using basic prompts");
+}
 
-// Helper function to create intelligent image prompts using Gemini's text capabilities
+// Helper function to create intelligent image prompts using GPT-5-mini (faster and no rate limits)
 async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
-  if (!process.env.GEMINI_API_KEY) {
+  // Check if OpenAI API key is available for intelligent prompts
+  if (!process.env.OPENAI_API_KEY) {
     // Fallback to the basic prompt if no API key
     return section.imagePrompt || `Professional visualization for ${section.title}`;
   }
 
   try {
-    // Use Gemini to analyze the content and create a better image prompt
-    const analysisUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // Use GPT-5-mini via Responses API to analyze content and create image prompts
+    const apiUrl = 'https://api.openai.com/v1/responses';
     
     const analysisPrompt = `Analyze this business report section and create a detailed image generation prompt:
 
@@ -36,27 +40,32 @@ TASK: Create a detailed, specific image generation prompt that:
 
 Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
 
-    const response = await fetch(analysisUrl, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: analysisPrompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 200
-        }
+        model: 'gpt-5-mini',
+        input: analysisPrompt,
+        max_tokens: 200,
+        temperature: 0.7
       })
     });
 
     if (response.ok) {
       const data = await response.json();
-      const intelligentPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text || section.imagePrompt;
+      const intelligentPrompt = data.output || section.imagePrompt || `Professional visualization for ${section.title}`;
       
       // Add our styling preferences to the intelligent prompt
       return `${intelligentPrompt}. Style: Modern professional business visualization with brand colors blue (#08b2c6), teal (#b5feff), and orange (#ff6b11) accents. Clean, minimalist, suitable for corporate report. No text or words in image.`;
+    } else {
+      const errorText = await response.text();
+      console.error('GPT-5-mini prompt generation failed:', response.status, errorText);
     }
   } catch (error) {
-    console.error('Failed to generate intelligent prompt:', error);
+    console.error('Failed to generate intelligent prompt with GPT-5-mini:', error);
   }
   
   // Fallback to original prompt
@@ -64,6 +73,8 @@ Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
 }
 
 // Generate image using Gemini 2.5 Flash Image Preview
+// Note: This function now ONLY uses Gemini for actual image generation.
+// Prompt creation has been offloaded to GPT-5-mini to avoid Gemini rate limits.
 async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Fallback images if API is not configured
   const placeholderImages = [
@@ -81,11 +92,11 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
   }
 
   try {
-    // First, get an intelligent prompt based on the actual content
+    // First, get an intelligent prompt based on the actual content (using GPT-5-mini)
     const intelligentPrompt = await createIntelligentImagePrompt(section);
     
-    console.log(`Generating image for: ${section.title}`);
-    console.log(`Intelligent prompt: ${intelligentPrompt}`);
+    console.log(`[GPT-5-mini] Created prompt for: ${section.title}`);
+    console.log(`[Gemini] Generating image with prompt: ${intelligentPrompt.slice(0, 100)}...`);
     
     // Now use the image generation endpoint
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`;
@@ -133,14 +144,14 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
       // Find the image part in the response
       for (const part of parts) {
         if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('image/')) {
-          console.log(`Successfully generated image for: ${section.title}`);
+          console.log(`[Gemini] Successfully generated image for: ${section.title}`);
           // Return as base64 data URL
           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
     }
     
-    console.warn(`No image found in Gemini response for: ${section.title}`, {
+    console.warn(`[Gemini] No image found in response for: ${section.title}`, {
       hasCandidate: !!data.candidates?.[0],
       hasContent: !!data.candidates?.[0]?.content,
       hasParts: !!data.candidates?.[0]?.content?.parts,
