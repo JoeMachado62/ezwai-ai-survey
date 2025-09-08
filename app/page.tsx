@@ -1,735 +1,778 @@
-"use client";
-import { useEffect, useMemo, useState } from "react";
-import StepCard from "@/components/StepCard";
-import { TextField, TextArea, SelectField } from "@/components/Field";
-import LoadingDots from "@/components/LoadingDots";
-import LoadingOverlay from "@/components/LoadingOverlay";
-import EnhancedReport from "@/components/report/EnhancedReport";
-import LoadingSpinner from "@/components/report/LoadingSpinner";
-import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
-import type { ReportSection } from "@/lib/report-types";
+'use client';
 
-// Images from original design
-const images = {
-  intro: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68baffc29846a685cc4f2bb2.webp",
-  techStack: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687915b96ccf5645dba7e085.jpeg",
-  social: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb04c89846a6c43e4fd338.webp",
-  questions1: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91bb03232c933f450f.jpeg",
-  questions2: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91cac6682b0fc37eeb.jpeg",
-  finalCta: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d8f398f0686b47096.jpeg"
-};
+import { useState, useEffect } from 'react';
+import { ChevronRight, Clock, Target, Award, TrendingUp, Users, BarChart } from 'lucide-react';
+import StepCard from '@/components/StepCard';
+import Field from '@/components/Field';
+import LoadingOverlay from '@/components/LoadingOverlay';
+import EnhancedReport from '@/components/report/EnhancedReport';
+import './globals.css';
 
-// Testimonials data
-const testimonials = [
-  {
-    text: "The AI assessment identified 12 automation opportunities we hadn't considered. We've already implemented 3 and saved 20 hours per week.",
-    author: "James Miller",
-    role: "Operations Director",
-    initial: "JM"
-  },
-  {
-    text: "We replaced 5 different tools with one AI-powered system that integrates with our existing CRM. Efficiency increased by 40%.",
-    author: "Sarah Kim",
-    role: "Tech Startup Founder",
-    initial: "SK"
-  },
-  {
-    text: "AI now creates 80% of our social media content. We went from posting twice a week to daily, and engagement tripled.",
-    author: "Rachel Thompson",
-    role: "Marketing Manager",
-    initial: "RT"
-  }
-];
-
-// Testimonial Component
-function Testimonial({ text, author, role, initial }: typeof testimonials[0]) {
-  return (
-    <div className="testimonial">
-      <div className="testimonial-text">{text}</div>
-      <div className="testimonial-author">
-        <div className="profile-image">{initial}</div>
-        <span>- {author}, {role}</span>
-      </div>
-    </div>
-  );
+interface Question {
+  id: string;
+  text: string;
+  type: 'select' | 'text' | 'checkbox' | 'textarea';
+  options?: string[];
+  placeholder?: string;
+  helperText?: string;
 }
 
-// Image Header Component  
-function ImageHeader({ src, alt }: { src: string; alt: string }) {
-  return (
-    <div className="image-container">
-      <div className="image-shadow"></div>
-      <div className="image-frame">
-        <img src={src} alt={alt} />
-      </div>
-    </div>
-  );
+interface ReportData {
+  company_name: string;
+  website: string;
+  industry: string;
+  executive_summary: string;
+  current_state: {
+    tech_maturity: string;
+    key_challenges: string[];
+    existing_tools: string[];
+  };
+  quick_wins: Array<{
+    title: string;
+    description: string;
+    impact: string;
+    timeline: string;
+    estimated_savings?: string;
+  }>;
+  strategic_recommendations: Array<{
+    area: string;
+    recommendation: string;
+    benefits: string[];
+    priority: string;
+    implementation_complexity: string;
+  }>;
+  competitive_analysis: {
+    industry_trends: string[];
+    competitor_capabilities: string[];
+    opportunities: string[];
+  };
+  roi_projections: {
+    efficiency_gains: string;
+    cost_savings: string;
+    revenue_opportunities: string;
+    payback_period: string;
+  };
+  implementation_roadmap: Array<{
+    phase: string;
+    timeline: string;
+    focus_areas: string[];
+    expected_outcomes: string[];
+  }>;
+  risk_assessment: {
+    potential_risks: string[];
+    mitigation_strategies: string[];
+  };
+  next_steps: string[];
+  sources: string[];
 }
 
-export default function Embed() {
-  const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [loadingPhase, setLoadingPhase] = useState<"questions" | "report" | undefined>();
+export default function Page() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | ''; message: string }>({ type: '', message: '' });
+  const [dynamicQuestions, setDynamicQuestions] = useState<Question[]>([]);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [loadingNarrative, setLoadingNarrative] = useState('');
 
-  const [companyInfo, setCompanyInfo] = useState<QuestionsInput["companyInfo"]>({ 
-    companyName: "", 
-    websiteURL: "", 
-    industry: "", 
-    employees: "", 
-    revenue: "" 
-  });
-  
-  const [techStack, setTechStack] = useState<QuestionsInput["techStack"]>({ 
-    crmSystem: "", 
-    aiTools: "", 
-    biggestChallenge: "" 
-  });
-  
-  const [socialMedia, setSocialMedia] = useState<QuestionsInput["socialMedia"]>({ 
-    channels: [], 
-    contentTime: "" 
-  });
+  const totalSteps = 7;
 
-  const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
-  const [summary, setSummary] = useState("");
-  const [qSources, setQSources] = useState<{title: string; url: string}[]>([]);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [report, setReport] = useState<ReportResult | null>(null);
+  const updateProgress = () => {
+    const progressPercentage = ((currentStep + 1) / totalSteps) * 100;
+    const progressBar = document.querySelector('.progress-bar') as HTMLElement;
+    if (progressBar) {
+      progressBar.style.width = `${progressPercentage}%`;
+    }
+  };
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  
-  // Enhanced report state
-  const [enhancedReport, setEnhancedReport] = useState<ReportSection[] | null>(null);
-  const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
-  const [visualError, setVisualError] = useState<string | null>(null);
-
-  // Auto-resize iframe
   useEffect(() => {
-    const send = () => {
-      const h = document.documentElement.scrollHeight;
-      window.parent?.postMessage({ type: "EZWAI_IFRAME_HEIGHT", height: h }, "*");
-    };
-    send();
-    const ro = new ResizeObserver(send);
-    ro.observe(document.documentElement);
-    window.addEventListener("load", send);
-    return () => { 
-      ro.disconnect(); 
-      window.removeEventListener("load", send); 
-    };
-  }, []);
+    updateProgress();
+  }, [currentStep]);
 
-  const grouped = useMemo(() => {
-    const half = Math.ceil(questions.length / 2);
-    return [questions.slice(0, half), questions.slice(half)];
-  }, [questions]);
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  };
 
-  async function generateQuestions() {
-    setLoading(true);
-    setLoadingPhase("questions");
-    try {
-      const response = await fetch("/api/questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyInfo, techStack, socialMedia })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-      }
-      
-      const data: QuestionsResult = await response.json();
-      setSummary(data.summary);
-      setQuestions(data.questions);
-      setQSources(data.sources || []);
-      setStep(1);
-    } catch (error) {
-      alert("Could not generate dynamic questions. Please try again.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-      setLoadingPhase(undefined);
-    }
-  }
-
-  function renderQuestion(q: GeneratedQuestion, idx: number) {
-    const key = `q_${idx}`;
-    if (q.type === "multiple_choice" && q.options?.length) {
-      return (
-        <SelectField 
-          key={key} 
-          label={q.text} 
-          value={answers[key] || ""} 
-          onChange={e => setAnswers(a => ({ ...a, [key]: e.target.value }))}
-        >
-          <option value="" disabled>Choose an option</option>
-          {q.options.map((opt, i) => (
-            <option key={i} value={opt}>{opt}</option>
-          ))}
-        </SelectField>
-      );
-    }
-    return (
-      <TextArea 
-        key={key} 
-        label={q.text} 
-        value={answers[key] || ""} 
-        onChange={e => setAnswers(a => ({ ...a, [key]: e.target.value }))} 
-      />
-    );
-  }
-
-  async function buildReport() {
-    setLoading(true);
-    setLoadingPhase("report");
-    try {
-      const response = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          companyInfo, 
-          techStack, 
-          socialMedia, 
-          aiSummary: summary, 
-          answers 
-        })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-      }
-      
-      const data: ReportResult = await response.json();
-      setReport(data);
-      setStep(3);
-    } catch (error) {
-      alert("Could not finalize the report. Please try again.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-      setLoadingPhase(undefined);
-    }
-  }
-
-  // Simple text download for fallback mode
-  function downloadTextReport() {
-    if (!report) return;
-    
-    const textContent = `
-AI OPPORTUNITIES REPORT
-Prepared for: ${companyInfo.companyName}
-
-` +
-      `EXECUTIVE SUMMARY\n${report.executiveSummary}\n\n` +
-      `QUICK WINS\n${report.quickWins.map(w => `- ${w.title}: ${w.description}`).join('\n')}\n\n` +
-      `RECOMMENDATIONS\n${report.recommendations.map(r => `- ${r.title}: ${r.description}`).join('\n')}\n\n` +
-      `COMPETITIVE ANALYSIS\n${report.competitiveAnalysis}\n\n` +
-      `NEXT STEPS\n${report.nextSteps.join('\n')}\n`;
-    
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `AI_Report_${companyInfo.companyName || 'Your_Business'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  // Transform ReportResult to ReportSection[] format
-  function transformReportToSections(report: ReportResult): Omit<ReportSection, 'imageUrl'>[] {
-    const sections: Omit<ReportSection, 'imageUrl'>[] = [];
-    
-    // Executive Summary section
-    sections.push({
-      title: "Executive Summary",
-      mainContent: report.executiveSummary,
-      imagePrompt: `Create a professional, abstract business visualization representing AI transformation opportunities for a ${companyInfo.industry} company. Use modern, tech-inspired design with subtle blue and teal gradients.`,
-      pullQuote: "Your AI transformation journey starts here",
-      keyTakeaways: [
-        `Tailored for ${companyInfo.companyName}`,
-        `${report.quickWins.length} immediate opportunities identified`,
-        `Industry-specific recommendations`
+  const fallbackQuestions: Question[] = [
+    {
+      id: 'current_pain_points',
+      text: 'What are your biggest operational challenges right now?',
+      type: 'textarea',
+      placeholder: 'Describe challenges with efficiency, customer service, data management, etc.',
+      helperText: 'Help us understand where AI can make the biggest impact'
+    },
+    {
+      id: 'growth_goals',
+      text: 'What are your growth goals for the next 12 months?',
+      type: 'textarea',
+      placeholder: 'Revenue targets, market expansion, customer acquisition, etc.',
+      helperText: 'AI can accelerate your path to these goals'
+    },
+    {
+      id: 'automation_interest',
+      text: 'Which areas would you most like to automate?',
+      type: 'checkbox',
+      options: [
+        'Customer service & support',
+        'Sales & lead generation',
+        'Marketing & content creation',
+        'Data analysis & reporting',
+        'Administrative tasks',
+        'Inventory & operations',
+        'HR & recruitment',
+        'Financial processes'
       ]
-    });
-    
-    // Quick Wins section
-    if (report.quickWins.length > 0) {
-      sections.push({
-        title: "Quick Wins - 30 Day Implementation",
-        mainContent: report.quickWins.map(win => 
-          `**${win.title}**\n${win.description}\n*Timeframe: ${win.timeframe} | Impact: ${win.impact}*`
-        ).join('\n\n'),
-        imagePrompt: `Illustrate quick, achievable AI implementations with upward trending graphs and checkmarks. Modern business style with orange accents for urgency and action.`,
-        statistic: {
-          value: `${report.quickWins.length}`,
-          description: "Immediate AI opportunities"
-        },
-        keyTakeaways: report.quickWins.map(win => win.title)
-      });
+    },
+    {
+      id: 'budget_range',
+      text: 'What\'s your annual budget for technology improvements?',
+      type: 'select',
+      options: [
+        'Under $10,000',
+        '$10,000 - $50,000',
+        '$50,000 - $100,000',
+        '$100,000 - $500,000',
+        'Over $500,000',
+        'Not sure yet'
+      ]
+    },
+    {
+      id: 'timeline',
+      text: 'When do you want to start implementing AI solutions?',
+      type: 'select',
+      options: [
+        'Immediately',
+        'Within 1-3 months',
+        'Within 3-6 months',
+        'Within 6-12 months',
+        'Just exploring options'
+      ]
     }
-    
-    // Strategic Recommendations section
-    if (report.recommendations.length > 0) {
-      sections.push({
-        title: "Strategic AI Roadmap",
-        mainContent: report.recommendations.map(rec => 
-          `**${rec.title}**\n${rec.description}\n*Expected ROI: ${rec.roi}*`
-        ).join('\n\n'),
-        imagePrompt: `Design a futuristic roadmap visualization showing AI integration phases, with interconnected nodes and a pathway to digital transformation. Use professional blue tones.`,
-        pullQuote: report.recommendations[0]?.roi || "Significant ROI potential",
-        keyTakeaways: report.recommendations.map(rec => rec.title)
-      });
-    }
-    
-    // Competitive Analysis section
-    sections.push({
-      title: "Competitive Intelligence",
-      mainContent: report.competitiveAnalysis,
-      imagePrompt: `Create a competitive landscape visualization with abstract representations of market positioning and AI adoption levels. Use data-driven design elements with teal highlights.`,
-      statistic: {
-        value: "20-40%",
-        description: "Average efficiency gain from AI adoption"
-      }
-    });
-    
-    // Next Steps section
-    sections.push({
-      title: "Your Implementation Roadmap",
-      mainContent: "Here's your personalized action plan:\n\n" + report.nextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n'),
-      imagePrompt: `Illustrate a clear action plan with numbered steps ascending like stairs, leading to a bright, tech-enabled future. Professional style with EZWAI brand colors.`,
-      keyTakeaways: report.nextSteps.slice(0, 3)
-    });
-    
-    return sections;
-  }
-  
-  
-  async function processContactAndGenerateVisualReport() {
-    if (!report) {
-      alert('Report data is missing. Please try again.');
-      return;
-    }
-    
-    setLoading(true);
-    setLoadingPhase('report' as any);
+  ];
+
+  const generateQuestions = async () => {
+    setLoadingNarrative('Analyzing your industry landscape and competitors...');
     
     try {
-      // Step 1: Save contact to GHL (non-blocking - we'll continue even if this fails)
-      try {
-        const ghlResponse = await fetch("/api/ghl/contact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            email,
-            phone,
-            tags: ["AI Assessment Survey", companyInfo.industry].filter(Boolean),
-            companyInfo,
-            techStack,
-            socialMedia,
-            answers,
-            report
-          })
-        });
-        
-        if (!ghlResponse.ok) {
-          console.error('GHL save failed but continuing with report generation');
-        }
-      } catch (ghlError) {
-        console.error('GHL contact save error (non-fatal):', ghlError);
-        // Continue with report generation even if GHL fails
-      }
-      
-      // Step 2: Transform and generate enhanced visual report
-      setIsGeneratingVisuals(true);
-      const reportSections = transformReportToSections(report);
-      
-      // Step 3: Call image generation API
-      const imageResponse = await fetch('/api/report/generate-images', {
+      const response = await fetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportData: reportSections })
+        body: JSON.stringify({
+          company_name: formData.company_name,
+          website: formData.website,
+          industry: formData.industry,
+          company_size: formData.company_size,
+          annual_revenue: formData.annual_revenue,
+          tech_stack: formData.tech_stack,
+          social_media: formData.social_media
+        })
       });
-      
-      if (!imageResponse.ok) {
-        const errorData = await imageResponse.json();
-        throw new Error(errorData.error || 'Failed to generate visual report');
+
+      if (!response.ok) {
+        console.error('Failed to generate questions:', response.status);
+        setDynamicQuestions(fallbackQuestions);
+        return;
       }
+
+      const data = await response.json();
       
-      const imageData = await imageResponse.json();
-      setEnhancedReport(imageData.enhancedReport);
-      
-      // Success - show the enhanced report
-      setStep(5);
-      
-    } catch (error: any) {
-      console.error('Visual report generation error:', error);
-      // Fallback to basic text report if visual generation fails
-      alert('Using text-only report view. Visual enhancements unavailable.');
-      setStep(4);
-    } finally {
-      setLoading(false);
-      setLoadingPhase(undefined);
-      setIsGeneratingVisuals(false);
+      if (data.questions && Array.isArray(data.questions)) {
+        const formattedQuestions = data.questions.map((q: any, index: number) => ({
+          id: q.id || `question_${index}`,
+          text: q.text || q.question,
+          type: q.type || 'textarea',
+          options: q.options || undefined,
+          placeholder: q.placeholder || 'Please provide your response',
+          helperText: q.helperText || undefined
+        }));
+        setDynamicQuestions(formattedQuestions);
+        setLoadingNarrative('');
+      } else {
+        setDynamicQuestions(fallbackQuestions);
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      setDynamicQuestions(fallbackQuestions);
+      setLoadingNarrative('');
     }
-  }
-
-  // Handle closing the enhanced report and starting over
-  const handleCloseReport = () => {
-    // Reset all state to start fresh
-    setStep(0);
-    setEnhancedReport(null);
-    setReport(null);
-    setAnswers({});
-    setQuestions([]);
-    setSummary("");
-    setQSources([]);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setPhone("");
-    setCompanyInfo({ 
-      companyName: "", 
-      websiteURL: "", 
-      industry: "", 
-      employees: "", 
-      revenue: "" 
-    });
-    setTechStack({ 
-      crmSystem: "", 
-      aiTools: "", 
-      biggestChallenge: "" 
-    });
-    setSocialMedia({ 
-      channels: [], 
-      contentTime: "" 
-    });
   };
-  
-  // Show loading spinner during visual generation
-  if (isGeneratingVisuals && !loading) {
-    return <LoadingSpinner />;
-  }
-  
-  // Show enhanced report if available
-  if (enhancedReport && step === 5) {
-    return (
-      <EnhancedReport 
-        sections={enhancedReport}
-        businessName={companyInfo.companyName || 'Your Business'}
-        onClose={handleCloseReport}
-      />
-    );
-  }
-  
-  return (
-    <main className="min-h-screen py-6">
-      <LoadingOverlay show={loading || isGeneratingVisuals} phase={isGeneratingVisuals ? 'report' : loadingPhase} companyInfo={companyInfo} />
 
-      {step === 0 && (
-        <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">
-          <ImageHeader src={images.intro} alt="AI Introduction" />
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField 
-              label="Company Name" 
-              value={companyInfo.companyName} 
-              onChange={e => setCompanyInfo({ ...companyInfo, companyName: e.target.value })} 
-              required 
-            />
-            <TextField 
-              label="Website URL" 
-              value={companyInfo.websiteURL || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, websiteURL: e.target.value })} 
-              placeholder="https://example.com" 
-            />
-            <TextField 
-              label="Industry" 
-              value={companyInfo.industry} 
-              onChange={e => setCompanyInfo({ ...companyInfo, industry: e.target.value })} 
-              required 
-            />
-            <TextField 
-              label="Employees" 
-              value={companyInfo.employees || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, employees: e.target.value })} 
-            />
-            <SelectField 
-              label="Annual Revenue" 
-              value={companyInfo.revenue || ""} 
-              onChange={e => setCompanyInfo({ ...companyInfo, revenue: e.target.value })}
-            >
-              <option value="" disabled>Select range</option>
-              <option value="Under $100k">Under $100k</option>
-              <option value="$100k-$250k">$100k - $250k</option>
-              <option value="$250k-$500k">$250k - $500k</option>
-              <option value="$500k-$1M">$500k - $1M</option>
-              <option value="$1M-$5M">$1M - $5M</option>
-              <option value="$5M-$10M">$5M - $10M</option>
-              <option value="$10M-$25M">$10M - $25M</option>
-              <option value="Over $25M">Over $25M</option>
-            </SelectField>
-          </div>
+  const generateReport = async () => {
+    setLoadingMessage('Creating your personalized AI Opportunities Report...');
+    setLoadingNarrative('Researching your industry\'s AI adoption trends...');
+    
+    setTimeout(() => setLoadingNarrative('Analyzing your competitors\' technology strategies...'), 3000);
+    setTimeout(() => setLoadingNarrative('Identifying quick wins and ROI opportunities...'), 6000);
+    setTimeout(() => setLoadingNarrative('Building your custom implementation roadmap...'), 9000);
+    
+    try {
+      const surveyAnswers = dynamicQuestions.reduce((acc: any, question) => {
+        acc[question.id] = formData[question.id] || '';
+        return acc;
+      }, {});
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            <TextField 
-              label="CRM (if any)" 
-              value={techStack.crmSystem || ""} 
-              onChange={e => setTechStack({ ...techStack, crmSystem: e.target.value })} 
-            />
-            <TextField 
-              label="AI Tools Currently Used" 
-              value={techStack.aiTools || ""} 
-              onChange={e => setTechStack({ ...techStack, aiTools: e.target.value })} 
-            />
-          </div>
-          
-          <TextArea 
-            label="Biggest Challenge" 
-            value={techStack.biggestChallenge || ""} 
-            onChange={e => setTechStack({ ...techStack, biggestChallenge: e.target.value })} 
-          />
+      const response = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          survey_answers: surveyAnswers
+        })
+      });
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            <TextField 
-              label="Social Channels (comma-separated)" 
-              value={(socialMedia.channels || []).join(", ")} 
-              onChange={e => setSocialMedia({ 
-                ...socialMedia, 
-                channels: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
-              })} 
-            />
-            <TextField 
-              label="Weekly Content Time" 
-              value={socialMedia.contentTime || ""} 
-              onChange={e => setSocialMedia({ ...socialMedia, contentTime: e.target.value })} 
-            />
-          </div>
+      if (!response.ok) {
+        throw new Error(`Failed to generate report: ${response.status}`);
+      }
 
-          <div className="mt-6 flex items-center gap-3">
-            <button 
-              className="btn-ez" 
-              onClick={generateQuestions} 
-              disabled={loading || !companyInfo.companyName || !companyInfo.industry}
-            >
-              {loading ? <LoadingDots/> : "Continue"}
-            </button>
-          </div>
-          
-          <Testimonial {...testimonials[0]} />
-        </StepCard>
-      )}
+      const data = await response.json();
+      setReportData(data);
+      setLoadingNarrative('');
+      return data;
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setLoadingNarrative('');
+      throw error;
+    }
+  };
 
-      {step === 1 && (
-        <StepCard 
-          title="Personalized Questions for Your Business" 
-          subtitle={summary ? summary : "Based on our analysis, we've identified key areas to explore"}
-        >
-          <ImageHeader src={images.questions1} alt="Dynamic Questions" />
-          {qSources?.length ? (
-            <div className="mb-4 text-sm text-slate-600">
-              <div className="font-semibold">Sources</div>
-              <ul className="list-disc ml-5">
-                {qSources.map((s, i) => (
-                  <li key={i}>
-                    <a className="underline" href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          
-          {grouped[0].map(renderQuestion)}
-          
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(0)} disabled={loading}>
-              Back
-            </button>
-            <button className="btn-ez" onClick={() => {
-              // Validate that at least half the questions are answered
-              const answeredCount = Object.keys(answers).filter(key => answers[key]?.trim()).length;
-              if (answeredCount < Math.floor(questions.length / 2)) {
-                alert(`Please answer at least ${Math.floor(questions.length / 2)} questions to continue.`);
-                return;
-              }
-              setStep(2);
-            }} disabled={loading}>
-              Continue
-            </button>
-          </div>
-          
-          <Testimonial {...testimonials[1]} />
-        </StepCard>
-      )}
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      setIsLoading(true);
+      setLoadingMessage('Generating personalized questions for your business...');
+      await generateQuestions();
+      setIsLoading(false);
+    } else if (currentStep === 3) {
+      setIsLoading(true);
+      try {
+        await generateReport();
+        setIsLoading(false);
+        setCurrentStep(currentStep + 1);
+        return;
+      } catch (error) {
+        setIsLoading(false);
+        setStatusMessage({ 
+          type: 'error', 
+          message: 'Failed to generate report. Please try again.' 
+        });
+        return;
+      }
+    }
+    
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
 
-      {step === 2 && (
-        <StepCard title="Let's Dive Deeper Into Your Processes" subtitle="These questions help us calculate your potential ROI from AI implementation">
-          <ImageHeader src={images.questions2} alt="Process Deep Dive" />
-          
-          {grouped[1].map(renderQuestion)}
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(1)} disabled={loading}>
-              Back
-            </button>
-            <button className="btn-ez" onClick={buildReport} disabled={loading}>
-              {loading ? <LoadingDots/> : "Generate My Report"}
-            </button>
-          </div>
-          
-          <Testimonial {...testimonials[2]} />
-        </StepCard>
-      )}
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
-      {step === 3 && report && (
-        <StepCard title="Your AI Transformation Report is Ready!" subtitle="Enter your contact information to receive your personalized AI opportunities report">
-          <ImageHeader src={images.finalCta} alt="Final Call to Action" />
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField 
-              label="First Name" 
-              value={firstName} 
-              onChange={e => setFirstName(e.target.value)} 
-              required 
-            />
-            <TextField 
-              label="Last Name" 
-              value={lastName} 
-              onChange={e => setLastName(e.target.value)} 
-              required 
-            />
-            <TextField 
-              label="Email" 
-              type="email" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
-            />
-            <TextField 
-              label="Phone" 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)} 
-            />
-          </div>
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setLoadingMessage('Saving your information...');
+    
+    try {
+      const response = await fetch('/api/ghl/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          report: reportData,
+          survey_answers: dynamicQuestions.reduce((acc: any, q) => {
+            acc[q.id] = formData[q.id] || '';
+            return acc;
+          }, {})
+        })
+      });
 
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => setStep(2)} disabled={loading}>
-              Back
-            </button>
-            <button 
-              className="btn-ez" 
-              onClick={processContactAndGenerateVisualReport} 
-              disabled={loading || !firstName || !lastName || !email}
-            >
-              {loading ? <LoadingDots/> : "Generate My Visual AI Report"}
-            </button>
-          </div>
-          
-          <p className="small-text">
-            By clicking the button above, you'll receive a visually enhanced AI report with custom-generated imagery. 
-            We'll also save your contact for follow-up consultation. Your privacy is protected.
-          </p>
+      if (!response.ok) {
+        throw new Error('Failed to save contact');
+      }
 
-          {report.sources?.length ? (
-            <div className="mt-6 text-sm text-slate-600">
-              <div className="font-semibold">Report Sources</div>
-              <ul className="list-disc ml-5">
-                {report.sources.map((s, i) => (
-                  <li key={i}>
-                    <a className="underline" href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </StepCard>
-      )}
+      setStatusMessage({ 
+        type: 'success', 
+        message: 'Thank you! Your AI Opportunities Report has been sent to your email.' 
+      });
+      setCurrentStep(currentStep + 1);
+    } catch (error) {
+      console.error('Error:', error);
+      setStatusMessage({ 
+        type: 'error', 
+        message: 'There was an error submitting your information. Please try again.' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      {step === 4 && (
-        <StepCard title="Text Report Ready (Fallback Mode)" subtitle="Visual generation unavailable - showing text version">
-          <div className="report-section">
-            <div className="report-header">
-              <div className="report-title">AI Opportunities Report</div>
-              <div className="report-subtitle">Prepared for {companyInfo.companyName}</div>
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <StepCard
+            title="Welcome to Your AI Transformation Journey"
+            subtitle="Let's discover how AI can revolutionize your business"
+          >
+            <div className="image-container">
+              <div className="image-shadow"></div>
+              <div className="image-frame">
+                <img src="/api/placeholder/720/400" alt="AI Innovation" />
+              </div>
             </div>
             
-            {report && (
-              <div className="report-content">
-                <div className="report-section-title">Executive Summary</div>
-                <div className="report-item">
-                  <div className="report-item-description">{report.executiveSummary}</div>
-                </div>
-                
-                <div className="report-section-title">Quick Wins - Implement Within 30 Days</div>
-                {report.quickWins.map((win, i) => (
-                  <div key={i} className="report-item">
-                    <div className="report-item-title">{win.title}</div>
-                    <div className="report-item-description">
-                      {win.description}<br/>
-                      <strong>Timeframe:</strong> {win.timeframe}<br/>
-                      <strong>Impact:</strong> {win.impact}
-                    </div>
-                  </div>
-                ))}
-                
-                <div className="report-section-title">Strategic Recommendations</div>
-                {report.recommendations.map((rec, i) => (
-                  <div key={i} className="report-item">
-                    <div className="report-item-title">{rec.title}</div>
-                    <div className="report-item-description">
-                      {rec.description}<br/>
-                      <strong>Expected ROI:</strong> {rec.roi}
-                    </div>
-                  </div>
-                ))}
-                
-                <div className="report-section-title">Competitive Analysis</div>
-                <div className="report-item">
-                  <div className="report-item-description">{report.competitiveAnalysis}</div>
-                </div>
-                
-                <div className="report-section-title">Your Next Steps</div>
-                <div className="report-item">
-                  <div className="report-item-description">
-                    <ol>
-                      {report.nextSteps.map((step, i) => (
-                        <li key={i}>{step}</li>
-                      ))}
-                    </ol>
-                  </div>
+            <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '30px' }}>
+              Join thousands of businesses already using AI to increase efficiency by 40%, 
+              reduce costs by 30%, and accelerate growth. This personalized assessment will 
+              identify your biggest AI opportunities.
+            </p>
+
+            <div className="testimonial">
+              <div className="testimonial-text">
+                "AI automation saved us 20 hours per week and increased our customer satisfaction by 35%. 
+                This assessment showed us opportunities we didn't even know existed."
+              </div>
+              <div className="testimonial-author">
+                <div className="profile-image">JD</div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>James Davidson</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>CEO, TechFlow Solutions</div>
                 </div>
               </div>
-            )}
-          </div>
-          
-          <div className="mt-6 flex items-center gap-3">
-            <button className="btn-ez secondary" onClick={() => {
-              setStep(3);
-              setEnhancedReport(null);
+            </div>
+
+            <button className="btn" onClick={handleNext}>
+              Start Your Assessment <ChevronRight style={{ display: 'inline', marginLeft: '5px' }} />
+            </button>
+            
+            <p className="small-text">
+              <Clock style={{ display: 'inline', width: '14px', marginRight: '5px' }} />
+              Takes only 3-4 minutes • Get instant personalized report • 100% free
+            </p>
+          </StepCard>
+        );
+
+      case 1:
+        return (
+          <StepCard
+            title="Tell Us About Your Business"
+            subtitle="Help us understand your company to provide relevant AI recommendations"
+          >
+            <Field
+              label="Company Name"
+              type="text"
+              value={formData.company_name || ''}
+              onChange={(value) => handleInputChange('company_name', value)}
+              placeholder="Enter your company name"
+              required
+            />
+            
+            <Field
+              label="Website"
+              type="text"
+              value={formData.website || ''}
+              onChange={(value) => handleInputChange('website', value)}
+              placeholder="https://www.yourcompany.com"
+            />
+            
+            <Field
+              label="Industry"
+              type="select"
+              value={formData.industry || ''}
+              onChange={(value) => handleInputChange('industry', value)}
+              options={[
+                'Technology & Software',
+                'Healthcare & Medical',
+                'Financial Services',
+                'Retail & E-commerce',
+                'Manufacturing',
+                'Real Estate',
+                'Education',
+                'Marketing & Advertising',
+                'Legal Services',
+                'Hospitality & Tourism',
+                'Construction',
+                'Transportation & Logistics',
+                'Non-profit',
+                'Other'
+              ]}
+              required
+            />
+            
+            <Field
+              label="Company Size"
+              type="select"
+              value={formData.company_size || ''}
+              onChange={(value) => handleInputChange('company_size', value)}
+              options={[
+                '1-10 employees',
+                '11-50 employees',
+                '51-200 employees',
+                '201-500 employees',
+                '500+ employees'
+              ]}
+              required
+            />
+            
+            <Field
+              label="Annual Revenue"
+              type="select"
+              value={formData.annual_revenue || ''}
+              onChange={(value) => handleInputChange('annual_revenue', value)}
+              options={[
+                'Under $100K',
+                '$100K - $500K',
+                '$500K - $1M',
+                '$1M - $5M',
+                '$5M - $10M',
+                '$10M - $50M',
+                'Over $50M'
+              ]}
+            />
+            
+            <Field
+              label="Current Tech Stack (Optional)"
+              type="textarea"
+              value={formData.tech_stack || ''}
+              onChange={(value) => handleInputChange('tech_stack', value)}
+              placeholder="E.g., Salesforce, QuickBooks, Shopify, WordPress, etc."
+            />
+            
+            <Field
+              label="Social Media/LinkedIn (Optional)"
+              type="text"
+              value={formData.social_media || ''}
+              onChange={(value) => handleInputChange('social_media', value)}
+              placeholder="LinkedIn profile or other social media URL"
+            />
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="btn" style={{ flex: 1 }} onClick={handlePrevious}>Previous</button>
+              <button className="btn" style={{ flex: 2 }} onClick={handleNext}>
+                Generate My Questions <ChevronRight style={{ display: 'inline', marginLeft: '5px' }} />
+              </button>
+            </div>
+          </StepCard>
+        );
+
+      case 2:
+        return (
+          <StepCard
+            title="Your Personalized AI Assessment"
+            subtitle="Based on your industry and business profile"
+          >
+            {dynamicQuestions.map((question, index) => (
+              <div key={question.id} style={{ marginBottom: '25px' }}>
+                <Field
+                  label={`${index + 1}. ${question.text}`}
+                  type={question.type}
+                  value={formData[question.id] || ''}
+                  onChange={(value) => handleInputChange(question.id, value)}
+                  options={question.options}
+                  placeholder={question.placeholder}
+                  helperText={question.helperText}
+                  required
+                />
+              </div>
+            ))}
+            
+            <div className="testimonial">
+              <div className="testimonial-text">
+                "The personalized questions really understood our unique challenges. 
+                The AI recommendations we received were spot-on and immediately actionable."
+              </div>
+              <div className="testimonial-author">
+                <div className="profile-image">SK</div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>Sarah Kim</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>COO, Retail Dynamics</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="btn" style={{ flex: 1 }} onClick={handlePrevious}>Previous</button>
+              <button className="btn" style={{ flex: 2 }} onClick={handleNext}>
+                Continue <ChevronRight style={{ display: 'inline', marginLeft: '5px' }} />
+              </button>
+            </div>
+          </StepCard>
+        );
+
+      case 3:
+        return (
+          <StepCard
+            title="Opportunity Discovery"
+            subtitle="Help us identify your biggest AI opportunities"
+          >
+            <Field
+              label="What's your biggest business challenge right now?"
+              type="textarea"
+              value={formData.biggest_challenge || ''}
+              onChange={(value) => handleInputChange('biggest_challenge', value)}
+              placeholder="E.g., Too much time on repetitive tasks, difficulty scaling customer service, need better data insights..."
+              required
+            />
+            
+            <Field
+              label="Which departments need the most help?"
+              type="checkbox"
+              value={formData.departments_need_help || []}
+              onChange={(value) => handleInputChange('departments_need_help', value)}
+              options={[
+                'Sales & Business Development',
+                'Marketing & Content',
+                'Customer Service & Support',
+                'Operations & Logistics',
+                'Finance & Accounting',
+                'HR & Recruitment',
+                'IT & Development',
+                'Data & Analytics'
+              ]}
+              required
+            />
+            
+            <Field
+              label="What would success look like in 12 months?"
+              type="textarea"
+              value={formData.success_metrics || ''}
+              onChange={(value) => handleInputChange('success_metrics', value)}
+              placeholder="E.g., 50% less time on admin work, 2x more leads, 30% cost reduction..."
+              required
+            />
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="btn" style={{ flex: 1 }} onClick={handlePrevious}>Previous</button>
+              <button className="btn" style={{ flex: 2 }} onClick={handleNext}>
+                Generate My Report <Award style={{ display: 'inline', marginLeft: '5px' }} />
+              </button>
+            </div>
+          </StepCard>
+        );
+
+      case 4:
+        return reportData ? (
+          <EnhancedReport data={reportData} />
+        ) : (
+          <StepCard
+            title="Generating Your Report"
+            subtitle="Please wait while we analyze your responses"
+          >
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <div className="loading-text">Creating your personalized AI report...</div>
+              {loadingNarrative && (
+                <div className="ez-fade">{loadingNarrative}</div>
+              )}
+            </div>
+          </StepCard>
+        );
+
+      case 5:
+        return (
+          <StepCard
+            title="Get Your Complete AI Opportunities Report"
+            subtitle="Receive your personalized roadmap and recommendations"
+          >
+            <div className="image-container">
+              <div className="image-shadow"></div>
+              <div className="image-frame">
+                <img src="/api/placeholder/720/400" alt="Report Preview" />
+              </div>
+            </div>
+            
+            <p style={{ fontSize: '16px', marginBottom: '25px', textAlign: 'center' }}>
+              Your custom report includes ROI projections, implementation roadmap, 
+              and specific AI tools for your business.
+            </p>
+            
+            <Field
+              label="First Name"
+              type="text"
+              value={formData.first_name || ''}
+              onChange={(value) => handleInputChange('first_name', value)}
+              placeholder="John"
+              required
+            />
+            
+            <Field
+              label="Last Name"
+              type="text"
+              value={formData.last_name || ''}
+              onChange={(value) => handleInputChange('last_name', value)}
+              placeholder="Smith"
+              required
+            />
+            
+            <Field
+              label="Work Email"
+              type="email"
+              value={formData.email || ''}
+              onChange={(value) => handleInputChange('email', value)}
+              placeholder="john@company.com"
+              required
+            />
+            
+            <Field
+              label="Phone Number"
+              type="tel"
+              value={formData.phone || ''}
+              onChange={(value) => handleInputChange('phone', value)}
+              placeholder="(555) 123-4567"
+              required
+            />
+            
+            <Field
+              label="Your Role"
+              type="select"
+              value={formData.role || ''}
+              onChange={(value) => handleInputChange('role', value)}
+              options={[
+                'Owner/Founder',
+                'CEO/President',
+                'COO/Operations',
+                'CFO/Finance',
+                'CTO/Technology',
+                'CMO/Marketing',
+                'Director/VP',
+                'Manager',
+                'Other Decision Maker'
+              ]}
+              required
+            />
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="btn" style={{ flex: 1 }} onClick={handlePrevious}>Previous</button>
+              <button 
+                className="btn" 
+                style={{ flex: 2, background: '#ff6b11' }} 
+                onClick={handleSubmit}
+              >
+                Get My Free Report <TrendingUp style={{ display: 'inline', marginLeft: '5px' }} />
+              </button>
+            </div>
+            
+            <p className="small-text">
+              🔒 Your information is secure and will never be shared. 
+              You'll receive your personalized AI Opportunities Report instantly via email.
+            </p>
+          </StepCard>
+        );
+
+      case 6:
+        return (
+          <StepCard
+            title="🎉 Success! Your Report is Ready"
+            subtitle="Check your email for your personalized AI Opportunities Report"
+          >
+            <div style={{ 
+              background: 'linear-gradient(135deg, #08b2c6 0%, #b5feff 100%)',
+              padding: '40px',
+              borderRadius: '12px',
+              color: 'white',
+              textAlign: 'center',
+              marginBottom: '30px'
             }}>
-              Try Again
-            </button>
-            <button className="btn-ez" onClick={downloadTextReport} disabled={!report}>
-              Download Text Report
-            </button>
-          </div>
-          
-          <p className="text-sm text-slate-600 mt-4">
-            Note: Visual enhancements couldn't be generated. You can download the text version above or try again.
-          </p>
-        </StepCard>
-      )}
-    </main>
+              <Award size={60} style={{ marginBottom: '20px' }} />
+              <h3 style={{ fontSize: '24px', marginBottom: '15px' }}>
+                Your AI Journey Starts Now!
+              </h3>
+              <p style={{ fontSize: '16px', opacity: 0.95 }}>
+                We've identified {reportData?.quick_wins?.length || 5} immediate opportunities 
+                that could save your business significant time and money.
+              </p>
+            </div>
+            
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '25px', 
+              borderRadius: '8px',
+              marginBottom: '25px'
+            }}>
+              <h4 style={{ marginBottom: '15px', color: '#08b2c6' }}>
+                <BarChart style={{ display: 'inline', marginRight: '8px' }} />
+                What's in Your Report:
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {[
+                  'Personalized AI implementation roadmap',
+                  'ROI projections and cost savings analysis',
+                  'Specific tool recommendations for your industry',
+                  'Quick wins you can implement immediately',
+                  'Competitive advantage opportunities'
+                ].map((item, index) => (
+                  <li key={index} style={{ 
+                    padding: '8px 0', 
+                    borderBottom: '1px solid #e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <Target size={16} style={{ marginRight: '10px', color: '#ff6b11' }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="testimonial">
+              <div className="testimonial-text">
+                "The report identified $200K in annual savings through AI automation. 
+                We implemented the quick wins immediately and saw results within weeks."
+              </div>
+              <div className="testimonial-author">
+                <div className="profile-image">MP</div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>Michael Park</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>CFO, Global Logistics Inc.</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ 
+              background: '#fff5ef', 
+              border: '2px solid #ff6b11',
+              padding: '20px', 
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginTop: '25px'
+            }}>
+              <Users size={30} style={{ color: '#ff6b11', marginBottom: '10px' }} />
+              <h4 style={{ color: '#ff6b11', marginBottom: '10px' }}>Ready to Accelerate?</h4>
+              <p style={{ fontSize: '14px', marginBottom: '15px' }}>
+                Our AI experts are standing by to help you implement these opportunities 
+                and transform your business.
+              </p>
+              <button 
+                className="btn" 
+                style={{ background: '#ff6b11' }}
+                onClick={() => window.location.href = 'https://ezwai.com/consultation'}
+              >
+                Schedule Free Consultation
+              </button>
+            </div>
+            
+            {statusMessage.message && (
+              <div className={`statusMessage ${statusMessage.type}`}>
+                {statusMessage.message}
+              </div>
+            )}
+          </StepCard>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="container">
+      {isLoading && <LoadingOverlay message={loadingMessage} narrative={loadingNarrative} />}
+      {renderStep()}
+      <div className="progress-container">
+        <div className="progress-bar"></div>
+      </div>
+    </div>
   );
 }

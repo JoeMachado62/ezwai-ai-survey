@@ -431,7 +431,7 @@ Prepared for: ${companyInfo.companyName}
   }
   
   return (
-    <main className="min-h-screen py-6">
+    <main className="container">
       <LoadingOverlay show={loading || isGeneratingVisuals} phase={isGeneratingVisuals ? 'report' : loadingPhase} companyInfo={companyInfo} />
 
       {step === 0 && (
