@@ -5,7 +5,7 @@ import { ChevronRight, Clock, Target, Award, TrendingUp, Users, BarChart } from 
 import StepCard from '@/components/StepCard';
 import Field from '@/components/Field';
 import LoadingOverlay from '@/components/LoadingOverlay';
-import EnhancedReport from '@/components/report/EnhancedReport';
+import ReportDisplay from '@/components/ReportDisplay';
 import './globals.css';
 
 interface Question {
@@ -554,7 +554,7 @@ export default function Page() {
 
       case 4:
         return reportData ? (
-          <EnhancedReport report={reportData} />
+          <ReportDisplay reportData={reportData} />
         ) : (
           <StepCard
             title="Generating Your Report"
