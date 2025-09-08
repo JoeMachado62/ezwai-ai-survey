@@ -58,3 +58,4 @@ nul
 
 # HTML files with potential secrets
 ezwai_ai_survey.html
+*.pdf
