@@ -53,12 +53,28 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
   const paragraphs = content.split('\n').filter(p => p.trim() !== '');
   // Regex to find stats, percentages, monetary values, etc.
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
+  
+  // Regex to detect markdown bold sections
+  const boldRegex = /\*\*(.*?)\*\*/g;
 
   return (
     <>
       {paragraphs.map((paragraph, pIndex) => {
+        // Check if this looks like a section title (starts with ** and ends with **)
+        if (paragraph.startsWith('**') && paragraph.includes('**')) {
+          const titleMatch = paragraph.match(/\*\*(.*?)\*\*/);
+          const title = titleMatch ? titleMatch[1] : paragraph;
+          const rest = paragraph.replace(/\*\*(.*?)\*\*/, '').trim();
+          
+          return (
+            <div key={pIndex} className="mb-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+              {rest && <p className="text-gray-700">{rest}</p>}
+            </div>
+          );
+        }
+        
         // Heuristic for an "impactful paragraph" that acts like a mini pull-quote.
-        // If a paragraph is short and there are multiple paragraphs, style it differently.
         if (paragraph.length < 150 && paragraphs.length > 1) {
           return (
             <p key={pIndex} className="text-xl font-serif text-gray-600 my-6 italic text-center leading-relaxed">
@@ -70,7 +86,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         const parts = paragraph.split(statRegex);
 
         return (
-          <p key={pIndex}>
+          <p key={pIndex} className="mb-4">
             {parts.map((part, i) => {
               if (part.match(statRegex)) {
                 return (
@@ -78,6 +94,11 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                     {part}
                   </span>
                 );
+              }
+              // Process bold markdown in regular text
+              const processedPart = part.replace(boldRegex, '<strong>$1</strong>');
+              if (processedPart !== part) {
+                return <span key={i} dangerouslySetInnerHTML={{ __html: processedPart }} />;
               }
               return part;
             })}

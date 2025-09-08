@@ -108,6 +108,8 @@ export async function POST(request: Request) {
   try {
     const { reportData } = await request.json() as { reportData: Omit<ReportSection, 'imageUrl'>[] };
 
+    console.log('Received report data with sections:', reportData?.map(s => s.title));
+    
     if (!reportData || !Array.isArray(reportData)) {
       return NextResponse.json({ error: 'Invalid report data provided.' }, { status: 400 });
     }

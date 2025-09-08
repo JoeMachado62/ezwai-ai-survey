@@ -41,9 +41,17 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
 
   return (
     <div className="loading-overlay">
-      <div className="loading-content">
-        {/* Show video for both phases */}
-        <div style={{ position: 'relative', width: '100%', maxWidth: '560px', margin: '0 auto 30px' }}>
+      <div className="loading-content" style={{ 
+        width: '80vw', 
+        minWidth: '80vw',
+        maxWidth: '1200px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '2rem'
+      }}>
+        {/* Show video for both phases - 80% of viewport width */}
+        <div style={{ position: 'relative', width: '100%' }}>
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
             <iframe 
               src="https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=false&preload=true&responsive=true"
@@ -62,20 +70,28 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
           </div>
         </div>
         
-        <div className="loading-text" style={{ marginBottom: '15px' }}>
+        <div className="loading-text" style={{ 
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          color: 'white',
+          textAlign: 'center',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+        }}>
           {phase === "questions" ? "Generating your custom questions" : "Deep research for your final report"}
         </div>
         
         {companyInfo && (
-          <LoadingNarrative
-            lines={phase === "questions" ? questionLines : reportLines}
-            ctx={{
-              company: companyInfo.companyName,
-              industry: companyInfo.industry,
-              websiteURL: companyInfo.websiteURL
-            }}
-            intervalMs={phase === "questions" ? 1800 : 2200}
-          />
+          <div style={{ color: 'white', fontSize: '1.25rem', textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>
+            <LoadingNarrative
+              lines={phase === "questions" ? questionLines : reportLines}
+              ctx={{
+                company: companyInfo.companyName,
+                industry: companyInfo.industry,
+                websiteURL: companyInfo.websiteURL
+              }}
+              intervalMs={phase === "questions" ? 1800 : 2200}
+            />
+          </div>
         )}
       </div>
     </div>
