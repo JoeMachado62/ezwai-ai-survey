@@ -560,6 +560,7 @@ export default function Page() {
             {
               title: "Executive Summary",
               mainContent: reportData.executive_summary,
+              imagePrompt: `Modern office with AI technology, ${reportData.industry} business transformation`,
               imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5a.jpeg`,
               pullQuote: `Your ${reportData.industry} business has significant AI opportunities`,
               keyTakeaways: reportData.quick_wins.slice(0, 3).map(w => w.title)
@@ -569,6 +570,7 @@ export default function Page() {
               mainContent: reportData.quick_wins.map(win => 
                 `${win.title}: ${win.description} (Impact: ${win.impact}, Timeline: ${win.timeline})`
               ).join('\n\n'),
+              imagePrompt: `Business growth chart, success metrics, ${reportData.industry} automation`,
               imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5b.jpeg`,
               statistic: {
                 value: reportData.roi_projections.cost_savings,
@@ -581,6 +583,7 @@ export default function Page() {
               mainContent: reportData.strategic_recommendations.map(rec => 
                 `${rec.area}: ${rec.recommendation}\n\nBenefits: ${rec.benefits.join(', ')}`
               ).join('\n\n'),
+              imagePrompt: `Strategic planning, AI implementation roadmap, ${reportData.industry} innovation`,
               imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5c.jpeg`,
               pullQuote: "Transform your operations with AI-powered automation",
               keyTakeaways: reportData.strategic_recommendations.map(r => r.area)
@@ -591,6 +594,7 @@ export default function Page() {
                 reportData.implementation_roadmap.map(phase => 
                   `${phase.phase} (${phase.timeline}):\n${phase.focus_areas.join(', ')}`
                 ).join('\n\n'),
+              imagePrompt: `ROI metrics dashboard, financial growth, ${reportData.industry} success`,
               imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5d.jpeg`,
               statistic: {
                 value: reportData.roi_projections.efficiency_gains,
