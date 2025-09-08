@@ -106,13 +106,31 @@ export async function callResponses<T>({
     : 45000; // 45 seconds for local development
     
   console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
+  
+  // Debug logging to verify API key format
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error("ERROR: OPENAI_API_KEY is not set!");
+    throw new Error("OPENAI_API_KEY environment variable is missing");
+  }
+  
+  // Log key format (safely, without exposing the full key)
+  const keyPrefix = apiKey.substring(0, 10);
+  const keyLength = apiKey.length;
+  console.log(`API Key format: ${keyPrefix}... (length: ${keyLength} chars)`);
+  
+  // Verify it's a project key
+  if (!apiKey.startsWith('sk-proj-')) {
+    console.warn(`Warning: API key doesn't start with 'sk-proj-'. Format: ${keyPrefix}...`);
+  }
+  
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(payload),
