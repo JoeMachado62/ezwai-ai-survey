@@ -5,7 +5,8 @@ import { ChevronRight, Clock, Target, Award, TrendingUp, Users, BarChart } from 
 import StepCard from '@/components/StepCard';
 import Field from '@/components/Field';
 import LoadingOverlay from '@/components/LoadingOverlay';
-import ReportDisplay from '@/components/ReportDisplay';
+import EnhancedReport from '@/components/report/EnhancedReport';
+import type { ReportSection } from '@/lib/report-types';
 import './globals.css';
 
 interface Question {
@@ -553,9 +554,61 @@ export default function Page() {
         );
 
       case 4:
-        return reportData ? (
-          <ReportDisplay reportData={reportData} />
-        ) : (
+        if (reportData) {
+          // Transform report data into sections for EnhancedReport
+          const sections: ReportSection[] = [
+            {
+              title: "Executive Summary",
+              mainContent: reportData.executive_summary,
+              imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5a.jpeg`,
+              pullQuote: `Your ${reportData.industry} business has significant AI opportunities`,
+              keyTakeaways: reportData.quick_wins.slice(0, 3).map(w => w.title)
+            },
+            {
+              title: "Quick Wins",
+              mainContent: reportData.quick_wins.map(win => 
+                `${win.title}: ${win.description} (Impact: ${win.impact}, Timeline: ${win.timeline})`
+              ).join('\n\n'),
+              imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5b.jpeg`,
+              statistic: {
+                value: reportData.roi_projections.cost_savings,
+                description: "Potential Cost Savings"
+              },
+              keyTakeaways: reportData.quick_wins.map(w => w.title)
+            },
+            {
+              title: "Strategic Recommendations",
+              mainContent: reportData.strategic_recommendations.map(rec => 
+                `${rec.area}: ${rec.recommendation}\n\nBenefits: ${rec.benefits.join(', ')}`
+              ).join('\n\n'),
+              imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5c.jpeg`,
+              pullQuote: "Transform your operations with AI-powered automation",
+              keyTakeaways: reportData.strategic_recommendations.map(r => r.area)
+            },
+            {
+              title: "ROI & Implementation",
+              mainContent: `Efficiency Gains: ${reportData.roi_projections.efficiency_gains}\n\nCost Savings: ${reportData.roi_projections.cost_savings}\n\nRevenue Opportunities: ${reportData.roi_projections.revenue_opportunities}\n\nPayback Period: ${reportData.roi_projections.payback_period}\n\n` +
+                reportData.implementation_roadmap.map(phase => 
+                  `${phase.phase} (${phase.timeline}):\n${phase.focus_areas.join(', ')}`
+                ).join('\n\n'),
+              imageUrl: `https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5d.jpeg`,
+              statistic: {
+                value: reportData.roi_projections.efficiency_gains,
+                description: "Efficiency Improvement"
+              },
+              keyTakeaways: reportData.next_steps
+            }
+          ];
+
+          return (
+            <EnhancedReport 
+              sections={sections}
+              businessName={reportData.company_name}
+              onClose={() => setCurrentStep(5)}
+            />
+          );
+        }
+        return (
           <StepCard
             title="Generating Your Report"
             subtitle="Please wait while we analyze your responses"
