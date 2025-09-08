@@ -66,10 +66,14 @@ npm run lint
    - Generates executive summary, quick wins, recommendations
    - Includes competitive analysis with web-sourced benchmarks
 
-3. **`/api/report/pdf`** - Generates downloadable PDF version of report
+3. **`/api/report/generate-images`** - Generates images for report sections
+   - Uses placeholder images (Gemini integration for future enhancement)
+   - Returns enhanced report sections with image URLs
 
 4. **`/api/ghl/contact`** - Creates/updates GoHighLevel contact
    - Saves complete survey and report as notes in CRM
+
+**Note**: PDF generation is handled client-side by the EnhancedReport component using html2canvas, preserving all styling and images.
 
 ### OpenAI Responses API Configuration
 
@@ -88,12 +92,16 @@ Key differences from Chat Completions:
 
 ```
 app/
-├── embed/page.tsx          # Main embeddable survey UI
+├── page.tsx               # Redirects to /embed
+├── embed/page.tsx         # Main embeddable survey UI
 ├── api/
-│   ├── questions/          # Questions generation (GPT-4o-mini)
-│   ├── report/            # Report generation (GPT-5)
-│   └── ghl/contact/       # GoHighLevel integration
+│   ├── questions/         # Questions generation (GPT-5-mini)
+│   ├── report/           # Report generation (GPT-5)
+│   ├── report/generate-images/  # Image generation for report sections
+│   └── ghl/contact/      # GoHighLevel integration
 components/
+├── report/
+│   └── EnhancedReport.tsx # Styled report display with PDF export
 ├── Field.tsx              # Form field components
 ├── StepCard.tsx           # Step container component
 ├── LoadingDots.tsx        # Loading indicator

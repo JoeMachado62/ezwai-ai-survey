@@ -103,10 +103,10 @@ export async function callResponses<T>({
   const controller = new AbortController();
   
   // CRITICAL: Extended timeout for GPT-5 with web search and reasoning
-  // Railway supports up to 5 minutes timeout, GPT-5 with web search can take 30-60 seconds
+  // Railway supports up to 5 minutes timeout, GPT-5 with web search can take 30-90 seconds
   const timeoutMs = process.env.RAILWAY_ENVIRONMENT 
-    ? 120000  // 2 minutes on Railway (production)
-    : 60000; // 60 seconds for local development
+    ? 180000  // 3 minutes on Railway (production)
+    : 120000; // 2 minutes for local development
     
   console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
   
