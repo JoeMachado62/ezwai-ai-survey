@@ -136,6 +136,7 @@ function SocialMediaCheckboxes({
 
 export default function Page() {
   const [step, setStep] = useState(0);
+  const [subStep, setSubStep] = useState(0); // 0: Business Info, 1: Tech Stack, 2: Social Media
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState<"questions" | "report" | undefined>();
 
@@ -417,6 +418,7 @@ export default function Page() {
   // Handle closing the enhanced report and starting over
   const handleCloseReport = () => {
     setStep(0);
+    setSubStep(0);
     setEnhancedReport(null);
     setReport(null);
     setAnswers({});
@@ -465,7 +467,24 @@ export default function Page() {
     <main className="container">
       <LoadingOverlay show={loading || isGeneratingVisuals} phase={isGeneratingVisuals ? 'report' : loadingPhase} companyInfo={companyInfo} />
 
+      {/* Progress indicator for initial data collection */}
       {step === 0 && (
+        <div className="flex justify-center mb-6">
+          <div className="flex items-center space-x-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${subStep === 0 ? 'bg-brand-teal text-white' : 'bg-gray-200'}`}>1</div>
+            <div className="w-16 h-1 bg-gray-200">
+              <div className={`h-full bg-brand-teal transition-all ${subStep >= 1 ? 'w-full' : 'w-0'}`}></div>
+            </div>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${subStep === 1 ? 'bg-brand-teal text-white' : subStep > 1 ? 'bg-brand-teal text-white' : 'bg-gray-200'}`}>2</div>
+            <div className="w-16 h-1 bg-gray-200">
+              <div className={`h-full bg-brand-teal transition-all ${subStep >= 2 ? 'w-full' : 'w-0'}`}></div>
+            </div>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${subStep === 2 ? 'bg-brand-teal text-white' : 'bg-gray-200'}`}>3</div>
+          </div>
+        </div>
+      )}
+
+      {step === 0 && subStep === 0 && (
         <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">
           <ImageHeader src={images.intro} alt="AI Introduction" />
           
@@ -519,6 +538,22 @@ export default function Page() {
             </div>
           </div>
 
+          <div className="mt-6 flex items-center gap-3">
+            <button 
+              className="btn-ez" 
+              onClick={() => setSubStep(1)} 
+              disabled={!companyInfo.companyName || !companyInfo.industry}
+            >
+              Continue
+            </button>
+          </div>
+          
+          <Testimonial {...testimonials[0]} />
+        </StepCard>
+      )}
+
+      {step === 0 && subStep === 1 && (
+        <StepCard title="Your Current Technology Stack" subtitle="Understanding your existing tools helps us identify integration opportunities">
           <ImageHeader src={images.techStack} alt="Technology Stack" />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -543,6 +578,21 @@ export default function Page() {
             placeholder="e.g., Lead generation, customer service, content creation, data entry..."
           />
 
+          <div className="mt-6 flex items-center gap-3">
+            <button className="btn-ez secondary" onClick={() => setSubStep(0)}>
+              Back
+            </button>
+            <button className="btn-ez" onClick={() => setSubStep(2)}>
+              Continue
+            </button>
+          </div>
+          
+          <Testimonial {...testimonials[1]} />
+        </StepCard>
+      )}
+
+      {step === 0 && subStep === 2 && (
+        <StepCard title="Your Digital Marketing Presence" subtitle="AI can transform your content creation and customer engagement">
           <ImageHeader src={images.social} alt="Social Media Marketing" />
           
           <SocialMediaCheckboxes
@@ -564,16 +614,19 @@ export default function Page() {
           </SelectField>
 
           <div className="mt-6 flex items-center gap-3">
+            <button className="btn-ez secondary" onClick={() => setSubStep(1)}>
+              Back
+            </button>
             <button 
               className="btn-ez" 
               onClick={generateQuestions} 
               disabled={loading || !companyInfo.companyName || !companyInfo.industry}
             >
-              {loading ? <LoadingDots/> : "Continue"}
+              {loading ? <LoadingDots/> : "Generate My Questions"}
             </button>
           </div>
           
-          <Testimonial {...testimonials[0]} />
+          <Testimonial {...testimonials[2]} />
         </StepCard>
       )}
 

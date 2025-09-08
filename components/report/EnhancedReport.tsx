@@ -20,7 +20,7 @@ const ReportHeader: React.FC<{ number: string; title: string; imageUrl: string }
 
 const PullQuote: React.FC<{ quote: string }> = ({ quote }) => (
     <blockquote className="font-serif text-2xl text-brand-orange border-l-4 border-brand-teal pl-6 my-8 italic">
-        "{quote}"
+        &ldquo;{quote}&rdquo;
     </blockquote>
 );
 
