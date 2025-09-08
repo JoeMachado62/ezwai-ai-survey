@@ -287,10 +287,16 @@ export default function Page() {
   function transformReportToSections(report: ReportResult): Omit<ReportSection, 'imageUrl'>[] {
     const sections: Omit<ReportSection, 'imageUrl'>[] = [];
     
+    // Extract key themes from the executive summary for a more relevant image
+    const summaryKeywords = report.executiveSummary.slice(0, 200);
+    
     sections.push({
       title: "Executive Summary",
       mainContent: report.executiveSummary,
-      imagePrompt: `Create a professional, abstract business visualization representing AI transformation opportunities for a ${companyInfo.industry} company. Use modern, tech-inspired design with subtle blue and teal gradients.`,
+      imagePrompt: `Create a professional business visualization for ${companyInfo.companyName} in the ${companyInfo.industry} industry. 
+                    Focus on: ${summaryKeywords}. 
+                    Style: Modern tech-inspired design with blue (#08b2c6) and teal (#b5feff) gradients. 
+                    Include abstract representations of AI automation and digital transformation.`,
       pullQuote: "Your AI transformation journey starts here",
       keyTakeaways: [
         `Tailored for ${companyInfo.companyName}`,
@@ -300,12 +306,18 @@ export default function Page() {
     });
     
     if (report.quickWins.length > 0) {
+      // Create image prompt based on actual quick wins
+      const quickWinTitles = report.quickWins.map(w => w.title).join(', ');
+      
       sections.push({
         title: "Quick Wins - 30 Day Implementation",
         mainContent: report.quickWins.map(win => 
           `**${win.title}**\n${win.description}\n*Timeframe: ${win.timeframe} | Impact: ${win.impact}*`
         ).join('\n\n'),
-        imagePrompt: `Illustrate quick, achievable AI implementations with upward trending graphs and checkmarks. Modern business style with orange accents for urgency and action.`,
+        imagePrompt: `Create a dynamic visualization showing these specific AI quick wins: ${quickWinTitles}. 
+                      Include upward trending graphs, checkmarks, and timeline elements. 
+                      Use orange (#ff6b11) accents for urgency with blue (#08b2c6) base. 
+                      Modern business style emphasizing immediate action and fast results.`,
         statistic: {
           value: `${report.quickWins.length}`,
           description: "Immediate AI opportunities"

@@ -182,7 +182,7 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
         </div>
       </div>
       
-      <div ref={reportRef} className="max-w-4xl mx-auto bg-white shadow-2xl">
+      <div ref={reportRef} className="max-w-4xl mx-auto bg-white shadow-2xl overflow-x-hidden">
         <header className="h-[100vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center p-8" style={{backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5a.jpeg')"}}>
             <h1 className="font-serif text-6xl md:text-7xl font-bold text-shadow-lg">AI Strategic Brief</h1>
             <p className="font-sans text-2xl mt-4 max-w-2xl text-shadow">A Growth & Innovation Roadmap for</p>
@@ -196,13 +196,19 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
                  <ReportHeader number={(index + 1).toString().padStart(2, '0')} title={section.title} imageUrl={section.imageUrl} />
               )}
               <div className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-                <div className="lg:col-span-2 text-lg text-gray-800 space-y-6 leading-relaxed">
-                  <DynamicContentRenderer content={section.mainContent} />
+                <div className="lg:col-span-2 text-lg text-gray-800 space-y-6 leading-relaxed overflow-hidden">
+                  <div className="break-words">
+                    <DynamicContentRenderer content={section.mainContent} />
+                  </div>
                   {section.pullQuote && <PullQuote quote={section.pullQuote} />}
                 </div>
-                <aside className="lg:col-span-1 space-y-6">
+                <aside className="lg:col-span-1 space-y-6 overflow-hidden">
                   {section.statistic && <StatHighlight value={section.statistic.value} description={section.statistic.description}/>}
-                  {section.keyTakeaways && section.keyTakeaways.length > 0 && <KeyTakeaways items={section.keyTakeaways} />}
+                  {section.keyTakeaways && section.keyTakeaways.length > 0 && (
+                    <div className="break-words">
+                      <KeyTakeaways items={section.keyTakeaways} />
+                    </div>
+                  )}
                 </aside>
               </div>
             </section>
