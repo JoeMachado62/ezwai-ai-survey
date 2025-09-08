@@ -9,6 +9,60 @@ if (!process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY not set - using placeholder images");
 }
 
+// Helper function to create intelligent image prompts using Gemini's text capabilities
+async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
+  if (!process.env.GEMINI_API_KEY) {
+    // Fallback to the basic prompt if no API key
+    return section.imagePrompt || `Professional visualization for ${section.title}`;
+  }
+
+  try {
+    // Use Gemini to analyze the content and create a better image prompt
+    const analysisUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const analysisPrompt = `Analyze this business report section and create a detailed image generation prompt:
+
+SECTION TITLE: ${section.title}
+
+CONTENT: ${section.mainContent.slice(0, 1000)}
+
+KEY TAKEAWAYS: ${section.keyTakeaways?.join(', ') || 'None'}
+
+TASK: Create a detailed, specific image generation prompt that:
+1. Captures the main concepts and themes from this section
+2. Suggests specific visual metaphors or symbols that represent the ideas
+3. Avoids generic business imagery
+4. Is suitable for AI image generation
+
+Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
+
+    const response = await fetch(analysisUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: analysisPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 200
+        }
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const intelligentPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text || section.imagePrompt;
+      
+      // Add our styling preferences to the intelligent prompt
+      return `${intelligentPrompt}. Style: Modern professional business visualization with brand colors blue (#08b2c6), teal (#b5feff), and orange (#ff6b11) accents. Clean, minimalist, suitable for corporate report. No text or words in image.`;
+    }
+  } catch (error) {
+    console.error('Failed to generate intelligent prompt:', error);
+  }
+  
+  // Fallback to original prompt
+  return section.imagePrompt || `Professional visualization for ${section.title}`;
+}
+
 // Generate image using Gemini 2.5 Flash Image Preview
 async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Fallback images if API is not configured
@@ -27,17 +81,16 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
   }
 
   try {
-    // Use Gemini 2.5 Flash Image Preview for actual image generation
-    console.log(`Generating image for: ${section.title}`);
+    // First, get an intelligent prompt based on the actual content
+    const intelligentPrompt = await createIntelligentImagePrompt(section);
     
-    // Construct the proper API endpoint for Gemini 2.5 Flash Image Preview
+    console.log(`Generating image for: ${section.title}`);
+    console.log(`Intelligent prompt: ${intelligentPrompt}`);
+    
+    // Now use the image generation endpoint
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
-    const promptText = `Create a professional business visualization for: ${section.imagePrompt}. 
-                        Style: Modern, professional, abstract business imagery with a color palette of deep blues (#08b2c6), teal (#b5feff), and accent orange (#ff6b11). 
-                        Clean, minimalist design suitable for a corporate report. 
-                        No text or words in the image, only visual elements.
-                        High quality, detailed, photorealistic rendering.`;
+    const promptText = intelligentPrompt;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
