@@ -30,8 +30,14 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
     // Use Gemini 2.5 Flash Image Preview for actual image generation
     console.log(`Generating image for: ${section.title}`);
     
-    // Construct the proper API endpoint for Gemini
+    // Construct the proper API endpoint for Gemini 2.5 Flash Image Preview
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const promptText = `Create a professional business visualization for: ${section.imagePrompt}. 
+                        Style: Modern, professional, abstract business imagery with a color palette of deep blues (#08b2c6), teal (#b5feff), and accent orange (#ff6b11). 
+                        Clean, minimalist design suitable for a corporate report. 
+                        No text or words in the image, only visual elements.
+                        High quality, detailed, photorealistic rendering.`;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -41,34 +47,31 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Create a professional business visualization for: ${section.imagePrompt}. 
-                   Style: Modern, professional, abstract business imagery with a color palette of deep blues (#08b2c6), teal (#b5feff), and accent orange (#ff6b11). 
-                   Clean, minimalist design suitable for a corporate report. 
-                   No text or words in the image, only visual elements.
-                   High quality, detailed, photorealistic rendering.`
+            text: promptText
           }]
         }],
         generationConfig: {
-          temperature: 0.8,
-          topK: 40,
+          temperature: 1.0,
           topP: 0.95,
+          topK: 40,
           maxOutputTokens: 8192,
-          responseMimeType: "application/json",
-        },
-        // Critical: Tell Gemini to return an image
-        config: {
-          responseModalities: ["IMAGE", "TEXT"]
+          responseMimeType: "text/plain"
         }
       })
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Gemini 2.5 Flash Image Preview API error:', error);
-      throw new Error('Image generation failed');
+      const errorText = await response.text();
+      console.error('Gemini 2.5 Flash Image Preview API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Image generation failed: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Gemini response structure:', JSON.stringify(data, null, 2).substring(0, 500));
     
     // Extract image from the response structure
     if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
@@ -84,7 +87,12 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
       }
     }
     
-    console.warn(`No image found in Gemini response for: ${section.title}`);
+    console.warn(`No image found in Gemini response for: ${section.title}`, {
+      hasCandidate: !!data.candidates?.[0],
+      hasContent: !!data.candidates?.[0]?.content,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length || 0
+    });
     throw new Error('No image in response');
     
   } catch (error) {

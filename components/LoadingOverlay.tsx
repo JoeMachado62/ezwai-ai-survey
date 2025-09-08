@@ -46,7 +46,7 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         <div style={{ position: 'relative', width: '100%', maxWidth: '560px', margin: '0 auto 30px' }}>
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
             <iframe 
-              src="https://www.youtube.com/embed/hTbtSjNPsUk?autoplay=1&mute=1&loop=1&playlist=hTbtSjNPsUk&controls=0&showinfo=0&rel=0&modestbranding=1" 
+              src="https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=false&preload=true&responsive=true"
               style={{
                 position: 'absolute',
                 top: 0,
