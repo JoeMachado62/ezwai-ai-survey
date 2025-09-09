@@ -8,6 +8,7 @@ import EnhancedReport from "@/components/report/EnhancedReport";
 import LoadingSpinner from "@/components/report/LoadingSpinner";
 import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
 import type { ReportSection } from "@/lib/report-types";
+import Image from "next/image";
 
 // Images from original design
 const images = {
@@ -28,7 +29,7 @@ const testimonials = [
     initial: "JM"
   },
   {
-    text: "We replaced 5 different tools with one AI-powered system that integrates with our existing CRM. Efficiency increased by 40%.",
+    text: "We replaced 5 different tools with one AI-powered system that integrates with our existing CRM. Efficiency increased by 40.",
     author: "Sarah Kim",
     role: "Tech Startup Founder",
     initial: "SK"
@@ -63,17 +64,17 @@ function ImageHeader({ src, alt }: { src: string; alt: string }) {
     <div className="image-container">
       <div className="image-shadow"></div>
       <div className="image-frame">
-        <img src={src} alt={alt} />
+        <Image src={src} alt={alt} width={1024} height={576} />
       </div>
     </div>
   );
 }
 
 // Multiple Choice Question Component
-function MultipleChoiceQuestion({ 
-  question, 
-  value, 
-  onChange 
+function MultipleChoiceQuestion({
+  question,
+  value,
+  onChange
 }: { 
   question: GeneratedQuestion;
   value: string;
@@ -98,9 +99,9 @@ function MultipleChoiceQuestion({
 }
 
 // Social Media Checkbox Component
-function SocialMediaCheckboxes({ 
-  channels, 
-  onChange 
+function SocialMediaCheckboxes({
+  channels,
+  onChange
 }: { 
   channels: string[];
   onChange: (channels: string[]) => void;
@@ -140,7 +141,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState<"questions" | "report" | undefined>();
 
-  const [companyInfo, setCompanyInfo] = useState<QuestionsInput["companyInfo"]>({ 
+  const [companyInfo, setCompanyInfo] = useState<QuestionsInput["companyInfo"]>({
     companyName: "", 
     websiteURL: "", 
     industry: "", 
@@ -148,13 +149,13 @@ export default function Page() {
     revenue: "" 
   });
   
-  const [techStack, setTechStack] = useState<QuestionsInput["techStack"]>({ 
+  const [techStack, setTechStack] = useState<QuestionsInput["techStack"]>({
     crmSystem: "", 
     aiTools: "", 
     biggestChallenge: "" 
   });
   
-  const [socialMedia, setSocialMedia] = useState<QuestionsInput["socialMedia"]>({ 
+  const [socialMedia, setSocialMedia] = useState<QuestionsInput["socialMedia"]>({
     channels: [], 
     contentTime: "" 
   });
@@ -257,7 +258,7 @@ export default function Page() {
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           companyInfo, 
           techStack, 
           socialMedia, 
@@ -441,19 +442,19 @@ export default function Page() {
     setLastName("");
     setEmail("");
     setPhone("");
-    setCompanyInfo({ 
+    setCompanyInfo({
       companyName: "", 
       websiteURL: "", 
       industry: "", 
       employees: "", 
       revenue: "" 
     });
-    setTechStack({ 
+    setTechStack({
       crmSystem: "", 
       aiTools: "", 
       biggestChallenge: "" 
     });
-    setSocialMedia({ 
+    setSocialMedia({
       channels: [], 
       contentTime: "" 
     });

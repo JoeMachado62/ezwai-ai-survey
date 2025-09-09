@@ -1,18 +1,19 @@
-
 // app/api/report/generate-images/route.ts
 
 import { NextResponse } from 'next/server';
 import type { ReportSection } from '@/lib/report-types';
 
+const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
+
 // Ensure the API keys are loaded from environment variables
-if (!process.env.GEMINI_API_KEY) {
-  console.warn("GEMINI_API_KEY not set - using placeholder images");
+if (!process.env.RUNWARE_API_KEY) {
+  console.warn("RUNWARE_API_KEY not set - using placeholder images");
 }
 if (!process.env.OPENAI_API_KEY) {
   console.warn("OPENAI_API_KEY not set - using basic prompts");
 }
 
-// Helper function to create intelligent image prompts using GPT-5-mini (faster and no rate limits)
+// Helper function to create intelligent image prompts using GPT-4o-mini
 async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Check if OpenAI API key is available for intelligent prompts
   if (!process.env.OPENAI_API_KEY) {
@@ -21,9 +22,7 @@ async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageU
   }
 
   try {
-    // Use GPT-5-mini via Responses API to analyze content and create image prompts
-    const apiUrl = 'https://api.openai.com/v1/responses';
-    
+    // Use GPT-4o-mini via Responses API to analyze content and create image prompts
     const analysisPrompt = `Analyze this business report section and create a detailed image generation prompt:
 
 SECTION TITLE: ${section.title}
@@ -40,41 +39,45 @@ TASK: Create a detailed, specific image generation prompt that:
 
 Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini',
-        input: analysisPrompt,
-        max_tokens: 200,
-        temperature: 0.7
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: "user",
+            content: analysisPrompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 300
       })
     });
 
     if (response.ok) {
       const data = await response.json();
       const intelligentPrompt = data.output || section.imagePrompt || `Professional visualization for ${section.title}`;
+      console.log("Generated prompt:", intelligentPrompt);
       
       // Add our styling preferences to the intelligent prompt
       return `${intelligentPrompt}. Style: Modern professional business visualization with brand colors blue (#08b2c6), teal (#b5feff), and orange (#ff6b11) accents. Clean, minimalist, suitable for corporate report. No text or words in image.`;
     } else {
       const errorText = await response.text();
-      console.error('GPT-5-mini prompt generation failed:', response.status, errorText);
+      console.error('GPT-4o-mini prompt generation failed:', response.status, errorText);
     }
   } catch (error) {
-    console.error('Failed to generate intelligent prompt with GPT-5-mini:', error);
+    console.error('Failed to generate intelligent prompt with GPT-4o-mini:', error);
   }
   
   // Fallback to original prompt
   return section.imagePrompt || `Professional visualization for ${section.title}`;
 }
 
-// Generate image using Gemini 2.5 Flash Image Preview
-// Note: This function now ONLY uses Gemini for actual image generation.
-// Prompt creation has been offloaded to GPT-5-mini to avoid Gemini rate limits.
+// Generate image using Runware Flux 1 Dev
 async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Fallback images if API is not configured
   const placeholderImages = [
@@ -84,49 +87,49 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
     'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d8f398f0686b47096.jpeg'
   ];
 
-  // Check if Gemini API key is configured
-  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
-    console.log('Gemini API key not configured, using placeholders');
+  // Check if Runware API key is configured
+  if (!process.env.RUNWARE_API_KEY || process.env.RUNWARE_API_KEY === 'your_runware_api_key_here') {
+    console.log('Runware API key not configured, using placeholders');
     const index = section.title.length % placeholderImages.length;
     return placeholderImages[index];
   }
 
   try {
-    // First, get an intelligent prompt based on the actual content (using GPT-5-mini)
+    // First, get an intelligent prompt based on the actual content
     const intelligentPrompt = await createIntelligentImagePrompt(section);
     
-    console.log(`[GPT-5-mini] Created prompt for: ${section.title}`);
-    console.log(`[Gemini] Generating image with prompt: ${intelligentPrompt.slice(0, 100)}...`);
+    console.log(`[GPT-4o-mini] Created prompt for: ${section.title}`);
+    console.log(`[Runware] Generating image with prompt: ${intelligentPrompt.slice(0, 100)}...`);
     
-    // Now use the image generation endpoint
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    
-    const promptText = intelligentPrompt;
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: promptText
-          }]
-        }],
-        generationConfig: {
-          temperature: 1.0,
-          topP: 0.95,
-          topK: 40,
-          maxOutputTokens: 8192,
-          responseMimeType: "text/plain"
-        }
-      })
-    });
+    // Now use the Runware image generation endpoint
+    const apiUrl = 'https://api.runware.ai/v1/tasks';
+    const headers = {
+      'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}`,
+      'Content-Type': 'application/json',
+    };
+    const body = JSON.stringify([
+      {
+        "taskType": "imageInference",
+        "model": "runware:101@1",
+        "numberResults": 1,
+        "outputFormat": "JPEG",
+        "width": 1536,
+        "height": 640,
+        "steps": 28,
+        "CFGScale": 3.5,
+        "scheduler": "FlowMatchEulerDiscreteScheduler",
+        "includeCost": true,
+        "outputType": ["URL"],
+        "outputQuality": 85,
+        "positivePrompt": intelligentPrompt
+      }
+    ]);
+
+    const response = await fetch(apiUrl, { method: 'POST', headers, body });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini 2.5 Flash Image Preview API error:', {
+      console.error('Runware API error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorText
@@ -135,30 +138,37 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
     }
 
     const data = await response.json();
-    console.log('Gemini response structure:', JSON.stringify(data, null, 2).substring(0, 500));
-    
-    // Extract image from the response structure
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      const parts = data.candidates[0].content.parts;
-      
-      // Find the image part in the response
-      for (const part of parts) {
-        if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('image/')) {
-          console.log(`[Gemini] Successfully generated image for: ${section.title}`);
-          // Return as base64 data URL
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    const taskId = data[0].taskId;
+
+    if (!taskId) {
+      throw new Error('No taskId in Runware response');
+    }
+
+    // Polling for the result
+    const pollUrl = `https://api.runware.ai/v1/tasks/${taskId}`;
+    for (let i = 0; i < 20; i++) { // Poll for a maximum of 20 times (e.g., 1 minute)
+      await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
+      const pollResponse = await fetch(pollUrl, { headers });
+      if ( pollResponse.ok) {
+        const result = await pollResponse.json();
+        if (result.status === 'COMPLETED') {
+          console.log("[Runware] API response:", result);
+          const imageUrl = result.output?.files?.[0]?.url;
+          if (imageUrl) {
+            console.log(`[Runware] Successfully generated image for: ${section.title}`);
+            return imageUrl;
+          } else {
+            console.warn(`[Runware] No image URL in response for: ${section.title}`, result);
+            throw new Error('No image URL in Runware response');
+          }
+        } else if (result.status === 'FAILED') {
+          console.error(`[Runware] Image generation failed for task ${taskId}`, result);
+          throw new Error('Runware task failed');
         }
       }
     }
-    
-    console.warn(`[Gemini] No image found in response for: ${section.title}`, {
-      hasCandidate: !!data.candidates?.[0],
-      hasContent: !!data.candidates?.[0]?.content,
-      hasParts: !!data.candidates?.[0]?.content?.parts,
-      partsLength: data.candidates?.[0]?.content?.parts?.length || 0
-    });
-    throw new Error('No image in response');
-    
+    throw new Error('Polling for Runware task timed out');
+
   } catch (error) {
     console.error(`Error generating image for section "${section.title}":`, error);
     // Return a fallback image on error

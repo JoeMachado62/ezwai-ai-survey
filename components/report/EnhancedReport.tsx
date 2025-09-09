@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -50,15 +49,18 @@ const KeyTakeaways: React.FC<{ items: string[] }> = ({ items }) => (
  * and styling impactful paragraphs to create a magazine-like feel.
  */
 const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
-  // Function to clean up citation artifacts from GPT-5 Responses API
-  const cleanCitations = (text: string): string => {
-    // Remove citation patterns like citeturn3search2*, citeturn0news12*, etc.
-    return text.replace(/cite[a-z0-9]+\*/g, '');
+  // Clean citation artifacts from the content
+  const cleanContent = (text: string): string => {
+    // Remove citation patterns like citeturn3search2turn2search0
+    return text.replace(/cite[a-z0-9]+(?:search\d+|turn\d+)*\*?/gi, '')
+               .replace(/\s+/g, ' ')
+               .trim();
   };
   
-  // Clean the content before processing
-  const cleanedContent = cleanCitations(content);
+  // Apply cleaning to the entire content first
+  const cleanedContent = cleanContent(content);
   const paragraphs = cleanedContent.split('\n').filter(p => p.trim() !== '');
+
   
   // Regex to find stats, percentages, monetary values, etc.
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
@@ -98,7 +100,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
           <p key={pIndex} className="mb-4">
             {parts.map((part, i) => {
               // Clean any remaining citation artifacts in individual parts
-              const cleanPart = cleanCitations(part);
+              const cleanPart = cleanContent(part);
               
               if (cleanPart.match(statRegex)) {
                 return (
