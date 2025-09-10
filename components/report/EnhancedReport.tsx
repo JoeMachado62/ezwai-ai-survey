@@ -197,7 +197,7 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
       </div>
       
       <div ref={reportRef} className="max-w-4xl mx-auto bg-white shadow-2xl overflow-x-hidden">
-        <header className="h-[100vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center p-8" style={{backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687ac926bb03231da1400a5a.jpeg')"}}>
+        <header className="h-[100vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center p-8" style={{backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45448e62615ab032eb08.webp')"}}>
             <h1 className="font-serif text-6xl md:text-7xl font-bold text-shadow-lg">AI Strategic Brief</h1>
             <p className="font-sans text-2xl mt-4 max-w-2xl text-shadow">A Growth & Innovation Roadmap for</p>
             <p className="font-serif text-4xl mt-2 text-brand-orange font-bold text-shadow">{businessName}</p>
