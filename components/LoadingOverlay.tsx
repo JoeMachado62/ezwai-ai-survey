@@ -8,9 +8,11 @@ type LoadingOverlayProps = {
     industry?: string;
     websiteURL?: string;
   };
+  onSkipWait?: () => void;
+  contactEmail?: string;
 };
 
-export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOverlayProps) {
+export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, contactEmail }: LoadingOverlayProps) {
   if (!show) return null;
 
   const questionLines = [
@@ -81,24 +83,87 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         </div>
         
         {companyInfo && (
-          <div style={{ 
-            color: 'white', 
-            fontSize: '2.75rem',  // 0.5rem smaller than main heading (2.25rem)
-            textShadow: '2px 2px 6px rgba(0,0,0,0.8)', 
-            fontWeight: '600',
-            lineHeight: '2.75rem',
-            marginTop: '1.25rem'
-          }}>
-            <LoadingNarrative
-              lines={phase === "questions" ? questionLines : reportLines}
-              ctx={{
-                company: companyInfo.companyName,
-                industry: companyInfo.industry,
-                websiteURL: companyInfo.websiteURL
-              }}
-              intervalMs={phase === "questions" ? 1800 : 2200}
-            />
-          </div>
+          <>
+            <div style={{ 
+              color: 'white', 
+              fontSize: '3.5rem',  // Twice the current size
+              textShadow: '3px 3px 8px rgba(0,0,0,0.9)', 
+              fontWeight: '700',
+              lineHeight: '4rem',
+              marginTop: '1.25rem'
+            }}>
+              <LoadingNarrative
+                lines={phase === "questions" ? questionLines : reportLines}
+                ctx={{
+                  company: companyInfo.companyName,
+                  industry: companyInfo.industry,
+                  websiteURL: companyInfo.websiteURL
+                }}
+                intervalMs={phase === "questions" ? 1800 : 2200}
+              />
+            </div>
+            
+            {phase === "report" && onSkipWait && contactEmail && (
+              <div style={{
+                marginTop: '2rem',
+                padding: '1.5rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                textAlign: 'center'
+              }}>
+                <p style={{
+                  color: 'white',
+                  fontSize: '1.125rem',
+                  marginBottom: '1rem',
+                  opacity: 0.95
+                }}>
+                  Don't want to wait? We'll email your complete report to:
+                </p>
+                <p style={{
+                  color: '#b5feff',
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  marginBottom: '1.5rem'
+                }}>
+                  {contactEmail}
+                </p>
+                <button
+                  onClick={onSkipWait}
+                  style={{
+                    padding: '0.875rem 2rem',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: '#ff6b11',
+                    color: 'white',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(255, 107, 17, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 107, 17, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 17, 0.3)';
+                  }}
+                >
+                  Skip Wait - Email Me The Report
+                </button>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.875rem',
+                  marginTop: '1rem',
+                  fontStyle: 'italic'
+                }}>
+                  We'll continue building your report and send it within 5 minutes
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

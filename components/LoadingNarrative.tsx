@@ -31,7 +31,7 @@ export default function LoadingNarrative({
   }, [resolved, intervalMs]);
 
   return (
-    <div className="text-sm text-slate-600 ez-fade" key={i}>
+    <div className="loading-narrative-text" key={i}>
       {resolved[i]}
     </div>
   );

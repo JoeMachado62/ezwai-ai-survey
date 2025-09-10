@@ -318,6 +318,33 @@ body {
   min-height: 1.5rem;
 }
 
+/* Loading Narrative Animated Text */
+.loading-narrative-text {
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  animation: fadeInOut 0.8s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
 /* Loading Dots Animation */
 .loading-dots {
   display: inline-flex;

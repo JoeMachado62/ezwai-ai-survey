@@ -7,6 +7,7 @@ interface EnhancedReportProps {
   sections: ReportSection[];
   onClose: () => void;
   businessName: string;
+  onReportReady?: (pdfBase64: string) => void;
 }
 
 const ReportHeader: React.FC<{ number: string; title: string; imageUrl: string }> = ({ number, title, imageUrl }) => (
@@ -124,15 +125,14 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
 };
 
 
-const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, businessName }) => {
+const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, businessName, onReportReady }) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [pdfGenerated, setPdfGenerated] = React.useState(false);
 
-  const handleDownloadPdf = async () => {
+  const generatePdfBase64 = async (): Promise<string> => {
     const reportElement = reportRef.current;
-    if (!reportElement) return;
-
-    setIsDownloading(true);
+    if (!reportElement) return '';
 
     // Temporarily increase width for higher resolution capture
     const originalWidth = reportElement.style.width;
@@ -171,9 +171,49 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
         pdf.addImage(imgData, 'JPEG', 0, yPos, pdfWidth, pdfHeight, undefined, 'FAST');
     }
     
-    pdf.save(`${businessName.replace(/\s+/g, '_')}_AI_Report.pdf`);
+    return pdf.output('datauristring').split(',')[1]; // Return base64 without data:application/pdf;base64, prefix
+  };
+  
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    const base64 = await generatePdfBase64();
+    
+    // Convert base64 to blob and download
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${businessName.replace(/\s+/g, '_')}_AI_Report.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     setIsDownloading(false);
   };
+  
+  // Generate PDF and notify parent when report is ready
+  React.useEffect(() => {
+    if (!pdfGenerated && onReportReady) {
+      // Wait a bit for the report to fully render
+      const timer = setTimeout(async () => {
+        const pdfBase64 = await generatePdfBase64();
+        if (pdfBase64) {
+          onReportReady(pdfBase64);
+          setPdfGenerated(true);
+        }
+      }, 2000); // Wait 2 seconds for full render
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pdfGenerated, onReportReady]);
   
   return (
     <div className="bg-gray-200 py-8 font-sans">
