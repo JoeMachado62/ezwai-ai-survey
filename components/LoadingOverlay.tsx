@@ -71,7 +71,7 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         </div>
         
         <div className="loading-text" style={{ 
-          fontSize: '3rem',
+          fontSize: '2.25rem',
           fontWeight: 'bold',
           color: 'white',
           textAlign: 'center',
@@ -81,7 +81,14 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         </div>
         
         {companyInfo && (
-          <div style={{ color: 'white', fontSize: '2.25rem', textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>
+          <div style={{ 
+            color: 'white', 
+            fontSize: '4.5rem', 
+            textShadow: '2px 2px 6px rgba(0,0,0,0.8)', 
+            fontWeight: '600',
+            lineHeight: '1.2',
+            marginTop: '1rem'
+          }}>
             <LoadingNarrative
               lines={phase === "questions" ? questionLines : reportLines}
               ctx={{

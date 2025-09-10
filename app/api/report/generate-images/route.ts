@@ -1,6 +1,7 @@
 // app/api/report/generate-images/route.ts
 
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import type { ReportSection } from '@/lib/report-types';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
@@ -13,7 +14,7 @@ if (!process.env.OPENAI_API_KEY) {
   console.warn("OPENAI_API_KEY not set - using basic prompts");
 }
 
-// Helper function to create intelligent image prompts using GPT-4o-mini
+// Helper function to create intelligent image prompts using gpt-5-mini
 async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageUrl'>): Promise<string> {
   // Check if OpenAI API key is available for intelligent prompts
   if (!process.env.OPENAI_API_KEY) {
@@ -22,7 +23,7 @@ async function createIntelligentImagePrompt(section: Omit<ReportSection, 'imageU
   }
 
   try {
-    // Use GPT-4o-mini via Responses API to analyze content and create image prompts
+    // Use gpt-5-mini via Responses API to analyze content and create image prompts
     const analysisPrompt = `Analyze this business report section and create a detailed image generation prompt:
 
 SECTION TITLE: ${section.title}
@@ -46,15 +47,8 @@ Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: "user",
-            content: analysisPrompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 300
+        model: 'gpt-5-mini',
+        input: analysisPrompt
       })
     });
 
@@ -67,10 +61,10 @@ Return ONLY the image prompt, nothing else. Make it detailed and specific.`;
       return `${intelligentPrompt}. Style: Modern professional business visualization with brand colors blue (#08b2c6), teal (#b5feff), and orange (#ff6b11) accents. Clean, minimalist, suitable for corporate report. No text or words in image.`;
     } else {
       const errorText = await response.text();
-      console.error('GPT-4o-mini prompt generation failed:', response.status, errorText);
+      console.error('gpt-5-mini prompt generation failed:', response.status, errorText);
     }
   } catch (error) {
-    console.error('Failed to generate intelligent prompt with GPT-4o-mini:', error);
+    console.error('Failed to generate intelligent prompt with gpt-5-mini:', error);
   }
   
   // Fallback to original prompt
@@ -98,8 +92,11 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
     // First, get an intelligent prompt based on the actual content
     const intelligentPrompt = await createIntelligentImagePrompt(section);
     
-    console.log(`[GPT-4o-mini] Created prompt for: ${section.title}`);
+    console.log(`[gpt-5-mini] Created prompt for: ${section.title}`);
     console.log(`[Runware] Generating image with prompt: ${intelligentPrompt.slice(0, 100)}...`);
+    
+    // Generate a UUID for this task
+    const taskUUID = crypto.randomUUID();
     
     // Now use the Runware image generation endpoint
     const apiUrl = 'https://api.runware.ai/v1/tasks';
@@ -107,14 +104,19 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
       'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}`,
       'Content-Type': 'application/json',
     };
+    // 21:9 aspect ratio calculation
+    // 21:9 = 2.333... ratio
+    // Using 1344x576 (both multiples of 64, within API limits)
+    // 1344 / 576 = 2.333... which is exactly 21:9
     const body = JSON.stringify([
       {
         "taskType": "imageInference",
+        "taskUUID": taskUUID,
         "model": "runware:101@1",
         "numberResults": 1,
         "outputFormat": "JPEG",
-        "width": 1536,
-        "height": 640,
+        "width": 1344,
+        "height": 576,
         "steps": 28,
         "CFGScale": 3.5,
         "scheduler": "FlowMatchEulerDiscreteScheduler",
@@ -138,36 +140,19 @@ async function generateImageForSection(section: Omit<ReportSection, 'imageUrl'>)
     }
 
     const data = await response.json();
-    const taskId = data[0].taskId;
-
-    if (!taskId) {
-      throw new Error('No taskId in Runware response');
+    console.log("[Runware] API response:", data);
+    
+    // The image URL is returned immediately in the response
+    const imageUrl = data?.data?.[0]?.imageURL;
+    
+    if (imageUrl) {
+      console.log(`[Runware] Successfully generated image for: ${section.title}`);
+      console.log(`[Runware] Image URL: ${imageUrl}`);
+      return imageUrl;
+    } else {
+      console.error("Runware response did not include an imageURL:", data);
+      throw new Error('No imageURL in Runware response');
     }
-
-    // Polling for the result
-    const pollUrl = `https://api.runware.ai/v1/tasks/${taskId}`;
-    for (let i = 0; i < 20; i++) { // Poll for a maximum of 20 times (e.g., 1 minute)
-      await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
-      const pollResponse = await fetch(pollUrl, { headers });
-      if ( pollResponse.ok) {
-        const result = await pollResponse.json();
-        if (result.status === 'COMPLETED') {
-          console.log("[Runware] API response:", result);
-          const imageUrl = result.output?.files?.[0]?.url;
-          if (imageUrl) {
-            console.log(`[Runware] Successfully generated image for: ${section.title}`);
-            return imageUrl;
-          } else {
-            console.warn(`[Runware] No image URL in response for: ${section.title}`, result);
-            throw new Error('No image URL in Runware response');
-          }
-        } else if (result.status === 'FAILED') {
-          console.error(`[Runware] Image generation failed for task ${taskId}`, result);
-          throw new Error('Runware task failed');
-        }
-      }
-    }
-    throw new Error('Polling for Runware task timed out');
 
   } catch (error) {
     console.error(`Error generating image for section "${section.title}":`, error);
@@ -188,6 +173,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid report data provided.' }, { status: 400 });
     }
 
+    const startTime = Date.now();
+    console.log(`[Image Generation] Starting generation for ${reportData.length} sections...`);
+
     // Generate all images in parallel for maximum speed
     const imageGenerationPromises = reportData.map(async (section) => {
       try {
@@ -200,13 +188,19 @@ export async function POST(request: Request) {
       }
     });
 
+    // Wait for ALL images to be generated before proceeding
     const generatedImageUrls = await Promise.all(imageGenerationPromises);
+    
+    const endTime = Date.now();
+    console.log(`[Image Generation] Completed all ${reportData.length} images in ${(endTime - startTime) / 1000}s`);
 
     // Combine the original section data with the new image URLs
     const finalSections: ReportSection[] = reportData.map((section, index) => ({
       ...section,
       imageUrl: generatedImageUrls[index],
     }));
+    
+    console.log(`[Image Generation] Returning enhanced report with all images`);
     
     // Send the complete report data back to the client
     return NextResponse.json({ enhancedReport: finalSections });
