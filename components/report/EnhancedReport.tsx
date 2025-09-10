@@ -50,57 +50,92 @@ const KeyTakeaways: React.FC<{ items: string[] }> = ({ items }) => (
  * and styling impactful paragraphs to create a magazine-like feel.
  */
 const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
-  // Clean citation artifacts from the content
+  // Enhanced citation cleaning function
   const cleanContent = (text: string): string => {
-    // Remove citation patterns like citeturn3search2turn2search0
-    return text.replace(/cite[a-z0-9]+(?:search\d+|turn\d+)*\*?/gi, '')
-               .replace(/\s+/g, ' ')
-               .trim();
+    return text
+      // Remove all citation artifacts with various patterns
+      .replace(/cite[a-z0-9_-]*(?:turn\d+|search\d+|news\d+)*\*?/gi, '')
+      .replace(/\bcite[^.\s]*\*/gi, '')  // Remove any remaining cite patterns
+      .replace(/\[\d+\]/g, '')  // Remove numbered references like [1], [2]
+      .replace(/\s*\.\s*\*/g, '.')  // Clean up asterisks after periods
+      .replace(/\s+([.,!?])/g, '$1')  // Fix spacing before punctuation
+      .replace(/\s+/g, ' ')  // Clean up extra spaces
+      .trim();
   };
   
   // Apply cleaning to the entire content first
   const cleanedContent = cleanContent(content);
-  const paragraphs = cleanedContent.split('\n').filter(p => p.trim() !== '');
-
   
-  // Regex to find stats, percentages, monetary values, etc.
+  // Better paragraph splitting that handles multiple line breaks
+  const rawParagraphs = cleanedContent.split(/\n\n+/);
+  const paragraphs = rawParagraphs.map(p => p.trim()).filter(p => p.length > 0);
+  
+  // Regex patterns
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
-  
-  // Regex to detect markdown bold sections
   const boldRegex = /\*\*(.*?)\*\*/g;
+  const bulletRegex = /^\s*[-•*]\s+(.+)/;
+  const numberedRegex = /^\s*\d+\.\s+(.+)/;
 
   return (
-    <>
+    <div className="space-y-6">
       {paragraphs.map((paragraph, pIndex) => {
-        // Check if this looks like a section title (starts with ** and ends with **)
-        if (paragraph.startsWith('**') && paragraph.includes('**')) {
-          const titleMatch = paragraph.match(/\*\*(.*?)\*\*/);
-          const title = titleMatch ? titleMatch[1] : paragraph;
-          const rest = paragraph.replace(/\*\*(.*?)\*\*/, '').trim();
+        // Clean the paragraph
+        const cleanParagraph = cleanContent(paragraph);
+        
+        // Check if this is a title/heading (starts and ends with **)
+        if (cleanParagraph.startsWith('**') && cleanParagraph.includes('**')) {
+          const titleMatch = cleanParagraph.match(/\*\*(.*?)\*\*/);
+          const title = titleMatch ? titleMatch[1] : cleanParagraph;
+          const rest = cleanParagraph.replace(/\*\*(.*?)\*\*/, '').trim();
           
           return (
-            <div key={pIndex} className="mb-4">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-              {rest && <p className="text-gray-700">{rest}</p>}
+            <div key={pIndex} className="mb-6 border-l-4 border-brand-teal pl-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+              {rest && (
+                <p className="text-gray-700 leading-relaxed text-lg">{cleanContent(rest)}</p>
+              )}
             </div>
           );
         }
         
-        // Heuristic for an "impactful paragraph" that acts like a mini pull-quote.
-        if (paragraph.length < 150 && paragraphs.length > 1) {
+        // Check if this is a bullet point
+        if (bulletRegex.test(cleanParagraph)) {
+          const bulletContent = cleanParagraph.replace(bulletRegex, '$1');
           return (
-            <p key={pIndex} className="text-xl font-serif text-gray-600 my-6 italic text-center leading-relaxed">
-              {paragraph}
+            <div key={pIndex} className="flex items-start mb-3">
+              <span className="text-brand-teal mr-3 text-xl">•</span>
+              <p className="text-gray-700 leading-relaxed flex-1">{cleanContent(bulletContent)}</p>
+            </div>
+          );
+        }
+        
+        // Check if this is a numbered list item
+        if (numberedRegex.test(cleanParagraph)) {
+          const number = cleanParagraph.match(/^\s*(\d+)\./)?.[1];
+          const listContent = cleanParagraph.replace(numberedRegex, '$1');
+          return (
+            <div key={pIndex} className="flex items-start mb-3">
+              <span className="text-brand-teal font-bold mr-3 text-lg">{number}.</span>
+              <p className="text-gray-700 leading-relaxed flex-1">{cleanContent(listContent)}</p>
+            </div>
+          );
+        }
+        
+        // Check for short impactful paragraphs (pull quotes)
+        if (cleanParagraph.length < 120 && paragraphs.length > 3) {
+          return (
+            <p key={pIndex} className="text-xl font-serif text-gray-600 my-8 italic text-center leading-relaxed px-8 border-t border-b border-gray-200 py-4">
+              {cleanContent(cleanParagraph)}
             </p>
           );
         }
 
-        const parts = paragraph.split(statRegex);
+        // Regular paragraph with stat highlighting
+        const parts = cleanParagraph.split(statRegex);
 
         return (
-          <p key={pIndex} className="mb-4">
+          <p key={pIndex} className="mb-4 text-gray-700 leading-relaxed text-lg">
             {parts.map((part, i) => {
-              // Clean any remaining citation artifacts in individual parts
               const cleanPart = cleanContent(part);
               
               if (cleanPart.match(statRegex)) {
@@ -110,17 +145,19 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                   </span>
                 );
               }
-              // Process bold markdown in regular text
-              const processedPart = cleanPart.replace(boldRegex, '<strong>$1</strong>');
+              
+              // Process bold markdown
+              const processedPart = cleanPart.replace(boldRegex, '<strong class="font-semibold text-gray-900">$1</strong>');
               if (processedPart !== cleanPart) {
                 return <span key={i} dangerouslySetInnerHTML={{ __html: processedPart }} />;
               }
+              
               return cleanPart;
             })}
           </p>
         );
       })}
-    </>
+    </div>
   );
 };
 

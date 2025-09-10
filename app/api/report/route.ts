@@ -82,7 +82,11 @@ ${input.socialMedia.channels?.length ? `This indicates opportunity for AI conten
 ${input.aiSummary || 'Assessment pending'}
 
 ==== DETAILED RESPONSES ====
-${Object.entries(input.answers || {}).map(([q, a]) => `Q: ${q}\nA: ${a}`).join('\n\n')}
+${Object.entries(input.answers || {}).map(([q, a]) => {
+  // Handle both single values and arrays from multi-select questions
+  const answer = Array.isArray(a) ? a.join(', ') : a;
+  return `Q: ${q}\nA: ${answer}`;
+}).join('\n\n')}
 
 ==== CRITICAL FOCUS AREAS ====
 1. PRIMARY: Solutions for "${input.techStack.biggestChallenge || 'operational efficiency'}"

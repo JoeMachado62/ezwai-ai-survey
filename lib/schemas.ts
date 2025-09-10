@@ -138,7 +138,8 @@ export type ReportInput = z.infer<typeof ReportInputZ>;
 export type GeneratedQuestion = { 
   type: "multiple_choice" | "text"; 
   text: string; 
-  options?: string[] 
+  options?: string[];
+  multiSelect?: boolean;
 };
 
 export type QuestionsResult = { 

@@ -70,29 +70,61 @@ function ImageHeader({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-// Multiple Choice Question Component
+// Multiple Choice Question Component (supports both single and multi-select)
 function MultipleChoiceQuestion({
   question,
   value,
   onChange
 }: { 
   question: GeneratedQuestion;
-  value: string;
-  onChange: (value: string) => void;
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
 }) {
+  const isMultiSelect = question.multiSelect || false;
+  const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
+  
+  const handleOptionClick = (option: string) => {
+    if (isMultiSelect) {
+      // Multi-select logic
+      const newValues = selectedValues.includes(option)
+        ? selectedValues.filter(v => v !== option)
+        : [...selectedValues, option];
+      onChange(newValues);
+    } else {
+      // Single-select logic
+      onChange(option);
+    }
+  };
+  
   return (
     <div className="mb-4">
-      <label className="label-ez">{question.text}</label>
+      <label className="label-ez">
+        {question.text}
+        {isMultiSelect && (
+          <span className="text-sm text-gray-500 ml-2">(Select all that apply)</span>
+        )}
+      </label>
       <div className="question-options">
-        {question.options?.map((option, i) => (
-          <div
-            key={i}
-            className={`question-option ${value === option ? 'selected' : ''}`}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </div>
-        ))}
+        {question.options?.map((option, i) => {
+          const isSelected = isMultiSelect 
+            ? selectedValues.includes(option)
+            : value === option;
+          
+          return (
+            <div
+              key={i}
+              className={`question-option ${isSelected ? 'selected' : ''}`}
+              onClick={() => handleOptionClick(option)}
+            >
+              {isMultiSelect && (
+                <span className="mr-2">
+                  {isSelected ? '☑' : '☐'}
+                </span>
+              )}
+              {option}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -174,6 +206,7 @@ export default function Page() {
   // Enhanced report state
   const [enhancedReport, setEnhancedReport] = useState<ReportSection[] | null>(null);
   const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+  const [skipWaitMode, setSkipWaitMode] = useState(false);
 
   // Auto-resize for iframe embedding
   useEffect(() => {
@@ -215,6 +248,13 @@ export default function Page() {
       setSummary(data.summary);
       setQuestions(data.questions);
       setQSources(data.sources || []);
+      
+      // Log multi-select questions for debugging
+      const multiSelectQuestions = data.questions.filter(q => q.multiSelect);
+      if (multiSelectQuestions.length > 0) {
+        console.log(`Found ${multiSelectQuestions.length} multi-select questions`);
+      }
+      
       setStep(1);
     } catch (error) {
       alert("Could not generate dynamic questions. Please try again.");
@@ -230,11 +270,14 @@ export default function Page() {
     
     // Handle multiple choice questions with styled buttons
     if (q.type === "multiple_choice" && q.options?.length) {
+      // ALL multiple choice questions are now multi-select
+      const modifiedQuestion = { ...q, multiSelect: true };
+      
       return (
         <MultipleChoiceQuestion
           key={key}
-          question={q}
-          value={answers[key] || ""}
+          question={modifiedQuestion}
+          value={answers[key] || []}
           onChange={value => setAnswers(a => ({ ...a, [key]: value }))}
         />
       );
@@ -251,10 +294,14 @@ export default function Page() {
     );
   }
 
-  async function buildReport() {
+  async function buildReportAndProcess() {
+    // IMMEDIATELY show loading overlay with skip option
     setLoading(true);
     setLoadingPhase("report");
+    setIsGeneratingVisuals(true);
+    
     try {
+      // Make report API call WHILE overlay is showing
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -274,13 +321,16 @@ export default function Page() {
       
       const data: ReportResult = await response.json();
       setReport(data);
-      setStep(3);
+      
+      // Now process the visual report
+      await processContactAndGenerateVisualReport();
+      
     } catch (error) {
-      alert("Could not finalize the report. Please try again.");
-      console.error(error);
-    } finally {
+      alert("Could not generate the report. Please try again.");
+      console.error("Error in report generation:", error);
       setLoading(false);
       setLoadingPhase(undefined);
+      setIsGeneratingVisuals(false);
     }
   }
 
@@ -365,11 +415,8 @@ export default function Page() {
       return;
     }
     
-    setLoading(true);
-    setLoadingPhase('report' as any);
-    
     try {
-      // Step 1: Save contact to GHL (non-blocking)
+      // Save contact to GHL (non-blocking)
       try {
         const ghlResponse = await fetch("/api/ghl/contact", {
           method: "POST",
@@ -389,38 +436,42 @@ export default function Page() {
         });
         
         if (!ghlResponse.ok) {
-          console.error('GHL save failed but continuing with report generation');
+          console.error('GHL save failed but continuing with report display');
         }
       } catch (ghlError) {
         console.error('GHL contact save error (non-fatal):', ghlError);
       }
       
-      // Step 2: Transform and generate enhanced visual report
-      setIsGeneratingVisuals(true);
+      // Transform report sections and assign environment variable images
       const reportSections = transformReportToSections(report);
       
-      // Step 3: Call image generation API
-      const imageResponse = await fetch('/api/report/generate-images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportData: reportSections })
+      // Map sections with proper image URLs from environment variables
+      const enhancedSections = reportSections.map((section, index) => {
+        let imageUrl = '';
+        
+        // Assign images based on section title
+        if (section.title.includes('Executive Summary')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || '';
+        } else if (section.title.includes('Quick Wins')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || '';
+        } else if (section.title.includes('Strategic AI Roadmap')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || '';
+        } else if (section.title.includes('Competitive')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || '';
+        } else if (section.title.includes('Implementation')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || '';
+        } else {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_FALLBACK || '';
+        }
+        
+        return { ...section, imageUrl };
       });
       
-      if (!imageResponse.ok) {
-        const errorData = await imageResponse.json();
-        throw new Error(errorData.error || 'Failed to generate visual report');
-      }
-      
-      const imageData = await imageResponse.json();
-      setEnhancedReport(imageData.enhancedReport);
+      setEnhancedReport(enhancedSections as any);
       
       // Success - show the enhanced report
       setStep(5);
       
-    } catch (error: any) {
-      console.error('Visual report generation error:', error);
-      alert('Using text-only report view. Visual enhancements unavailable.');
-      setStep(4);
     } finally {
       setLoading(false);
       setLoadingPhase(undefined);
@@ -459,6 +510,45 @@ export default function Page() {
       contentTime: "" 
     });
   };
+
+  // Handle skip wait and send report by email
+  const handleSkipWait = async () => {
+    try {
+      setSkipWaitMode(true);
+      
+      // Send email with the current report
+      if (report && email) {
+        const response = await fetch('/api/email/send-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            firstName,
+            companyName: companyInfo.companyName,
+            reportSections: enhancedReport || []
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send email');
+        }
+
+        // Clear loading state but keep report processing
+        setLoading(false);
+        setIsGeneratingVisuals(false);
+        
+        // Show success message
+        alert('Report will be sent to your email within 5 minutes!');
+        
+        // Reset to start
+        handleCloseReport();
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Failed to send email. Please try again.');
+      setSkipWaitMode(false);
+    }
+  };
   
   // Show loading spinner during visual generation
   if (isGeneratingVisuals && !loading) {
@@ -478,7 +568,13 @@ export default function Page() {
   
   return (
     <main className="container">
-      <LoadingOverlay show={loading || isGeneratingVisuals} phase={isGeneratingVisuals ? 'report' : loadingPhase} companyInfo={companyInfo} />
+      <LoadingOverlay 
+        show={loading || isGeneratingVisuals} 
+        phase={loadingPhase === 'report' || isGeneratingVisuals ? 'report' : loadingPhase} 
+        companyInfo={companyInfo}
+        onSkipWait={(loadingPhase === 'report' || isGeneratingVisuals) && !skipWaitMode ? handleSkipWait : undefined}
+        contactEmail={email}
+      />
 
       {/* Progress indicator for initial data collection */}
       {step === 0 && (
@@ -526,10 +622,14 @@ export default function Page() {
               onChange={e => setCompanyInfo({ ...companyInfo, employees: e.target.value })}
             >
               <option value="">Select employee count</option>
-              <option value="1-10">1-10</option>
-              <option value="11-50">11-50</option>
-              <option value="51-200">51-200</option>
-              <option value="201-500">201-500</option>
+              <option value="1-2">1-2</option>
+              <option value="2-5">2-5</option>
+              <option value="5-10">5-10</option>
+              <option value="10-20">10-20</option>
+              <option value="20-50">20-50</option>
+              <option value="51-100">51-100</option>
+              <option value="101-250">101-250</option>
+              <option value="251-500">251-500</option>
               <option value="500+">500+</option>
             </SelectField>
             <div className="sm:col-span-2">
@@ -619,11 +719,13 @@ export default function Page() {
             onChange={e => setSocialMedia({ ...socialMedia, contentTime: e.target.value })}
           >
             <option value="">Select time range</option>
-            <option value="Less than 5">Less than 5 hours</option>
-            <option value="5-10">5-10 hours</option>
-            <option value="10-20">10-20 hours</option>
-            <option value="20-40">20-40 hours</option>
-            <option value="Over 40">Over 40 hours</option>
+            <option value="Less than 1 hour">Less than 1hour</option>
+            <option value="1-2 hours">1-2 hours</option>
+            <option value="2-5 hours">2-5 hours</option>
+            <option value="5-10 hours">5-10 hours</option>
+            <option value="10-20 hours">10-20 hours</option>
+            <option value="20-40 hours">20-40 hours</option>
+            <option value="Over 40 hours">Over 40 hours</option>
           </SelectField>
 
           <div className="mt-6 flex items-center gap-3">
@@ -672,7 +774,11 @@ export default function Page() {
               Back
             </button>
             <button className="btn-ez" onClick={() => {
-              const answeredCount = Object.keys(answers).filter(key => answers[key]?.trim ? answers[key].trim() : answers[key]).length;
+              const answeredCount = Object.keys(answers).filter(key => {
+                const answer = answers[key];
+                if (Array.isArray(answer)) return answer.length > 0;
+                return answer?.trim ? answer.trim() : answer;
+              }).length;
               if (answeredCount < Math.floor(questions.length / 2)) {
                 alert(`Please answer at least ${Math.floor(questions.length / 2)} questions to continue.`);
                 return;
@@ -697,8 +803,8 @@ export default function Page() {
             <button className="btn-ez secondary" onClick={() => setStep(1)} disabled={loading}>
               Back
             </button>
-            <button className="btn-ez" onClick={buildReport} disabled={loading}>
-              {loading ? <LoadingDots/> : "Generate My Report"}
+            <button className="btn-ez" onClick={() => setStep(3)} disabled={loading}>
+              Continue
             </button>
           </div>
           
@@ -706,8 +812,8 @@ export default function Page() {
         </StepCard>
       )}
 
-      {step === 3 && report && (
-        <StepCard title="Your AI Transformation Report is Ready!" subtitle="Enter your contact information to receive your personalized AI opportunities report">
+      {step === 3 && (
+        <StepCard title="Almost There! Let's Get Your Report" subtitle="Enter your contact information to receive your personalized AI opportunities report">
           <ImageHeader src={images.finalCta} alt="Final Call to Action" />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -745,10 +851,10 @@ export default function Page() {
             </button>
             <button 
               className="btn-ez" 
-              onClick={processContactAndGenerateVisualReport} 
+              onClick={buildReportAndProcess} 
               disabled={loading || !firstName || !lastName || !email}
             >
-              {loading ? <LoadingDots/> : "Get My AI Report"}
+              {loading ? <LoadingDots/> : "Get My Free Report"}
             </button>
           </div>
           

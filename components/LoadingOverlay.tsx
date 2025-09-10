@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import LoadingNarrative from "./LoadingNarrative";
 
 type LoadingOverlayProps = {
@@ -13,6 +14,21 @@ type LoadingOverlayProps = {
 };
 
 export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, contactEmail }: LoadingOverlayProps) {
+  const [showSkipOption, setShowSkipOption] = useState(false);
+  
+  // Show skip option after 12 seconds when in report phase
+  useEffect(() => {
+    if (phase === "report" && show) {
+      const timer = setTimeout(() => {
+        setShowSkipOption(true);
+      }, 12000); // 12 seconds delay
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkipOption(false);
+    }
+  }, [phase, show]);
+  
   if (!show) return null;
 
   const questionLines = [
@@ -42,15 +58,22 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
   ];
 
   return (
-    <div className="loading-overlay">
-      <div className="loading-content" style={{ 
+    <>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div className="loading-overlay">
+        <div className="loading-content" style={{ 
         width: '80vw', 
         minWidth: '80vw',
         maxWidth: '1200px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '2rem'
+        gap: '1rem'  // Reduced gap between elements
       }}>
         {/* Show video for both phases - 80% of viewport width */}
         <div style={{ position: 'relative', width: '100%' }}>
@@ -73,11 +96,12 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         </div>
         
         <div className="loading-text" style={{ 
-          fontSize: '2.25rem',
+          fontSize: '2.5rem',
           fontWeight: 'bold',
           color: 'white',
           textAlign: 'center',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+          marginBottom: '0'  // Normal spacing
         }}>
           {phase === "questions" ? "Generating your custom questions" : "Deep research for your final report"}
         </div>
@@ -86,11 +110,11 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
           <>
             <div style={{ 
               color: 'white', 
-              fontSize: '3.5rem',  // Twice the current size
-              textShadow: '3px 3px 8px rgba(0,0,0,0.9)', 
-              fontWeight: '700',
-              lineHeight: '4rem',
-              marginTop: '1.25rem'
+              fontSize: '1.75rem',  // Much smaller than heading
+              textShadow: '2px 2px 5px rgba(0,0,0,0.8)', 
+              fontWeight: '500',
+              lineHeight: '2.25rem',
+              marginTop: '0'  // Normal spacing
             }}>
               <LoadingNarrative
                 lines={phase === "questions" ? questionLines : reportLines}
@@ -103,8 +127,9 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
               />
             </div>
             
-            {phase === "report" && onSkipWait && contactEmail && (
+            {phase === "report" && onSkipWait && contactEmail && showSkipOption && (
               <div style={{
+                animation: 'fadeIn 0.5s ease-in',
                 marginTop: '2rem',
                 padding: '1.5rem',
                 background: 'rgba(255, 255, 255, 0.1)',
@@ -114,11 +139,14 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
               }}>
                 <p style={{
                   color: 'white',
-                  fontSize: '1.125rem',
+                  fontSize: '1.25rem',
                   marginBottom: '1rem',
-                  opacity: 0.95
+                  opacity: 0.95,
+                  lineHeight: '1.6'
                 }}>
-                  Don't want to wait? We'll email your complete report to:
+                  Can't wait? Click here to receive report by Email,<br/>
+                  otherwise hang in there as we dive deep to uncover<br/>
+                  the opportunities that can power your growth.
                 </p>
                 <p style={{
                   color: '#b5feff',
@@ -151,7 +179,7 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 17, 0.3)';
                   }}
                 >
-                  Skip Wait - Email Me The Report
+                  Email Me The Report Instead
                 </button>
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -159,7 +187,7 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
                   marginTop: '1rem',
                   fontStyle: 'italic'
                 }}>
-                  We'll continue building your report and send it within 5 minutes
+                  Your report will continue processing and be emailed within 5 minutes
                 </p>
               </div>
             )}
@@ -167,5 +195,6 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         )}
       </div>
     </div>
+    </>
   );
 }
