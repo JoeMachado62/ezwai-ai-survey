@@ -300,7 +300,22 @@ export default function Page() {
     setLoadingPhase("report");
     setIsGeneratingVisuals(true);
     
+    // Set a timeout for the entire process (3 minutes)
+    const reportTimeout = setTimeout(() => {
+      if (loading) {
+        console.error("Report generation timed out after 3 minutes");
+        alert("Report generation is taking longer than expected. We'll email you the report once it's ready.");
+        setLoading(false);
+        setLoadingPhase(undefined);
+        setIsGeneratingVisuals(false);
+      }
+    }, 180000); // 3 minutes
+    
     try {
+      // Create an AbortController for fetch timeout
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 120000); // 2 minute fetch timeout
+      
       // Make report API call WHILE overlay is showing
       const response = await fetch("/api/report", {
         method: "POST",
@@ -311,8 +326,11 @@ export default function Page() {
           socialMedia, 
           aiSummary: summary, 
           answers 
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(fetchTimeout);
       
       if (!response.ok) {
         const error = await response.text();
@@ -325,9 +343,20 @@ export default function Page() {
       // Now process the visual report
       await processContactAndGenerateVisualReport();
       
-    } catch (error) {
-      alert("Could not generate the report. Please try again.");
-      console.error("Error in report generation:", error);
+      // Clear the main timeout if everything succeeded
+      clearTimeout(reportTimeout);
+      
+    } catch (error: any) {
+      clearTimeout(reportTimeout);
+      
+      if (error.name === 'AbortError') {
+        console.error("Report API call timed out");
+        alert("Report generation is taking longer than expected. Please try again or use the email option.");
+      } else {
+        console.error("Error in report generation:", error);
+        alert("Could not generate the report. Please try again.");
+      }
+      
       setLoading(false);
       setLoadingPhase(undefined);
       setIsGeneratingVisuals(false);
@@ -411,7 +440,11 @@ export default function Page() {
   
   async function processContactAndGenerateVisualReport() {
     if (!report) {
-      alert('Report data is missing. Please try again.');
+      console.error('Report data is missing in processContactAndGenerateVisualReport');
+      alert('Report data is missing. Please try again or use the email option to receive your report.');
+      setLoading(false);
+      setLoadingPhase(undefined);
+      setIsGeneratingVisuals(false);
       return;
     }
     
@@ -516,33 +549,63 @@ export default function Page() {
     try {
       setSkipWaitMode(true);
       
-      // Send email with the current report
-      if (report && email) {
-        const response = await fetch('/api/email/send-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            firstName,
-            companyName: companyInfo.companyName,
-            reportSections: enhancedReport || []
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to send email');
-        }
-
-        // Clear loading state but keep report processing
+      // We need to wait for the report to be generated if it's not ready yet
+      if (!report) {
+        // Report is still being generated, just show message and close overlay
+        alert('Your report is still being generated and will be sent to your email within 5 minutes!');
         setLoading(false);
         setIsGeneratingVisuals(false);
-        
-        // Show success message
-        alert('Report will be sent to your email within 5 minutes!');
-        
-        // Reset to start
         handleCloseReport();
+        return;
       }
+      
+      // Transform report to sections for email
+      const reportSections = transformReportToSections(report);
+      const enhancedSectionsForEmail = reportSections.map((section, index) => {
+        let imageUrl = '';
+        
+        // Assign images based on section title
+        if (section.title.includes('Executive Summary')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || '';
+        } else if (section.title.includes('Quick Wins')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || '';
+        } else if (section.title.includes('Strategic AI Roadmap')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || '';
+        } else if (section.title.includes('Competitive')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || '';
+        } else if (section.title.includes('Implementation')) {
+          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || '';
+        }
+        
+        return { ...section, imageUrl };
+      });
+      
+      // Send email with the report
+      const response = await fetch('/api/email/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          firstName,
+          companyName: companyInfo.companyName,
+          reportSections: enhancedSectionsForEmail
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      // Clear loading state and close overlay
+      setLoading(false);
+      setIsGeneratingVisuals(false);
+      
+      // Show success message
+      alert('Report will be sent to your email within 5 minutes!');
+      
+      // Reset to start
+      handleCloseReport();
+      
     } catch (error) {
       console.error('Error sending email:', error);
       alert('Failed to send email. Please try again.');

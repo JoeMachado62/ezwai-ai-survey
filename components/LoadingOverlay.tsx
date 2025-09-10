@@ -75,6 +75,86 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         alignItems: 'center',
         gap: '1rem'  // Reduced gap between elements
       }}>
+        <div className="loading-text" style={{ 
+          fontSize: '2.5rem',
+          fontWeight: 'bold',
+          color: 'white',
+          textAlign: 'center',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+          marginBottom: '0'  // Normal spacing
+        }}>
+          {phase === "questions" ? "Generating your custom questions" : "Deep research for your final report"}
+        </div>
+        
+        {/* Show skip-wait option above video for report phase */}
+        {phase === "report" && onSkipWait && contactEmail && showSkipOption && (
+          <div style={{
+            animation: 'fadeIn 0.5s ease-in',
+            marginTop: '1rem',
+            marginBottom: '1rem',
+            padding: '1.5rem',
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: '600px'
+          }}>
+            <p style={{
+              color: 'white',
+              fontSize: '1.25rem',
+              marginBottom: '1rem',
+              opacity: 0.95,
+              lineHeight: '1.6'
+            }}>
+              Can't wait? Click here to receive report by Email,<br/>
+              otherwise hang in there as we dive deep to uncover<br/>
+              the opportunities that can power your growth.
+            </p>
+            <p style={{
+              color: '#b5feff',
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              marginBottom: '1.5rem'
+            }}>
+              {contactEmail}
+            </p>
+            <button
+              onClick={onSkipWait}
+              style={{
+                padding: '0.875rem 2rem',
+                fontSize: '1rem',
+                fontWeight: '600',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                background: '#ff6b11',
+                color: 'white',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(255, 107, 17, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 107, 17, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 17, 0.3)';
+              }}
+            >
+              Email Me The Report Instead
+            </button>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.875rem',
+              marginTop: '1rem',
+              fontStyle: 'italic'
+            }}>
+              Your report will continue processing and be emailed within 5 minutes
+            </p>
+          </div>
+        )}
+        
         {/* Show video for both phases - 80% of viewport width */}
         <div style={{ position: 'relative', width: '100%' }}>
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
@@ -93,17 +173,6 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
               allowFullScreen
             />
           </div>
-        </div>
-        
-        <div className="loading-text" style={{ 
-          fontSize: '2.5rem',
-          fontWeight: 'bold',
-          color: 'white',
-          textAlign: 'center',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-          marginBottom: '0'  // Normal spacing
-        }}>
-          {phase === "questions" ? "Generating your custom questions" : "Deep research for your final report"}
         </div>
         
         {companyInfo && (
@@ -126,71 +195,6 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
                 intervalMs={phase === "questions" ? 1800 : 2200}
               />
             </div>
-            
-            {phase === "report" && onSkipWait && contactEmail && showSkipOption && (
-              <div style={{
-                animation: 'fadeIn 0.5s ease-in',
-                marginTop: '2rem',
-                padding: '1.5rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                textAlign: 'center'
-              }}>
-                <p style={{
-                  color: 'white',
-                  fontSize: '1.25rem',
-                  marginBottom: '1rem',
-                  opacity: 0.95,
-                  lineHeight: '1.6'
-                }}>
-                  Can't wait? Click here to receive report by Email,<br/>
-                  otherwise hang in there as we dive deep to uncover<br/>
-                  the opportunities that can power your growth.
-                </p>
-                <p style={{
-                  color: '#b5feff',
-                  fontSize: '1.25rem',
-                  fontWeight: '600',
-                  marginBottom: '1.5rem'
-                }}>
-                  {contactEmail}
-                </p>
-                <button
-                  onClick={onSkipWait}
-                  style={{
-                    padding: '0.875rem 2rem',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: '#ff6b11',
-                    color: 'white',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(255, 107, 17, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 107, 17, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 17, 0.3)';
-                  }}
-                >
-                  Email Me The Report Instead
-                </button>
-                <p style={{
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '0.875rem',
-                  marginTop: '1rem',
-                  fontStyle: 'italic'
-                }}>
-                  Your report will continue processing and be emailed within 5 minutes
-                </p>
-              </div>
-            )}
           </>
         )}
       </div>
