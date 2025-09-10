@@ -161,6 +161,10 @@ Create a report that feels like it was written specifically for THIS company, no
     }
 
     // Try actual API call if key is configured
+    console.log("[Report API] Starting GPT-5 report generation...");
+    console.log(`[Report API] Company: ${input.companyInfo.companyName}, Industry: ${input.companyInfo.industry}`);
+    console.log(`[Report API] Model: ${process.env.OPENAI_MODEL_REPORT || "gpt-5"}`);
+    
     try {
       const result = await callResponses<ReportResult>({
         input: [
@@ -169,9 +173,12 @@ Create a report that feels like it was written specifically for THIS company, no
         ],
         schema: ReportJsonSchema,
         tools: [{ type: "web_search" }],
-        model: process.env.OPENAI_MODEL_REPORT || "gpt-5"  // Use full GPT-5 for complex reasoning and broad knowledge
+        model: process.env.OPENAI_MODEL_REPORT || "gpt-5",  // Use full GPT-5 for complex reasoning and broad knowledge
+        reasoning_effort: "medium",  // Higher reasoning for complex report generation
+        verbosity: "high"  // More detailed output for comprehensive report
       });
 
+      console.log("[Report API] Successfully generated report");
       return NextResponse.json(result, { status: 200 });
     } catch (apiError: any) {
       console.error("OpenAI API error, using fallback:", apiError.message);

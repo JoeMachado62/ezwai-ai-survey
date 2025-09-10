@@ -67,35 +67,40 @@ export async function callResponses<T>({
   schema,
   tools = [{ type: "web_search" }],
   model = process.env.OPENAI_MODEL || "gpt-5-mini",
-  reasoning_effort = "low"
+  reasoning_effort = "low",
+  verbosity = "medium"
 }: {
   input: any;
   schema: any;
   tools?: any[];
   model?: string;
   reasoning_effort?: "minimal" | "low" | "medium" | "high";
+  verbosity?: "low" | "medium" | "high";
 }): Promise<T> {
   // Build the request payload according to GPT-5 documentation
+  // CRITICAL: Use response_format, not text.format!
   const payload: any = {
     model,
     input,
     tools,
     tool_choice: "auto",
-    text: {
-      format: {
-        type: "json_schema",
+    response_format: {
+      type: "json_schema",
+      json_schema: {
         name: schema.name || "DefaultSchema",
-        schema: schema.schema || schema,
-        strict: true
+        schema: schema.schema || schema
       }
     }
   };
 
-  // Add reasoning effort for GPT-5 models to enable deeper analysis
+  // Add GPT-5 specific parameters
   if (model.includes('gpt-5')) {
     // Use low effort for web_search compatibility while keeping speed
     // Web_search requires at least "low" reasoning effort
     payload.reasoning = { effort: reasoning_effort || "low" };
+    
+    // Add verbosity control for better output
+    payload.text = { verbosity: verbosity || "medium" };
   }
 
   // ALWAYS use Responses API for GPT-5 models
