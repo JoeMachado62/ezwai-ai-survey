@@ -83,10 +83,10 @@ export default function LoadingOverlay({ show, phase, companyInfo }: LoadingOver
         {companyInfo && (
           <div style={{ 
             color: 'white', 
-            fontSize: '4.5rem', 
+            fontSize: '1.75rem',  // 0.5rem smaller than main heading (2.25rem)
             textShadow: '2px 2px 6px rgba(0,0,0,0.8)', 
-            fontWeight: '600',
-            lineHeight: '1.2',
+            fontWeight: '500',
+            lineHeight: '1.3',
             marginTop: '1rem'
           }}>
             <LoadingNarrative
