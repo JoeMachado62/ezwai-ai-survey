@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ReportInputZ, ReportJsonSchema, type ReportResult } from "@/lib/schemas";
 import { callResponses } from "@/lib/openai";
 import { checkRate } from "@/lib/rateLimit";
+import { generateReportPdf } from "@/lib/generateReportPdf";
 
 const SYSTEM_PROMPT = `You are a senior AI Transformation Consultant creating a customized report for a specific client.
 
@@ -193,6 +194,26 @@ Create a report that feels like it was written specifically for THIS company, no
           const sgMail = require('@sendgrid/mail');
           sgMail.setApiKey(process.env.SENDGRID_API_KEY);
           
+          // Generate PDF attachment
+          let pdfAttachment;
+          try {
+            const pdfBuffer = await generateReportPdf(
+              result,
+              input.companyInfo.companyName || 'Your Company',
+              emailDetails.firstName
+            );
+            pdfAttachment = {
+              content: pdfBuffer.toString('base64'),
+              filename: `AI_Opportunities_Report_${input.companyInfo.companyName || 'Company'}.pdf`,
+              type: 'application/pdf',
+              disposition: 'attachment'
+            };
+            console.log("[Report API] PDF generated successfully for attachment");
+          } catch (pdfError) {
+            console.error("[Report API] PDF generation failed:", pdfError);
+            // Continue without attachment if PDF fails
+          }
+          
           // Create email HTML with report summary
           const emailHtml = `
             <!DOCTYPE html>
@@ -217,7 +238,7 @@ Create a report that feels like it was written specifically for THIS company, no
                 <div class="content">
                   <p>Hi ${emailDetails.firstName || 'there'},</p>
                   
-                  <p>Great news! Your personalized AI Opportunities Report for <strong>${input.companyInfo.companyName}</strong> has been generated.</p>
+                  <p>Great news! Your personalized AI Opportunities Report for <strong>${input.companyInfo.companyName}</strong> has been generated and is attached to this email as a PDF.</p>
                   
                   <div class="highlight">
                     <h3>Executive Summary:</h3>
@@ -255,13 +276,19 @@ Create a report that feels like it was written specifically for THIS company, no
             </html>
           `;
           
-          const msg = {
+          const msg: any = {
             to: emailDetails.email,
             from: 'joe@ezwai.com',
             bcc: ['jeriz@ezwai.com', 'joemachado62@gmail.com'], // BCC to both for lead notification and testing
             subject: `${emailDetails.firstName}, Your AI Opportunities Report is Ready!`,
             html: emailHtml
           };
+          
+          // Add PDF attachment if it was generated
+          if (pdfAttachment) {
+            msg.attachments = [pdfAttachment];
+            console.log("[Report API] PDF attachment added to email");
+          }
           
           await sgMail.send(msg);
           console.log("[Report API] Email sent successfully to:", emailDetails.email);
