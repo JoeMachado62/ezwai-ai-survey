@@ -55,15 +55,19 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
     return text
       // Remove all citation artifacts with various patterns
       .replace(/cite[a-z0-9_-]*(?:turn\d+|search\d+|news\d+)*\*?/gi, '')
+      .replace(/\bturn\d+(?:search\d+|news\d+)+\*?/gi, '')
       .replace(/\bcite[^.\s]*\*/gi, '')  // Remove any remaining cite patterns
       .replace(/\[\d+\]/g, '')  // Remove numbered references like [1], [2]
+      .replace(/【[\d:]+†source】/g, '')  // Remove Unicode citation markers
+      .replace(/\s*\*+\s*/g, ' ')  // Remove standalone asterisks
       .replace(/\s*\.\s*\*/g, '.')  // Clean up asterisks after periods
       .replace(/\s+([.,!?])/g, '$1')  // Fix spacing before punctuation
       .replace(/\s+/g, ' ')  // Clean up extra spaces
+      .replace(/^\s*[•·]\s*/gm, '• ')  // Standardize bullet points
       .trim();
   };
   
-  // Apply cleaning to the entire content first
+  // Apply cleaning to the entire content first - MODIFIED TO USE cleanContent
   const cleanedContent = cleanContent(content);
   
   // Better paragraph splitting that handles lists properly
@@ -120,7 +124,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
   return (
     <div className="space-y-6">
       {paragraphs.map((paragraph, pIndex) => {
-        // Clean the paragraph
+        // Clean the paragraph - ADDED CLEANING HERE
         const cleanParagraph = cleanContent(paragraph);
         
         // Check if this is a title/heading (starts and ends with **)
@@ -147,7 +151,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
               <span className="text-brand-teal mr-3 text-xl mt-1">•</span>
               <p className="text-gray-700 leading-relaxed flex-1 text-lg">
                 {bulletContent.split(statRegex).map((part, i) => {
-                  const cleanPart = cleanContent(part);
+                  const cleanPart = cleanContent(part);  // ADDED CLEANING
                   if (cleanPart.match(statRegex)) {
                     return (
                       <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
@@ -171,7 +175,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
               <span className="text-brand-teal font-bold mr-4 text-lg min-w-[24px]">{number}.</span>
               <p className="text-gray-700 leading-relaxed flex-1 text-lg">
                 {listContent.split(statRegex).map((part, i) => {
-                  const cleanPart = cleanContent(part);
+                  const cleanPart = cleanContent(part);  // ADDED CLEANING
                   if (cleanPart.match(statRegex)) {
                     return (
                       <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
@@ -190,7 +194,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         if (cleanParagraph.length < 120 && paragraphs.length > 3) {
           return (
             <p key={pIndex} className="text-xl font-serif text-gray-600 my-8 italic text-center leading-relaxed px-8 border-t border-b border-gray-200 py-4">
-              {cleanContent(cleanParagraph)}
+              {cleanContent(cleanParagraph)}  
             </p>
           );
         }
@@ -201,7 +205,7 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         return (
           <p key={pIndex} className="mb-4 text-gray-700 leading-relaxed text-lg">
             {parts.map((part, i) => {
-              const cleanPart = cleanContent(part);
+              const cleanPart = cleanContent(part);  // ADDED CLEANING
               
               if (cleanPart.match(statRegex)) {
                 return (
