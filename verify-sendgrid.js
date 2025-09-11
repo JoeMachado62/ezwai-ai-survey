@@ -1,20 +1,22 @@
 // SendGrid API Key Verification Script
 // Run this to verify your SendGrid integration
 
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
+
 const sgMail = require('@sendgrid/mail');
 
 // Use the API key from environment
-// You must set SENDGRID_API_KEY in your environment variables
 const apiKey = process.env.SENDGRID_API_KEY;
 
 if (!apiKey) {
-  console.error('❌ ERROR: SENDGRID_API_KEY environment variable is not set');
-  console.log('\nTo set it temporarily for testing:');
-  console.log('Windows: set SENDGRID_API_KEY=your-api-key');
-  console.log('Mac/Linux: export SENDGRID_API_KEY=your-api-key');
-  console.log('\nThen run this script again.');
+  console.error('❌ ERROR: SENDGRID_API_KEY not found in .env.local');
+  console.log('\nMake sure SENDGRID_API_KEY is set in your .env.local file');
   process.exit(1);
 }
+
+console.log('Using API key from .env.local');
+console.log('Key starts with:', apiKey.substring(0, 10) + '...');
 
 sgMail.setApiKey(apiKey);
 
@@ -41,7 +43,16 @@ sgMail
     if (error.response) {
       console.error('Response body:', error.response.body);
       
-      if (error.code === 401) {
+      if (error.code === 401 && error.response?.body?.errors?.[0]?.message === 'Maximum credits exceeded') {
+        console.log('\n⚠️  SendGrid Credits Exceeded:');
+        console.log('✅ Your API key is VALID and working!');
+        console.log('❌ But you have exceeded your SendGrid email credits.');
+        console.log('\nTo fix this:');
+        console.log('1. Log into SendGrid: https://app.sendgrid.com');
+        console.log('2. Check your account limits and usage');
+        console.log('3. Upgrade your plan or wait for credits to reset');
+        console.log('\nNote: The API integration is working correctly!');
+      } else if (error.code === 401) {
         console.log('\n⚠️  API Key Issue Detected:');
         console.log('1. Make sure your API key is complete and valid');
         console.log('2. Check that the API key has "Mail Send" permission enabled');

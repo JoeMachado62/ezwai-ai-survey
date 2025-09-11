@@ -4,8 +4,11 @@ Add these environment variables to your Railway deployment:
 
 ## Required for Email Functionality
 ```
-SENDGRID_API_KEY=<your-complete-sendgrid-api-key>
+SENDGRID_API_KEY=<your-sendgrid-api-key-here>
 ```
+**Status**: API key has been validated and is working correctly.
+**Current Issue**: SendGrid account has exceeded email credits limit.
+**Solution**: Upgrade SendGrid plan or wait for credits to reset.
 
 ## Required for Report Banner Images (Client-side variables)
 ```
