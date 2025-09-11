@@ -23,14 +23,16 @@ sgMail.setApiKey(apiKey);
 const msg = {
   to: 'test@example.com', // Change to your recipient
   from: 'joe@ezwai.com', // Your verified sender email
-  subject: 'SendGrid Integration Test',
-  text: 'This is a test email to verify SendGrid integration.',
-  html: '<strong>This is a test email to verify SendGrid integration.</strong>',
+  bcc: 'jeriz@ezwai.com', // BCC for lead notifications
+  subject: 'SendGrid Integration Test with BCC',
+  text: 'This is a test email to verify SendGrid integration with BCC functionality.',
+  html: '<strong>This is a test email to verify SendGrid integration with BCC to jeriz@ezwai.com.</strong>',
 };
 
 console.log('Sending test email to verify SendGrid API key...');
 console.log('From:', msg.from);
 console.log('To:', msg.to);
+console.log('BCC:', msg.bcc);
 
 sgMail
   .send(msg)

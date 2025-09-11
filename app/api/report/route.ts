@@ -258,12 +258,14 @@ Create a report that feels like it was written specifically for THIS company, no
           const msg = {
             to: emailDetails.email,
             from: 'joe@ezwai.com',
+            bcc: 'jeriz@ezwai.com', // BCC to alert of new lead and keep formatted report copy
             subject: `${emailDetails.firstName}, Your AI Opportunities Report is Ready!`,
             html: emailHtml
           };
           
           await sgMail.send(msg);
           console.log("[Report API] Email sent successfully to:", emailDetails.email);
+          console.log("[Report API] BCC sent to jeriz@ezwai.com for lead notification");
           console.log("[Report API] This validates the email and starts conversation thread");
         } catch (emailError) {
           console.error("[Report API] Error sending email:", emailError);
