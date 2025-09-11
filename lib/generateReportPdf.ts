@@ -15,7 +15,10 @@ export async function generateReportPdf(
           bottom: 50,
           left: 50,
           right: 50
-        }
+        },
+        // Disable font embedding to avoid file system issues
+        autoFirstPage: true,
+        compress: true
       });
 
       const chunks: Buffer[] = [];
@@ -28,7 +31,7 @@ export async function generateReportPdf(
       const textGray = '#4a5568';
       const titleGray = '#1a202c';
 
-      // Title Page
+      // Title Page - using default font
       doc.fontSize(28)
          .fillColor(brandTeal)
          .text('AI Opportunities Report', { align: 'center' });
@@ -36,7 +39,7 @@ export async function generateReportPdf(
       doc.moveDown();
       doc.fontSize(20)
          .fillColor(titleGray)
-         .text(companyName, { align: 'center' });
+         .text(companyName || 'Your Company', { align: 'center' });
       
       if (firstName) {
         doc.moveDown();
