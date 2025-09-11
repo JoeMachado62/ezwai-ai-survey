@@ -706,7 +706,7 @@ export default function Page() {
         show={loading || isGeneratingVisuals} 
         phase={loadingPhase === 'report' || isGeneratingVisuals ? 'report' : loadingPhase} 
         companyInfo={companyInfo}
-        onSkipWait={(loadingPhase === 'report' || isGeneratingVisuals) && !skipWaitMode ? handleSkipWait : undefined}
+        onSkipWait={(loadingPhase === 'report' || isGeneratingVisuals) ? handleSkipWait : undefined}
         contactEmail={email}
       />
 

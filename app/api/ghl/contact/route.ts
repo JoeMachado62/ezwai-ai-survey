@@ -166,9 +166,7 @@ export async function POST(req: Request) {
       const note = await ghlFetch(`/contacts/${contactId}/notes`, {
         method: "POST",
         body: JSON.stringify({ 
-          body: noteBody, 
-          contactId,
-          userId: process.env.GHL_USER_ID // Optional: if you have a specific user ID
+          body: noteBody
         })
       });
 
