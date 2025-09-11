@@ -108,10 +108,10 @@ export async function callResponses<T>({
   const controller = new AbortController();
   
   // CRITICAL: Extended timeout for GPT-5 with web search and reasoning
-  // Railway supports up to 5 minutes timeout, GPT-5 with web search can take 30-90 seconds
+  // Railway supports up to 5 minutes timeout, GPT-5 with web search can take 30-180 seconds for reports
   const timeoutMs = process.env.RAILWAY_ENVIRONMENT 
-    ? 180000  // 3 minutes on Railway (production)
-    : 120000; // 2 minutes for local development
+    ? 300000  // 5 minutes on Railway (production) - maximum allowed
+    : 180000; // 3 minutes for local development
     
   console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
   
@@ -206,14 +206,21 @@ export async function callResponses<T>({
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       // More informative timeout message
-      console.warn(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search needs more time`);
-      console.warn('API call exceeded timeout - increasing timeout may help');
-      console.warn('Returning enhanced fallback questions...');
-      return getFallbackQuestions() as T;
+      console.error(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search needs more time`);
+      console.error('Consider reducing reasoning effort or verbosity for faster responses');
+      
+      // Only return fallback for questions, not reports
+      if (model.includes('mini')) {
+        console.warn('Returning enhanced fallback questions...');
+        return getFallbackQuestions() as T;
+      }
+      // For reports, throw the error to trigger proper error handling
+      throw new Error(`Report generation timed out after ${timeoutMs/1000} seconds. Please try again.`);
     }
     console.error('OpenAI API error:', error.message);
-    // Return fallback on any error in production
-    if (process.env.NODE_ENV === 'production' || error.message.includes('503')) {
+    
+    // Only use fallback for questions in production
+    if ((process.env.NODE_ENV === 'production' || error.message.includes('503')) && model.includes('mini')) {
       console.warn('API unavailable or error - using enhanced fallback questions');
       return getFallbackQuestions() as T;
     }

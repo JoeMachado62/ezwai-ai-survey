@@ -174,8 +174,8 @@ Create a report that feels like it was written specifically for THIS company, no
         schema: ReportJsonSchema,
         tools: [{ type: "web_search" }],
         model: process.env.OPENAI_MODEL_REPORT || "gpt-5",  // Use full GPT-5 for complex reasoning and broad knowledge
-        reasoning_effort: "medium",  // Higher reasoning for complex report generation
-        verbosity: "high"  // More detailed output for comprehensive report
+        reasoning_effort: "low",  // Reduced to prevent timeouts while still enabling web search
+        verbosity: "medium"  // Balanced output for faster generation
       });
 
       console.log("[Report API] Successfully generated report");

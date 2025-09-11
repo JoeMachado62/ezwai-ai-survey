@@ -14,12 +14,13 @@ export async function POST(req: NextRequest) {
       companyName,
       reportPdfBase64,
       reportData,
+      reportSections,
       skipWait = false
     } = body;
 
-    if (!email || !reportPdfBase64) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Email is required" },
         { status: 400 }
       );
     }
@@ -97,20 +98,24 @@ export async function POST(req: NextRequest) {
     const sgMail = require('@sendgrid/mail');
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     
-    const msg = {
+    const msg: any = {
       to: email,
       from: 'joe@ezwai.com',
       subject: `${firstName}, Your AI Opportunities Report is Ready!`,
-      html: emailHtml,
-      attachments: [
+      html: emailHtml
+    };
+    
+    // Only attach PDF if it's available
+    if (reportPdfBase64) {
+      msg.attachments = [
         {
           content: reportPdfBase64,
           filename: `AI-Report-${companyName?.replace(/\s+/g, '-') || 'Report'}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment'
         }
-      ]
-    };
+      ];
+    }
     
     await sgMail.send(msg);
     

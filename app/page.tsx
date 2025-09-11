@@ -345,21 +345,21 @@ export default function Page() {
     setLoadingPhase("report");
     setIsGeneratingVisuals(true);
     
-    // Set a timeout for the entire process (3 minutes)
+    // Set a timeout for the entire process (5 minutes to match server timeout)
     const reportTimeout = setTimeout(() => {
       if (loading) {
-        console.error("Report generation timed out after 3 minutes");
+        console.error("Report generation timed out after 5 minutes");
         alert("Report generation is taking longer than expected. We'll email you the report once it's ready.");
         setLoading(false);
         setLoadingPhase(undefined);
         setIsGeneratingVisuals(false);
       }
-    }, 180000); // 3 minutes
+    }, 300000); // 5 minutes to match server timeout
     
     try {
       // Create an AbortController for fetch timeout
       const controller = new AbortController();
-      const fetchTimeout = setTimeout(() => controller.abort(), 120000); // 2 minute fetch timeout
+      const fetchTimeout = setTimeout(() => controller.abort(), 240000); // 4 minute fetch timeout (less than total timeout)
       
       // Make report API call WHILE overlay is showing
       const response = await fetch("/api/report", {
