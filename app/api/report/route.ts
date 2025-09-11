@@ -57,7 +57,11 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const input = ReportInputZ.parse(body);
+    
+    // Extract email parameters if provided (for skip-wait functionality)
+    const { sendEmailWhenComplete, emailDetails, ...reportInput } = body;
+    
+    const input = ReportInputZ.parse(reportInput);
 
     const userPrompt = `Create a personalized AI Opportunities Report for ${input.companyInfo.companyName || 'this company'}.
 
@@ -179,6 +183,39 @@ Create a report that feels like it was written specifically for THIS company, no
       });
 
       console.log("[Report API] Successfully generated report");
+      
+      // If email was requested, send it now with the report
+      if (sendEmailWhenComplete && emailDetails?.email) {
+        console.log("[Report API] Sending report via email to:", emailDetails.email);
+        
+        try {
+          // Send email with the generated report
+          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/send-report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: emailDetails.email,
+              firstName: emailDetails.firstName,
+              lastName: emailDetails.lastName,
+              companyName: input.companyInfo.companyName,
+              reportData: result,
+              // Note: PDF generation would need to be implemented server-side
+              reportPdfBase64: null,
+              skipWait: true
+            })
+          });
+          
+          if (!emailResponse.ok) {
+            console.error("[Report API] Failed to send email:", await emailResponse.text());
+          } else {
+            console.log("[Report API] Email sent successfully");
+          }
+        } catch (emailError) {
+          console.error("[Report API] Error sending email:", emailError);
+          // Don't fail the report generation if email fails
+        }
+      }
+      
       return NextResponse.json(result, { status: 200 });
     } catch (apiError: any) {
       console.error("OpenAI API error, using fallback:", apiError.message);

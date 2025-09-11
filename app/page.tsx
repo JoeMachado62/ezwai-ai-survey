@@ -594,18 +594,45 @@ export default function Page() {
     try {
       setSkipWaitMode(true);
       
-      // We need to wait for the report to be generated if it's not ready yet
+      // If report generation hasn't started or is in progress
       if (!report) {
-        // Report is still being generated, just acknowledge and close
-        // NOTE: In a production system, this should trigger a background job
-        // that sends the email once the report is ready
-        alert('We\'ve noted your email preference. Your report is still being generated and you\'ll receive it once complete.\n\nNote: In the current version, you may need to keep this page open for the report to finish generating.');
+        // Trigger a NEW report generation request with email flag
+        // This will run on the server and send email when complete
+        console.log("Triggering server-side report generation with email delivery");
         
-        // Keep the loading state but hide the overlay
+        fetch("/api/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyInfo,
+            techStack,
+            socialMedia,
+            aiSummary: summary,
+            answers,
+            sendEmailWhenComplete: true,
+            emailDetails: {
+              email,
+              firstName,
+              lastName
+            }
+          })
+        }).then(response => {
+          if (response.ok) {
+            console.log("Server-side report generation initiated");
+          } else {
+            console.error("Failed to initiate server-side report");
+          }
+        }).catch(error => {
+          console.error("Error initiating server-side report:", error);
+        });
+        
+        // Close the overlay and show success message
         setLoading(false);
         setIsGeneratingVisuals(false);
+        alert(`Thank you! Your report is being generated and will be sent to ${email} within 5-10 minutes.\n\nYou can safely close this page.`);
         
-        // Don't close/reset - let the report continue generating in background
+        // Reset to start
+        handleCloseReport();
         return;
       }
       
