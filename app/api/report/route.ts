@@ -189,27 +189,82 @@ Create a report that feels like it was written specifically for THIS company, no
         console.log("[Report API] Sending report via email to:", emailDetails.email);
         
         try {
-          // Send email with the generated report
-          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/send-report`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: emailDetails.email,
-              firstName: emailDetails.firstName,
-              lastName: emailDetails.lastName,
-              companyName: input.companyInfo.companyName,
-              reportData: result,
-              // Note: PDF generation would need to be implemented server-side
-              reportPdfBase64: null
-            })
-          });
+          // Import SendGrid directly instead of making internal API call
+          const sgMail = require('@sendgrid/mail');
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
           
-          if (!emailResponse.ok) {
-            console.error("[Report API] Failed to send email:", await emailResponse.text());
-          } else {
-            console.log("[Report API] Email sent successfully to:", emailDetails.email);
-            console.log("[Report API] This validates the email and starts conversation thread");
-          }
+          // Create email HTML with report summary
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #08b2c6, #b5feff); padding: 30px; border-radius: 10px 10px 0 0; }
+                .header h1 { color: white; margin: 0; }
+                .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px; }
+                .button { display: inline-block; padding: 12px 24px; background: #08b2c6; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
+                .highlight { background: #f0f9ff; padding: 15px; border-left: 4px solid #08b2c6; margin: 20px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Your AI Opportunities Report is Ready!</h1>
+                </div>
+                <div class="content">
+                  <p>Hi ${emailDetails.firstName || 'there'},</p>
+                  
+                  <p>Great news! Your personalized AI Opportunities Report for <strong>${input.companyInfo.companyName}</strong> has been generated.</p>
+                  
+                  <div class="highlight">
+                    <h3>Executive Summary:</h3>
+                    <p>${result.executiveSummary?.substring(0, 300)}...</p>
+                  </div>
+                  
+                  <h3>Your Report Includes:</h3>
+                  <ul>
+                    <li>🚀 ${result.quickWins?.length || 0} Quick Wins you can implement in 30 days</li>
+                    <li>📊 Strategic AI recommendations for your ${input.companyInfo.industry} business</li>
+                    <li>🎯 Competitive intelligence and market insights</li>
+                    <li>📋 Step-by-step implementation guide</li>
+                  </ul>
+                  
+                  <h3>Top Quick Win:</h3>
+                  ${result.quickWins?.[0] ? `
+                    <p><strong>${result.quickWins[0].title}</strong><br>
+                    ${result.quickWins[0].description}<br>
+                    <em>Impact: ${result.quickWins[0].impact}</em></p>
+                  ` : ''}
+                  
+                  <center>
+                    <a href="https://ezwai.com/scheduling-calendar/" class="button">Schedule Your Free Consultation</a>
+                  </center>
+                  
+                  <div class="footer">
+                    <p><strong>Questions?</strong> Simply reply to this email and I'll personally respond within 24 hours.</p>
+                    <p>Best regards,<br>
+                    The EZWAI Team<br>
+                    <a href="https://ezwai.com">ezwai.com</a></p>
+                  </div>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+          
+          const msg = {
+            to: emailDetails.email,
+            from: 'joe@ezwai.com',
+            subject: `${emailDetails.firstName}, Your AI Opportunities Report is Ready!`,
+            html: emailHtml
+          };
+          
+          await sgMail.send(msg);
+          console.log("[Report API] Email sent successfully to:", emailDetails.email);
+          console.log("[Report API] This validates the email and starts conversation thread");
         } catch (emailError) {
           console.error("[Report API] Error sending email:", emailError);
           // Don't fail the report generation if email fails

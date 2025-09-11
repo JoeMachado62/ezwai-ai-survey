@@ -66,7 +66,8 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1rem'  // Reduced gap between elements
+        gap: '1rem',  // Reduced gap between elements
+        position: 'relative'  // For absolute positioning of popup
       }}>
         <div className="loading-text" style={{ 
           fontSize: '2.5rem',
@@ -79,21 +80,54 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
           {phase === "questions" ? "Generating your custom questions" : "Deep research for your final report"}
         </div>
         
-        {/* Show skip-wait option above video for report phase */}
+        {/* Show skip-wait option as centered overlay */}
         {phase === "report" && onSkipWait && contactEmail && showSkipOption && (
           <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             animation: 'fadeInUp 0.5s ease-in',
             opacity: 1,
-            marginTop: '1rem',
-            marginBottom: '1rem',
             padding: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.1)',
+            background: 'rgba(20, 20, 30, 0.95)',
             borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
             textAlign: 'center',
-            width: '100%',
-            maxWidth: '600px'
+            width: '90%',
+            maxWidth: '500px',
+            zIndex: 10,
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)'
           }}>
+            {/* Close button */}
+            <button
+              onClick={() => setShowSkipOption(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+              }}
+            >
+              <span style={{ fontSize: '28px', lineHeight: '1' }}>×</span>
+              <span style={{ fontSize: '12px' }}>close</span>
+            </button>
+            
             <p style={{
               color: 'white',
               fontSize: '1.25rem',
