@@ -77,18 +77,20 @@ export async function callResponses<T>({
   reasoning_effort?: "minimal" | "low" | "medium" | "high";
   verbosity?: "low" | "medium" | "high";
 }): Promise<T> {
-  // Build the request payload according to GPT-5 documentation
-  // CRITICAL: Use response_format, not text.format!
+  // Build the request payload according to OpenAI Responses API
+  // CRITICAL: The API requires text.format, NOT response_format!
   const payload: any = {
     model,
     input,
     tools,
     tool_choice: "auto",
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: schema.name || "DefaultSchema",
-        schema: schema.schema || schema
+    text: {
+      format: {
+        type: "json_schema",
+        json_schema: {
+          name: schema.name || "DefaultSchema",
+          schema: schema.schema || schema
+        }
       }
     }
   };
@@ -99,8 +101,8 @@ export async function callResponses<T>({
     // Web_search requires at least "low" reasoning effort
     payload.reasoning = { effort: reasoning_effort || "low" };
     
-    // Add verbosity control for better output
-    payload.text = { verbosity: verbosity || "medium" };
+    // Add verbosity control for better output (merge with existing text object)
+    payload.text.verbosity = verbosity || "medium";
   }
 
   // ALWAYS use Responses API for GPT-5 models

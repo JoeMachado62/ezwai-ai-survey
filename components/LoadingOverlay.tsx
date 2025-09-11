@@ -58,14 +58,7 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
   ];
 
   return (
-    <>
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-      <div className="loading-overlay">
+    <div className="loading-overlay">
         <div className="loading-content" style={{ 
         width: '80vw', 
         minWidth: '80vw',
@@ -89,7 +82,8 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         {/* Show skip-wait option above video for report phase */}
         {phase === "report" && onSkipWait && contactEmail && showSkipOption && (
           <div style={{
-            animation: 'fadeIn 0.5s ease-in',
+            animation: 'fadeInUp 0.5s ease-in',
+            opacity: 1,
             marginTop: '1rem',
             marginBottom: '1rem',
             padding: '1.5rem',
@@ -199,6 +193,5 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         )}
       </div>
     </div>
-    </>
   );
 }
