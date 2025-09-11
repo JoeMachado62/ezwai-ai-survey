@@ -392,8 +392,8 @@ export default function Page() {
       const data: ReportResult = await response.json();
       setReport(data);
       
-      // Now process the visual report
-      await processContactAndGenerateVisualReport();
+      // Now process the visual report - pass data directly to avoid state timing issues
+      await processContactAndGenerateVisualReport(data);
       
       // Clear the main timeout if everything succeeded
       clearTimeout(reportTimeout);
@@ -490,8 +490,11 @@ export default function Page() {
     return sections;
   }
   
-  async function processContactAndGenerateVisualReport() {
-    if (!report) {
+  async function processContactAndGenerateVisualReport(reportData?: ReportResult) {
+    // Use passed data or fallback to state (for skip-wait scenario)
+    const currentReport = reportData || report;
+    
+    if (!currentReport) {
       console.error('Report data is missing in processContactAndGenerateVisualReport');
       alert('Report data is missing. Please try again or use the email option to receive your report.');
       setLoading(false);
@@ -516,7 +519,7 @@ export default function Page() {
             techStack,
             socialMedia,
             answers,
-            report
+            report: currentReport
           })
         });
         
@@ -528,7 +531,7 @@ export default function Page() {
       }
       
       // Transform report sections and assign environment variable images
-      const reportSections = transformReportToSections(report);
+      const reportSections = transformReportToSections(currentReport);
       
       // Map sections with proper image URLs from environment variables
       const enhancedSections = reportSections.map((section, index) => {

@@ -66,9 +66,50 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
   // Apply cleaning to the entire content first
   const cleanedContent = cleanContent(content);
   
-  // Better paragraph splitting that handles multiple line breaks
-  const rawParagraphs = cleanedContent.split(/\n\n+/);
-  const paragraphs = rawParagraphs.map(p => p.trim()).filter(p => p.length > 0);
+  // Better paragraph splitting that handles lists properly
+  const lines = cleanedContent.split(/\n/);
+  const processedParagraphs: string[] = [];
+  let currentParagraph = '';
+  let inList = false;
+  
+  lines.forEach((line, index) => {
+    const trimmedLine = line.trim();
+    const isListItem = /^\s*[-•*]\s+/.test(trimmedLine) || /^\s*\d+\.\s+/.test(trimmedLine);
+    
+    if (isListItem) {
+      // If we have accumulated text, save it
+      if (currentParagraph && !inList) {
+        processedParagraphs.push(currentParagraph);
+        currentParagraph = '';
+      }
+      processedParagraphs.push(trimmedLine);
+      inList = true;
+    } else if (trimmedLine === '') {
+      // Empty line - end current paragraph
+      if (currentParagraph) {
+        processedParagraphs.push(currentParagraph);
+        currentParagraph = '';
+      }
+      inList = false;
+    } else {
+      // Regular text
+      if (inList) {
+        // If coming from a list, start new paragraph
+        currentParagraph = trimmedLine;
+        inList = false;
+      } else {
+        // Continue current paragraph
+        currentParagraph = currentParagraph ? `${currentParagraph} ${trimmedLine}` : trimmedLine;
+      }
+    }
+  });
+  
+  // Don't forget the last paragraph
+  if (currentParagraph) {
+    processedParagraphs.push(currentParagraph);
+  }
+  
+  const paragraphs = processedParagraphs.filter(p => p.length > 0);
   
   // Regex patterns
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
@@ -102,9 +143,21 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         if (bulletRegex.test(cleanParagraph)) {
           const bulletContent = cleanParagraph.replace(bulletRegex, '$1');
           return (
-            <div key={pIndex} className="flex items-start mb-3">
-              <span className="text-brand-teal mr-3 text-xl">•</span>
-              <p className="text-gray-700 leading-relaxed flex-1">{cleanContent(bulletContent)}</p>
+            <div key={pIndex} className="flex items-start mb-4 ml-4">
+              <span className="text-brand-teal mr-3 text-xl mt-1">•</span>
+              <p className="text-gray-700 leading-relaxed flex-1 text-lg">
+                {bulletContent.split(statRegex).map((part, i) => {
+                  const cleanPart = cleanContent(part);
+                  if (cleanPart.match(statRegex)) {
+                    return (
+                      <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
+                        {cleanPart}
+                      </span>
+                    );
+                  }
+                  return cleanPart;
+                })}
+              </p>
             </div>
           );
         }
@@ -114,9 +167,21 @@ const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
           const number = cleanParagraph.match(/^\s*(\d+)\./)?.[1];
           const listContent = cleanParagraph.replace(numberedRegex, '$1');
           return (
-            <div key={pIndex} className="flex items-start mb-3">
-              <span className="text-brand-teal font-bold mr-3 text-lg">{number}.</span>
-              <p className="text-gray-700 leading-relaxed flex-1">{cleanContent(listContent)}</p>
+            <div key={pIndex} className="flex items-start mb-4 ml-4">
+              <span className="text-brand-teal font-bold mr-4 text-lg min-w-[24px]">{number}.</span>
+              <p className="text-gray-700 leading-relaxed flex-1 text-lg">
+                {listContent.split(statRegex).map((part, i) => {
+                  const cleanPart = cleanContent(part);
+                  if (cleanPart.match(statRegex)) {
+                    return (
+                      <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
+                        {cleanPart}
+                      </span>
+                    );
+                  }
+                  return cleanPart;
+                })}
+              </p>
             </div>
           );
         }
