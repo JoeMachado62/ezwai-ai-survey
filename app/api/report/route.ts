@@ -184,8 +184,8 @@ Create a report that feels like it was written specifically for THIS company, no
 
       console.log("[Report API] Successfully generated report");
       
-      // If email was requested, send it now with the report
-      if (sendEmailWhenComplete && emailDetails?.email) {
+      // ALWAYS send email with the report - this is now standard
+      if (emailDetails?.email) {
         console.log("[Report API] Sending report via email to:", emailDetails.email);
         
         try {
@@ -200,20 +200,22 @@ Create a report that feels like it was written specifically for THIS company, no
               companyName: input.companyInfo.companyName,
               reportData: result,
               // Note: PDF generation would need to be implemented server-side
-              reportPdfBase64: null,
-              skipWait: true
+              reportPdfBase64: null
             })
           });
           
           if (!emailResponse.ok) {
             console.error("[Report API] Failed to send email:", await emailResponse.text());
           } else {
-            console.log("[Report API] Email sent successfully");
+            console.log("[Report API] Email sent successfully to:", emailDetails.email);
+            console.log("[Report API] This validates the email and starts conversation thread");
           }
         } catch (emailError) {
           console.error("[Report API] Error sending email:", emailError);
           // Don't fail the report generation if email fails
         }
+      } else {
+        console.warn("[Report API] No email provided - report generated but not sent");
       }
       
       return NextResponse.json(result, { status: 200 });

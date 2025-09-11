@@ -362,6 +362,7 @@ export default function Page() {
       const fetchTimeout = setTimeout(() => controller.abort(), 240000); // 4 minute fetch timeout (less than total timeout)
       
       // Make report API call WHILE overlay is showing
+      // ALWAYS include email details for automatic email delivery
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -370,7 +371,13 @@ export default function Page() {
           techStack, 
           socialMedia, 
           aiSummary: summary, 
-          answers 
+          answers,
+          // Always include email details - email is sent for ALL reports
+          emailDetails: {
+            email,
+            firstName,
+            lastName
+          }
         }),
         signal: controller.signal
       });
@@ -596,43 +603,17 @@ export default function Page() {
       
       // If report generation hasn't started or is in progress
       if (!report) {
-        // Trigger a NEW report generation request with email flag
-        // This will run on the server and send email when complete
-        console.log("Triggering server-side report generation with email delivery");
-        
-        fetch("/api/report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            companyInfo,
-            techStack,
-            socialMedia,
-            aiSummary: summary,
-            answers,
-            sendEmailWhenComplete: true,
-            emailDetails: {
-              email,
-              firstName,
-              lastName
-            }
-          })
-        }).then(response => {
-          if (response.ok) {
-            console.log("Server-side report generation initiated");
-          } else {
-            console.error("Failed to initiate server-side report");
-          }
-        }).catch(error => {
-          console.error("Error initiating server-side report:", error);
-        });
+        // Report is already being generated with email delivery (standard flow)
+        // Just close the overlay and inform the user
+        console.log("Report generation already in progress with automatic email delivery");
         
         // Close the overlay and show success message
         setLoading(false);
         setIsGeneratingVisuals(false);
-        alert(`Thank you! Your report is being generated and will be sent to ${email} within 5-10 minutes.\n\nYou can safely close this page.`);
         
-        // Reset to start
-        handleCloseReport();
+        alert(`Perfect! Your report is already being generated and will automatically be sent to ${email}.\n\nThis helps us validate your email and starts our conversation about your AI opportunities.\n\nYou can safely close this page - the report will arrive in 5-10 minutes.`);
+        
+        // Don't reset - let the existing request continue
         return;
       }
       
