@@ -58,13 +58,40 @@ function Testimonial({ text, author, role, initial }: typeof testimonials[0]) {
   );
 }
 
-// Image Header Component  
-function ImageHeader({ src, alt }: { src: string; alt: string }) {
+// Image Header Component with optimizations
+function ImageHeader({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) {
+  const [imageLoading, setImageLoading] = useState(true);
+  
   return (
     <div className="image-container">
       <div className="image-shadow"></div>
-      <div className="image-frame">
-        <Image src={src} alt={alt} width={1024} height={576} />
+      <div className="image-frame" style={{ position: 'relative', minHeight: imageLoading ? '300px' : 'auto' }}>
+        {imageLoading && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '8px'
+          }} />
+        )}
+        <Image 
+          src={src} 
+          alt={alt} 
+          width={1024} 
+          height={576}
+          priority={priority}
+          quality={85}
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          onLoad={() => setImageLoading(false)}
+          style={{ opacity: imageLoading ? 0 : 1, transition: 'opacity 0.3s' }}
+        />
       </div>
     </div>
   );
@@ -207,6 +234,24 @@ export default function Page() {
   const [enhancedReport, setEnhancedReport] = useState<ReportSection[] | null>(null);
   const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
   const [skipWaitMode, setSkipWaitMode] = useState(false);
+
+  // Preload all images on component mount for faster display
+  useEffect(() => {
+    // Create link elements for preloading
+    Object.values(images).forEach(src => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = src;
+      document.head.appendChild(link);
+    });
+    
+    // Also preload images using Image constructor for immediate caching
+    Object.values(images).forEach(src => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, []);
 
   // Auto-resize for iframe embedding
   useEffect(() => {
@@ -658,7 +703,7 @@ export default function Page() {
 
       {step === 0 && subStep === 0 && (
         <StepCard title="Let's Understand Your Business" subtitle="Tell us about your company to receive a customized AI opportunities assessment">
-          <ImageHeader src={images.intro} alt="AI Introduction" />
+          <ImageHeader src={images.intro} alt="AI Introduction" priority={true} />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField 

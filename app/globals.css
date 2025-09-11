@@ -357,6 +357,16 @@ body {
   }
 }
 
+/* Shimmer animation for image loading skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 /* Loading Dots Animation */
 .loading-dots {
   display: inline-flex;
