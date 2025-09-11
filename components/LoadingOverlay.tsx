@@ -187,7 +187,11 @@ export default function LoadingOverlay({ show, phase, companyInfo, onSkipWait, c
         <div style={{ position: 'relative', width: '100%' }}>
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
             <iframe 
-              src="https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=false&preload=true&responsive=true"
+              src={phase === "report" 
+                ? "https://iframe.mediadelivery.net/embed/406789/382e3adb-4fd6-45ba-aa7f-3bd5d0bbfaa3?autoplay=true&loop=true&muted=false&preload=true&responsive=true"
+                : "https://iframe.mediadelivery.net/embed/406789/f7fc57b5-a0a6-45cd-a438-2bf260626b09?autoplay=true&loop=true&muted=false&preload=true&responsive=true"
+              }
+              loading="lazy"
               style={{
                 position: 'absolute',
                 top: 0,
