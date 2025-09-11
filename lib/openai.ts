@@ -78,7 +78,7 @@ export async function callResponses<T>({
   verbosity?: "low" | "medium" | "high";
 }): Promise<T> {
   // Build the request payload according to OpenAI Responses API
-  // CRITICAL: The API requires text.format, NOT response_format!
+  // CRITICAL: The API requires text.format with name and schema at the format level!
   const payload: any = {
     model,
     input,
@@ -87,10 +87,8 @@ export async function callResponses<T>({
     text: {
       format: {
         type: "json_schema",
-        json_schema: {
-          name: schema.name || "DefaultSchema",
-          schema: schema.schema || schema
-        }
+        name: schema.name || "DefaultSchema",
+        schema: schema.schema || schema
       }
     }
   };
