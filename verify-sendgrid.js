@@ -21,12 +21,24 @@ console.log('Key starts with:', apiKey.substring(0, 10) + '...');
 sgMail.setApiKey(apiKey);
 
 const msg = {
-  to: 'test@example.com', // Change to your recipient
+  to: 'joe.machado@carlucent.net', // Primary recipient
   from: 'joe@ezwai.com', // Your verified sender email
-  bcc: 'jeriz@ezwai.com', // BCC for lead notifications
-  subject: 'SendGrid Integration Test with BCC',
-  text: 'This is a test email to verify SendGrid integration with BCC functionality.',
-  html: '<strong>This is a test email to verify SendGrid integration with BCC to jeriz@ezwai.com.</strong>',
+  bcc: 'joemachado62@gmail.com', // BCC for verification
+  subject: 'AI Survey - SendGrid Integration Test',
+  text: 'This is a test email to verify SendGrid integration is working correctly.\n\nPrimary recipient: joe.machado@carlucent.net\nBCC recipient: joemachado62@gmail.com\n\nIf you receive this email, the integration is working perfectly!',
+  html: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #08b2c6;">AI Survey - SendGrid Integration Test</h2>
+      <p>This is a test email to verify SendGrid integration is working correctly.</p>
+      <div style="background: #f0f9ff; padding: 15px; border-left: 4px solid #08b2c6; margin: 20px 0;">
+        <p><strong>Primary recipient:</strong> joe.machado@carlucent.net</p>
+        <p><strong>BCC recipient:</strong> joemachado62@gmail.com</p>
+      </div>
+      <p style="color: green; font-weight: bold;">✅ If you receive this email, the integration is working perfectly!</p>
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+      <p style="color: #6b7280; font-size: 14px;">This test confirms that the AI Survey application can send reports via email with BCC functionality.</p>
+    </div>
+  `,
 };
 
 console.log('Sending test email to verify SendGrid API key...');
