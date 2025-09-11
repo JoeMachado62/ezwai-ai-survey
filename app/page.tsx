@@ -596,11 +596,16 @@ export default function Page() {
       
       // We need to wait for the report to be generated if it's not ready yet
       if (!report) {
-        // Report is still being generated, just show message and close overlay
-        alert('Your report is still being generated and will be sent to your email within 5 minutes!');
+        // Report is still being generated, just acknowledge and close
+        // NOTE: In a production system, this should trigger a background job
+        // that sends the email once the report is ready
+        alert('We\'ve noted your email preference. Your report is still being generated and you\'ll receive it once complete.\n\nNote: In the current version, you may need to keep this page open for the report to finish generating.');
+        
+        // Keep the loading state but hide the overlay
         setLoading(false);
         setIsGeneratingVisuals(false);
-        handleCloseReport();
+        
+        // Don't close/reset - let the report continue generating in background
         return;
       }
       
@@ -625,31 +630,44 @@ export default function Page() {
         return { ...section, imageUrl };
       });
       
-      // Send email with the report
-      const response = await fetch('/api/email/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          firstName,
-          companyName: companyInfo.companyName,
-          reportSections: enhancedSectionsForEmail
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send email');
+      // Only send email if we have actual report content
+      if (enhancedSectionsForEmail && enhancedSectionsForEmail.length > 0) {
+        // For now, we'll just inform the user that the report is ready
+        // In a production system, this would generate a PDF and send it
+        alert(`Your report has been generated successfully!\n\nThe report contains ${enhancedSectionsForEmail.length} sections with insights for ${companyInfo.companyName}.\n\nNote: Email sending with PDF attachment requires additional server-side implementation.`);
+        
+        // Optionally try to send a notification email (without PDF for now)
+        try {
+          const response = await fetch('/api/email/send-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              firstName,
+              companyName: companyInfo.companyName,
+              reportSections: enhancedSectionsForEmail,
+              // Note: PDF generation would happen here in production
+              reportPdfBase64: null
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Notification email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Email sending failed:', emailError);
+          // Don't throw - the report is ready even if email fails
+        }
+      } else {
+        alert('Report generation completed but no content was generated. Please try again.');
       }
-
+      
       // Clear loading state and close overlay
       setLoading(false);
       setIsGeneratingVisuals(false);
       
-      // Show success message
-      alert('Report will be sent to your email within 5 minutes!');
-      
-      // Reset to start
-      handleCloseReport();
+      // Don't reset - keep the report data available
+      // handleCloseReport();
       
     } catch (error) {
       console.error('Error sending email:', error);
