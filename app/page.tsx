@@ -8,7 +8,7 @@ import EnhancedReport from "@/components/report/EnhancedReport";
 import LoadingSpinner from "@/components/report/LoadingSpinner";
 import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
 import type { ReportSection } from "@/lib/report-types";
-import { generateStyledPdfFromSections } from "@/lib/generateStyledPdf";
+// Removed client-side PDF generation - using server-side instead
 import Image from "next/image";
 
 // Images from original design
@@ -645,12 +645,22 @@ export default function Page() {
       // Only send email if we have actual report content
       if (enhancedSectionsForEmail && enhancedSectionsForEmail.length > 0) {
         try {
-          // Generate the styled PDF
-          console.log('Generating styled PDF for email...');
-          const pdfBase64 = await generateStyledPdfFromSections(
-            enhancedSectionsForEmail, 
-            companyInfo.companyName || 'Your Business'
-          );
+          // Generate the styled PDF server-side
+          console.log('Generating styled PDF server-side for email...');
+          const pdfResponse = await fetch('/api/report/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sections: enhancedSectionsForEmail,
+              businessName: companyInfo.companyName || 'Your Business'
+            })
+          });
+          
+          if (!pdfResponse.ok) {
+            throw new Error('Failed to generate PDF');
+          }
+          
+          const { pdfBase64 } = await pdfResponse.json();
           
           // Send email with the styled PDF
           const response = await fetch('/api/email/send-report', {
@@ -668,7 +678,7 @@ export default function Page() {
           });
           
           if (response.ok) {
-            alert(`Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the beautifully formatted PDF report!`);
+            alert(`Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately (prioritizing GoHighLevel solutions)\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the professionally formatted PDF report!`);
           } else {
             alert('There was an issue sending the email. Please try again or wait for the report to generate on screen.');
           }
