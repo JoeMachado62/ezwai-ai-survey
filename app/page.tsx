@@ -8,6 +8,7 @@ import EnhancedReport from "@/components/report/EnhancedReport";
 import LoadingSpinner from "@/components/report/LoadingSpinner";
 import type { QuestionsResult, GeneratedQuestion, ReportResult, QuestionsInput } from "@/lib/schemas";
 import type { ReportSection } from "@/lib/report-types";
+import { generateStyledPdfFromSections } from "@/lib/generateStyledPdf";
 import Image from "next/image";
 
 // Images from original design
@@ -643,31 +644,37 @@ export default function Page() {
       
       // Only send email if we have actual report content
       if (enhancedSectionsForEmail && enhancedSectionsForEmail.length > 0) {
-        // For now, we'll just inform the user that the report is ready
-        // In a production system, this would generate a PDF and send it
-        alert(`Your report has been generated successfully!\n\nThe report contains ${enhancedSectionsForEmail.length} sections with insights for ${companyInfo.companyName}.\n\nNote: Email sending with PDF attachment requires additional server-side implementation.`);
-        
-        // Optionally try to send a notification email (without PDF for now)
         try {
+          // Generate the styled PDF
+          console.log('Generating styled PDF for email...');
+          const pdfBase64 = await generateStyledPdfFromSections(
+            enhancedSectionsForEmail, 
+            companyInfo.companyName || 'Your Business'
+          );
+          
+          // Send email with the styled PDF
           const response = await fetch('/api/email/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email,
               firstName,
+              lastName,
               companyName: companyInfo.companyName,
               reportSections: enhancedSectionsForEmail,
-              // Note: PDF generation would happen here in production
-              reportPdfBase64: null
+              reportPdfBase64: pdfBase64,  // Include the styled PDF
+              skipWait: true
             })
           });
           
           if (response.ok) {
-            console.log('Notification email sent successfully');
+            alert(`Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the beautifully formatted PDF report!`);
+          } else {
+            alert('There was an issue sending the email. Please try again or wait for the report to generate on screen.');
           }
         } catch (emailError) {
           console.error('Email sending failed:', emailError);
-          // Don't throw - the report is ready even if email fails
+          alert('Failed to send the email. You can still view and download the report on screen.');
         }
       } else {
         alert('Report generation completed but no content was generated. Please try again.');
