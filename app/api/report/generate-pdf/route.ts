@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateServerPdfBuffer } from '@/lib/generateServerPdf';
+import { generateRailwayPdfBuffer } from '@/lib/generateRailwayPdf';
 import type { ReportSection } from '@/lib/report-types';
 
 export async function POST(req: NextRequest) {
@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    console.log(`[PDF Generation] Creating PDF for ${businessName} with ${sections.length} sections`);
+    console.log(`[PDF Generation] Creating Railway-compatible PDF for ${businessName} with ${sections.length} sections`);
     
-    // Generate PDF buffer server-side
-    const pdfBuffer = await generateServerPdfBuffer(
+    // Generate PDF buffer using Railway-compatible renderer
+    const pdfBuffer = await generateRailwayPdfBuffer(
       sections,
       businessName || 'Your Business'
     );

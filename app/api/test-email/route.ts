@@ -1,9 +1,167 @@
 import { NextResponse } from "next/server";
-import { generateReportPdf } from "@/lib/generateReportPdf";
-import type { ReportResult } from "@/lib/schemas";
+import { generateRailwayPdfBuffer } from "@/lib/generateRailwayPdf";
+import type { ReportSection } from "@/lib/report-types";
+
+// Transform report data into sections for the new PDF generator
+function transformToSections(companyName: string): ReportSection[] {
+  return [
+    {
+      title: "Executive Summary",
+      mainContent: `**AI Transformation Overview for ${companyName}**
+
+Based on our comprehensive analysis of your automobile brokerage business, we've identified significant opportunities to leverage AI and GoHighLevel's platform to transform your lead generation and customer acquisition processes.
+
+Your primary challenge of generating new leads can be directly addressed through GoHighLevel's AI-powered automation suite, which includes intelligent chatbots, automated lead scoring, and multi-channel campaign management.
+
+**Key Opportunities:**
+• Implement GoHighLevel's Conversational AI for 24/7 lead capture
+• Deploy automated social media lead generation workflows
+• Create intelligent email sequences with behavior-based triggers
+• Build a predictive lead scoring system within the GHL platform`,
+      keyTakeaways: [
+        "GoHighLevel can increase your lead generation by 40-60% within 30 days",
+        "AI automation can reduce manual follow-up time by 75%",
+        "Integrated CRM and marketing automation eliminates the need for multiple tools"
+      ],
+      pullQuote: "Companies using GoHighLevel's AI features report 3x higher conversion rates",
+      statistic: {
+        value: "287%",
+        description: "Average ROI for businesses using GoHighLevel's full automation suite"
+      },
+      imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45427b03233d423f353f.webp"
+    },
+    {
+      title: "Quick Wins - 30 Day Implementation",
+      mainContent: `**1. GoHighLevel AI Chatbot Deployment**
+Implement GoHighLevel's Conversational AI on your website to qualify leads 24/7. The chatbot can answer questions about vehicle sourcing, collect contact information, and automatically schedule consultations directly into your GHL calendar.
+
+*Timeframe: 1 week* | *Impact: 40-60% increase in qualified leads*
+
+**2. Automated Review Management**
+Use GoHighLevel's reputation management tools to automatically request reviews from satisfied clients and respond to feedback with AI-generated responses. This builds trust and improves local SEO.
+
+*Timeframe: 3 days* | *Impact: 25% increase in positive reviews*
+
+**3. Smart Email & SMS Campaigns**
+Set up GoHighLevel's AI-driven email and SMS sequences that nurture leads based on their behavior. The platform's built-in AI can personalize messages and optimize send times.
+
+*Timeframe: 1 week* | *Impact: 3x improvement in engagement rates*`,
+      keyTakeaways: [
+        "All quick wins can be implemented within GoHighLevel's platform",
+        "No additional software or integrations required",
+        "Expected combined impact: 200%+ increase in qualified leads"
+      ],
+      imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb055f7235614c5090e379.webp"
+    },
+    {
+      title: "Strategic AI Roadmap",
+      mainContent: `**Phase 1: Foundation (Months 1-2)**
+• Migrate existing contacts to GoHighLevel CRM
+• Set up AI-powered lead scoring and segmentation
+• Implement basic automation workflows
+• Configure tracking and analytics
+
+**Phase 2: Expansion (Months 3-4)**
+• Deploy advanced GoHighLevel features like pipeline automation
+• Create custom AI workflows for specific lead sources
+• Implement GoHighLevel's membership site for client portals
+• Set up white-label capabilities for scalability
+
+**Phase 3: Optimization (Months 5-6)**
+• Use GoHighLevel's AI insights to optimize campaigns
+• Implement predictive analytics for sales forecasting
+• Create automated reporting dashboards
+• Scale successful campaigns across new channels
+
+**Expected Outcomes:**
+• 300% increase in marketing qualified leads
+• 50% reduction in cost per acquisition
+• 75% time savings on manual tasks
+• Complete marketing and sales alignment`,
+      keyTakeaways: [
+        "GoHighLevel provides all tools needed for each phase",
+        "No need to integrate multiple disparate systems",
+        "ROI typically achieved within 60-90 days"
+      ],
+      statistic: {
+        value: "$47,000",
+        description: "Average annual savings from consolidating tools into GoHighLevel"
+      },
+      imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f916e86860b82f699ef.jpeg"
+    },
+    {
+      title: "Competitive Intelligence",
+      mainContent: `**Market Analysis:**
+In the automobile broker industry, early AI adopters using platforms like GoHighLevel are seeing significant advantages:
+
+• **Lead Generation:** 40-70% more qualified leads than traditional methods
+• **Conversion Rates:** 3x higher than industry average
+• **Customer Lifetime Value:** 45% increase through automated nurturing
+• **Operational Efficiency:** 60% reduction in administrative tasks
+
+**GoHighLevel Advantage:**
+While your competitors may be using basic chatbots or email tools, GoHighLevel's all-in-one platform provides:
+• Unified customer data across all touchpoints
+• AI-powered insights that improve over time
+• White-label capabilities for building your own brand
+• Continuous platform updates with new AI features
+
+**Competitive Positioning:**
+By implementing GoHighLevel now, you'll leapfrog competitors still using fragmented solutions. The platform's comprehensive nature means you can move faster and iterate quicker than companies juggling multiple tools.`,
+      keyTakeaways: [
+        "GoHighLevel users report 40% faster implementation than multi-tool setups",
+        "Platform consolidation reduces technical debt and training time",
+        "AI features give sustainable competitive advantage"
+      ],
+      imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/6829ebbb8e6261cf7632eb06.webp"
+    },
+    {
+      title: "Your Implementation Roadmap",
+      mainContent: `**Immediate Next Steps:**
+
+**Week 1: GoHighLevel Setup**
+1. Schedule your GoHighLevel demo and onboarding call
+2. Import existing contacts and set up your account structure
+3. Configure your first AI chatbot for lead capture
+4. Set up basic email automation sequences
+
+**Week 2: Campaign Launch**
+5. Create your first automated lead nurturing campaign
+6. Set up SMS follow-up sequences
+7. Configure appointment scheduling automation
+8. Implement review request automation
+
+**Week 3: Optimization**
+9. Review initial metrics and optimize workflows
+10. Set up advanced features like pipeline automation
+11. Create custom reports and dashboards
+12. Plan expansion into additional channels
+
+**Success Metrics to Track:**
+• Number of leads generated per week
+• Lead-to-appointment conversion rate
+• Average response time to inquiries
+• Customer acquisition cost
+• Return on ad spend (ROAS)
+
+**Support Resources:**
+• GoHighLevel 24/7 support team
+• Comprehensive video training library
+• Active user community and forums
+• EZWAI implementation assistance`,
+      keyTakeaways: [
+        "Full implementation achievable within 30 days",
+        "GoHighLevel provides extensive onboarding support",
+        "EZWAI team available for personalized assistance"
+      ],
+      pullQuote: "The best time to implement AI was yesterday. The second best time is now.",
+      imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d67354ea6fab47017.jpeg"
+    }
+  ];
+}
 
 // Mock report data for testing
-const mockReport: ReportResult = {
+const mockReport = {
   executiveSummary: "This is a test executive summary for cARLUCENT, an automobile broker specializing in vehicle buyer services. Based on your challenge with lead generation, we've identified several AI-powered opportunities to transform your business operations and customer acquisition strategy.",
   quickWins: [
     {
@@ -88,32 +246,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
     
-    console.log("[Test Email] Generating PDF with mock data...");
+    console.log("[Test Email] Generating Railway-compatible PDF...");
     
-    // Sanitize the mock report data for PDF generation
-    const sanitizedReport: ReportResult = {
-      executiveSummary: sanitizeForPDF(mockReport.executiveSummary),
-      quickWins: mockReport.quickWins?.map(qw => ({
-        title: sanitizeForPDF(qw.title),
-        description: sanitizeForPDF(qw.description),
-        timeframe: sanitizeForPDF(qw.timeframe),
-        impact: sanitizeForPDF(qw.impact)
-      })) || [],
-      recommendations: mockReport.recommendations?.map(rec => ({
-        title: sanitizeForPDF(rec.title),
-        description: sanitizeForPDF(rec.description),
-        roi: sanitizeForPDF(rec.roi)
-      })) || [],
-      competitiveAnalysis: sanitizeForPDF(mockReport.competitiveAnalysis),
-      nextSteps: mockReport.nextSteps?.map(step => sanitizeForPDF(step)) || [],
-      sources: []
-    };
+    // Generate mock sections (with fewer to reduce size)
+    const testSections = transformToSections(companyName || 'Test Company').slice(0, 2); // Only 2 sections for testing
     
-    // Generate PDF
-    const pdfBuffer = await generateReportPdf(
-      sanitizedReport,
-      sanitizeForPDF(companyName) || 'Test Company',
-      sanitizeForPDF(firstName) || 'Test User'
+    // Generate PDF using Railway-compatible renderer
+    const pdfBuffer = await generateRailwayPdfBuffer(
+      testSections,
+      companyName || 'Test Company'
     );
     
     console.log("[Test Email] PDF generated, size:", pdfBuffer.length, "bytes");
@@ -186,11 +327,18 @@ export async function POST(request: Request) {
     
   } catch (error: any) {
     console.error("[Test Email] Error:", error);
+    
+    // Log SendGrid specific errors
+    if (error.response?.body?.errors) {
+      console.error("[Test Email] SendGrid errors:", JSON.stringify(error.response.body.errors, null, 2));
+    }
+    
     return NextResponse.json(
       { 
         error: "Failed to send test email", 
         details: error.message,
-        stack: error.stack 
+        sendgridErrors: error.response?.body?.errors || null,
+        pdfSizeMB: pdfBuffer ? (pdfBuffer.length / 1024 / 1024).toFixed(2) : 0
       },
       { status: 500 }
     );
