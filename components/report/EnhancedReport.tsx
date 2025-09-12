@@ -11,7 +11,7 @@ interface EnhancedReportProps {
 }
 
 const ReportHeader: React.FC<{ number: string; title: string; imageUrl: string }> = ({ number, title, imageUrl }) => (
-  <div className="h-[400px] bg-cover bg-center flex items-end text-white p-8 md:p-12 relative print:h-[300px]" style={{ backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%), url('${imageUrl}')` }}>
+  <div className="report-header h-[400px] bg-cover bg-center flex items-end text-white p-8 md:p-12 relative print:h-[300px]" style={{ backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%), url('${imageUrl}')` }}>
     <h2 className="font-serif text-5xl md:text-6xl font-bold z-10 print:text-4xl">
       <span className="text-brand-orange">{number}.</span> {title}
     </h2>
@@ -19,20 +19,20 @@ const ReportHeader: React.FC<{ number: string; title: string; imageUrl: string }
 );
 
 const PullQuote: React.FC<{ quote: string }> = ({ quote }) => (
-    <blockquote className="font-serif text-2xl text-brand-orange border-l-4 border-brand-teal pl-6 my-8 italic">
+    <blockquote className="keep-together font-serif text-2xl text-brand-orange border-l-4 border-brand-teal pl-6 my-8 italic">
         &ldquo;{quote}&rdquo;
     </blockquote>
 );
 
 const StatHighlight: React.FC<{ value: string; description: string }> = ({ value, description }) => (
-    <div className="bg-teal-50 border border-brand-teal p-6 rounded-lg text-center my-6">
+    <div className="keep-together bg-teal-50 border border-brand-teal p-6 rounded-lg text-center my-6">
         <div className="text-5xl font-bold text-brand-teal leading-none">{value}</div>
         <div className="text-base text-gray-700 mt-2">{description}</div>
     </div>
 );
 
 const KeyTakeaways: React.FC<{ items: string[] }> = ({ items }) => (
-    <div className="bg-gray-50 p-6 rounded-lg border-t-4 border-brand-orange">
+    <div className="keep-together bg-gray-50 p-6 rounded-lg border-t-4 border-brand-orange">
         <h3 className="font-serif text-xl font-bold text-brand-orange mb-4 border-b-2 border-gray-200 pb-2">Key Takeaways</h3>
         <ul className="list-none space-y-3">
             {items.map((item, index) => (
@@ -45,277 +45,357 @@ const KeyTakeaways: React.FC<{ items: string[] }> = ({ items }) => (
     </div>
 );
 
-/**
- * A component to render text content dynamically, highlighting stats
- * and styling impactful paragraphs to create a magazine-like feel.
- */
+// Global cleaning function to use everywhere
+const cleanCitations = (text: string): string => {
+  if (!text) return '';
+  
+  return text
+    // Remove all star-based citations and their variations
+    .replace(/cite[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*[a-z0-9_-]*(?:turn\d+|search\d+|news\d+)*[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*/gi, '')
+    .replace(/\bturn\d+(?:search\d+|news\d+)*[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*/gi, '')
+    .replace(/[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]+/g, '') // Remove any standalone stars
+    .replace(/\bcite[^.\s,;!?]*\*/gi, '')
+    .replace(/\[\d+\]/g, '') // Remove numbered references
+    .replace(/〔[\d:]+－source〕/g, '') // Remove Unicode citation markers
+    .replace(/\s*\*+\s*/g, ' ') // Remove standalone asterisks
+    .replace(/\s*\.\s*\*/g, '.') // Clean up asterisks after periods
+    .replace(/\s+([.,!?;:])/g, '$1') // Fix spacing before punctuation
+    .replace(/([.,!?;:])\s*([.,!?;:])/g, '$1') // Remove duplicate punctuation
+    .replace(/\s+/g, ' ') // Clean up extra spaces
+    .replace(/^\s*[•·]\s*/gm, '• ') // Standardize bullet points
+    .trim();
+};
+
 const DynamicContentRenderer: React.FC<{ content: string }> = ({ content }) => {
-  // Enhanced citation cleaning function
-  const cleanContent = (text: string): string => {
-    return text
-      // Remove all citation artifacts with various patterns
-      .replace(/cite[a-z0-9_-]*(?:turn\d+|search\d+|news\d+)*\*?/gi, '')
-      .replace(/\bturn\d+(?:search\d+|news\d+)+\*?/gi, '')
-      .replace(/\bcite[^.\s]*\*/gi, '')  // Remove any remaining cite patterns
-      .replace(/\[\d+\]/g, '')  // Remove numbered references like [1], [2]
-      .replace(/【[\d:]+†source】/g, '')  // Remove Unicode citation markers
-      .replace(/\s*\*+\s*/g, ' ')  // Remove standalone asterisks
-      .replace(/\s*\.\s*\*/g, '.')  // Clean up asterisks after periods
-      .replace(/\s+([.,!?])/g, '$1')  // Fix spacing before punctuation
-      .replace(/\s+/g, ' ')  // Clean up extra spaces
-      .replace(/^\s*[•·]\s*/gm, '• ')  // Standardize bullet points
-      .trim();
-  };
+  // Apply aggressive cleaning first
+  const cleanedContent = cleanCitations(content);
   
-  // Apply cleaning to the entire content first - MODIFIED TO USE cleanContent
-  const cleanedContent = cleanContent(content);
-  
-  // Better paragraph splitting that handles lists properly
-  const lines = cleanedContent.split(/\n/);
-  const processedParagraphs: string[] = [];
+  // Split into paragraphs more intelligently
+  const lines = cleanedContent.split(/\n+/);
+  const processedParagraphs: { type: 'heading' | 'bullet' | 'numbered' | 'paragraph' | 'quote'; content: string }[] = [];
   let currentParagraph = '';
   let inList = false;
   
-  lines.forEach((line, index) => {
+  lines.forEach((line) => {
     const trimmedLine = line.trim();
-    const isListItem = /^\s*[-•*]\s+/.test(trimmedLine) || /^\s*\d+\.\s+/.test(trimmedLine);
     
-    if (isListItem) {
-      // If we have accumulated text, save it
-      if (currentParagraph && !inList) {
-        processedParagraphs.push(currentParagraph);
-        currentParagraph = '';
-      }
-      processedParagraphs.push(trimmedLine);
-      inList = true;
-    } else if (trimmedLine === '') {
-      // Empty line - end current paragraph
+    // Skip empty lines
+    if (!trimmedLine) {
       if (currentParagraph) {
-        processedParagraphs.push(currentParagraph);
+        processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
         currentParagraph = '';
       }
       inList = false;
-    } else {
-      // Regular text
-      if (inList) {
-        // If coming from a list, start new paragraph
-        currentParagraph = trimmedLine;
-        inList = false;
-      } else {
-        // Continue current paragraph
-        currentParagraph = currentParagraph ? `${currentParagraph} ${trimmedLine}` : trimmedLine;
+      return;
+    }
+    
+    // Check for headers (lines that start and end with **)
+    if (trimmedLine.startsWith('**') && trimmedLine.includes('**')) {
+      if (currentParagraph) {
+        processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
+        currentParagraph = '';
       }
+      processedParagraphs.push({ type: 'heading', content: trimmedLine });
+      inList = false;
+      return;
+    }
+    
+    // Check for bullet points
+    if (/^[-•*]\s+/.test(trimmedLine)) {
+      if (currentParagraph && !inList) {
+        processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
+        currentParagraph = '';
+      }
+      processedParagraphs.push({ type: 'bullet', content: trimmedLine.replace(/^[-•*]\s+/, '') });
+      inList = true;
+      return;
+    }
+    
+    // Check for numbered lists
+    if (/^\d+\.\s+/.test(trimmedLine)) {
+      if (currentParagraph && !inList) {
+        processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
+        currentParagraph = '';
+      }
+      const number = trimmedLine.match(/^(\d+)\./)?.[1] || '1';
+      processedParagraphs.push({ 
+        type: 'numbered', 
+        content: number + '.' + trimmedLine.replace(/^\d+\.\s*/, '')
+      });
+      inList = true;
+      return;
+    }
+    
+    // Check for short impactful quotes
+    if (trimmedLine.length < 120 && trimmedLine.length > 20 && !inList) {
+      if (currentParagraph) {
+        processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
+        currentParagraph = '';
+      }
+      processedParagraphs.push({ type: 'quote', content: trimmedLine });
+      return;
+    }
+    
+    // Regular paragraph text
+    if (inList) {
+      processedParagraphs.push({ type: 'paragraph', content: trimmedLine });
+      inList = false;
+    } else {
+      currentParagraph = currentParagraph ? `${currentParagraph} ${trimmedLine}` : trimmedLine;
     }
   });
   
   // Don't forget the last paragraph
   if (currentParagraph) {
-    processedParagraphs.push(currentParagraph);
+    processedParagraphs.push({ type: 'paragraph', content: currentParagraph });
   }
   
-  const paragraphs = processedParagraphs.filter(p => p.length > 0);
-  
-  // Regex patterns
   const statRegex = /(\d+%|\$\d{1,3}(?:,\d{3})*(?:\.\d+)?|\b\d+x\b|by \d+%|over \d+%|an \d+% increase)/gi;
-  const boldRegex = /\*\*(.*?)\*\*/g;
-  const bulletRegex = /^\s*[-•*]\s+(.+)/;
-  const numberedRegex = /^\s*\d+\.\s+(.+)/;
+  
+  const highlightStats = (text: string) => {
+    const parts = text.split(statRegex);
+    return parts.map((part, i) => {
+      const cleanPart = cleanCitations(part);
+      if (cleanPart.match(statRegex)) {
+        return (
+          <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 inline-block">
+            {cleanPart}
+          </span>
+        );
+      }
+      // Handle bold markdown
+      const processedPart = cleanPart.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
+      if (processedPart !== cleanPart) {
+        return <span key={i} dangerouslySetInnerHTML={{ __html: processedPart }} />;
+      }
+      return cleanPart;
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      {paragraphs.map((paragraph, pIndex) => {
-        // Clean the paragraph - ADDED CLEANING HERE
-        const cleanParagraph = cleanContent(paragraph);
+    <div className="space-y-4">
+      {processedParagraphs.map((item, index) => {
+        const cleanContent = cleanCitations(item.content);
         
-        // Check if this is a title/heading (starts and ends with **)
-        if (cleanParagraph.startsWith('**') && cleanParagraph.includes('**')) {
-          const titleMatch = cleanParagraph.match(/\*\*(.*?)\*\*/);
-          const title = titleMatch ? titleMatch[1] : cleanParagraph;
-          const rest = cleanParagraph.replace(/\*\*(.*?)\*\*/, '').trim();
-          
-          return (
-            <div key={pIndex} className="mb-6 border-l-4 border-brand-teal pl-4">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
-              {rest && (
-                <p className="text-gray-700 leading-relaxed text-lg">{cleanContent(rest)}</p>
-              )}
-            </div>
-          );
-        }
-        
-        // Check if this is a bullet point
-        if (bulletRegex.test(cleanParagraph)) {
-          const bulletContent = cleanParagraph.replace(bulletRegex, '$1');
-          return (
-            <div key={pIndex} className="flex items-start mb-4 ml-4">
-              <span className="text-brand-teal mr-3 text-xl mt-1">•</span>
-              <p className="text-gray-700 leading-relaxed flex-1 text-lg">
-                {bulletContent.split(statRegex).map((part, i) => {
-                  const cleanPart = cleanContent(part);  // ADDED CLEANING
-                  if (cleanPart.match(statRegex)) {
-                    return (
-                      <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
-                        {cleanPart}
-                      </span>
-                    );
-                  }
-                  return cleanPart;
-                })}
+        switch (item.type) {
+          case 'heading':
+            const titleMatch = cleanContent.match(/\*\*(.*?)\*\*/);
+            const title = titleMatch ? titleMatch[1] : cleanContent.replace(/\*/g, '');
+            const rest = cleanContent.replace(/\*\*(.*?)\*\*/, '').trim();
+            return (
+              <div key={index} className="keep-together mb-6 border-l-4 border-brand-teal pl-4">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{cleanCitations(title)}</h3>
+                {rest && (
+                  <p className="text-gray-700 leading-relaxed text-lg">{highlightStats(rest)}</p>
+                )}
+              </div>
+            );
+            
+          case 'bullet':
+            return (
+              <div key={index} className="flex items-start mb-3 ml-4">
+                <span className="text-brand-teal mr-3 text-xl mt-1">•</span>
+                <p className="text-gray-700 leading-relaxed flex-1 text-lg">
+                  {highlightStats(cleanContent)}
+                </p>
+              </div>
+            );
+            
+          case 'numbered':
+            const [num, ...textParts] = cleanContent.split('.');
+            const text = textParts.join('.').trim();
+            return (
+              <div key={index} className="flex items-start mb-3 ml-4">
+                <span className="text-brand-teal font-bold mr-4 text-lg min-w-[24px]">{num}.</span>
+                <p className="text-gray-700 leading-relaxed flex-1 text-lg">
+                  {highlightStats(text)}
+                </p>
+              </div>
+            );
+            
+          case 'quote':
+            return (
+              <p key={index} className="keep-together text-xl font-serif text-gray-600 my-8 italic text-center leading-relaxed px-8 border-t border-b border-gray-200 py-4">
+                {cleanCitations(cleanContent)}
               </p>
-            </div>
-          );
-        }
-        
-        // Check if this is a numbered list item
-        if (numberedRegex.test(cleanParagraph)) {
-          const number = cleanParagraph.match(/^\s*(\d+)\./)?.[1];
-          const listContent = cleanParagraph.replace(numberedRegex, '$1');
-          return (
-            <div key={pIndex} className="flex items-start mb-4 ml-4">
-              <span className="text-brand-teal font-bold mr-4 text-lg min-w-[24px]">{number}.</span>
-              <p className="text-gray-700 leading-relaxed flex-1 text-lg">
-                {listContent.split(statRegex).map((part, i) => {
-                  const cleanPart = cleanContent(part);  // ADDED CLEANING
-                  if (cleanPart.match(statRegex)) {
-                    return (
-                      <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
-                        {cleanPart}
-                      </span>
-                    );
-                  }
-                  return cleanPart;
-                })}
+            );
+            
+          default:
+            return (
+              <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
+                {highlightStats(cleanContent)}
               </p>
-            </div>
-          );
+            );
         }
-        
-        // Check for short impactful paragraphs (pull quotes)
-        if (cleanParagraph.length < 120 && paragraphs.length > 3) {
-          return (
-            <p key={pIndex} className="text-xl font-serif text-gray-600 my-8 italic text-center leading-relaxed px-8 border-t border-b border-gray-200 py-4">
-              {cleanContent(cleanParagraph)}  
-            </p>
-          );
-        }
-
-        // Regular paragraph with stat highlighting
-        const parts = cleanParagraph.split(statRegex);
-
-        return (
-          <p key={pIndex} className="mb-4 text-gray-700 leading-relaxed text-lg">
-            {parts.map((part, i) => {
-              const cleanPart = cleanContent(part);  // ADDED CLEANING
-              
-              if (cleanPart.match(statRegex)) {
-                return (
-                  <span key={i} className="font-bold text-brand-teal bg-teal-50 px-2 py-1 rounded-md mx-1 whitespace-nowrap">
-                    {cleanPart}
-                  </span>
-                );
-              }
-              
-              // Process bold markdown
-              const processedPart = cleanPart.replace(boldRegex, '<strong class="font-semibold text-gray-900">$1</strong>');
-              if (processedPart !== cleanPart) {
-                return <span key={i} dangerouslySetInnerHTML={{ __html: processedPart }} />;
-              }
-              
-              return cleanPart;
-            })}
-          </p>
-        );
       })}
     </div>
   );
 };
-
 
 const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, businessName, onReportReady }) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [pdfGenerated, setPdfGenerated] = React.useState(false);
 
+  // Add print styles to prevent page breaks
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        .keep-together {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .report-section {
+          page-break-inside: auto;
+        }
+        .report-header {
+          page-break-before: always;
+        }
+      }
+      @page {
+        margin: 0;
+        size: A4;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const generatePdfBase64 = async (): Promise<string> => {
     const reportElement = reportRef.current;
     if (!reportElement) return '';
 
-    // Temporarily increase width for higher resolution capture
+    // Save original styles
     const originalWidth = reportElement.style.width;
-    reportElement.style.width = '1024px';
-
-    const canvas = await html2canvas(reportElement, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      windowWidth: 1024,
-    });
+    const originalPosition = reportElement.style.position;
     
-    // Restore original width
-    reportElement.style.width = originalWidth;
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG for better compression
+    // Set up for capture
+    reportElement.style.width = '794px'; // A4 width in pixels at 96dpi
+    reportElement.style.position = 'absolute';
+    reportElement.style.left = '-9999px';
     
-    const pdf = new jsPDF({
-      orientation: 'p',
-      unit: 'pt',
-      format: 'a4',
-      hotfixes: ['px_scaling'],
-    });
+    // Wait for reflow
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    
-    const ratio = canvasWidth / pdfWidth;
-    const pdfHeight = canvasHeight / ratio;
-    const totalPdfPages = Math.ceil(pdfHeight / pdf.internal.pageSize.getHeight());
+    try {
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // Clean up cloned document
+          const clonedElement = clonedDoc.getElementById(reportElement.id || 'report');
+          if (clonedElement) {
+            clonedElement.style.width = '794px';
+          }
+        }
+      });
+      
+      // Restore original styles
+      reportElement.style.width = originalWidth;
+      reportElement.style.position = originalPosition;
+      reportElement.style.left = '';
 
-    for (let i = 0; i < totalPdfPages; i++) {
-        if (i > 0) pdf.addPage();
-        const yPos = -i * pdf.internal.pageSize.getHeight();
-        pdf.addImage(imgData, 'JPEG', 0, yPos, pdfWidth, pdfHeight, undefined, 'FAST');
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [595, 842], // A4 in points
+        compress: true
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const scaledWidth = imgWidth * ratio;
+      const scaledHeight = imgHeight * ratio;
+      
+      let heightLeft = scaledHeight;
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(imgData, 'JPEG', 0, position, scaledWidth, scaledHeight);
+      heightLeft -= pdfHeight;
+      
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - scaledHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, scaledWidth, scaledHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      return pdf.output('datauristring').split(',')[1];
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      // Restore styles on error
+      reportElement.style.width = originalWidth;
+      reportElement.style.position = originalPosition;
+      reportElement.style.left = '';
+      return '';
     }
-    
-    return pdf.output('datauristring').split(',')[1]; // Return base64 without data:application/pdf;base64, prefix
   };
   
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
-    const base64 = await generatePdfBase64();
-    
-    // Convert base64 to blob and download
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    try {
+      const base64 = await generatePdfBase64();
+      
+      if (!base64) {
+        console.error('Failed to generate PDF');
+        setIsDownloading(false);
+        return;
+      }
+      
+      // Convert base64 to blob
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
+      // Download the file
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${businessName.replace(/\s+/g, '_')}_AI_Report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+    } finally {
+      setIsDownloading(false);
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${businessName.replace(/\s+/g, '_')}_AI_Report.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    setIsDownloading(false);
   };
   
   // Generate PDF and notify parent when report is ready
   React.useEffect(() => {
     if (!pdfGenerated && onReportReady) {
-      // Wait a bit for the report to fully render
       const timer = setTimeout(async () => {
-        const pdfBase64 = await generatePdfBase64();
-        if (pdfBase64) {
-          onReportReady(pdfBase64);
-          setPdfGenerated(true);
+        try {
+          const pdfBase64 = await generatePdfBase64();
+          if (pdfBase64) {
+            onReportReady(pdfBase64);
+            setPdfGenerated(true);
+          }
+        } catch (error) {
+          console.error('Failed to generate PDF for email:', error);
         }
-      }, 2000); // Wait 2 seconds for full render
+      }, 3000); // Give more time for full render
       
       return () => clearTimeout(timer);
     }
@@ -323,51 +403,48 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
   
   return (
     <div className="bg-gray-200 py-8 font-sans">
-       <div className="max-w-4xl mx-auto p-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-50 bg-gray-200/80 backdrop-blur-sm rounded-b-lg mb-8">
+      <div className="max-w-4xl mx-auto p-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-50 bg-gray-200/80 backdrop-blur-sm rounded-b-lg mb-8">
         <h1 className="font-serif text-2xl font-bold text-center sm:text-left text-gray-800">Your Enhanced AI Report</h1>
         <div className="flex gap-4">
-            <button
-              onClick={handleDownloadPdf}
-              disabled={isDownloading}
-              className="px-6 py-2 bg-brand-teal text-white font-bold rounded-lg shadow-md hover:bg-opacity-90 transition-colors disabled:bg-gray-400"
-            >
-              {isDownloading ? 'Downloading...' : 'Download PDF'}
-            </button>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-brand-orange text-white font-bold rounded-lg shadow-md hover:bg-opacity-90 transition-colors"
-            >
-              Close Report
-            </button>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            className="px-6 py-2 bg-brand-teal text-white font-bold rounded-lg shadow-md hover:bg-opacity-90 transition-colors disabled:bg-gray-400"
+          >
+            {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-brand-orange text-white font-bold rounded-lg shadow-md hover:bg-opacity-90 transition-colors"
+          >
+            Close Report
+          </button>
         </div>
       </div>
       
-      <div ref={reportRef} className="max-w-4xl mx-auto bg-white shadow-2xl overflow-x-hidden">
-        <header className="h-[100vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center p-8" style={{backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45448e62615ab032eb08.webp')"}}>
-            <h1 className="font-serif text-6xl md:text-7xl font-bold text-shadow-lg">AI Strategic Brief</h1>
-            <p className="font-sans text-2xl mt-4 max-w-2xl text-shadow">A Growth & Innovation Roadmap for</p>
-            <p className="font-serif text-4xl mt-2 text-brand-orange font-bold text-shadow">{businessName}</p>
+      <div ref={reportRef} id="report" className="max-w-4xl mx-auto bg-white shadow-2xl overflow-hidden">
+        <header className="report-header h-[100vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center p-8" 
+                style={{backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45448e62615ab032eb08.webp')"}}>
+          <h1 className="font-serif text-6xl md:text-7xl font-bold text-shadow-lg">AI Strategic Brief</h1>
+          <p className="font-sans text-2xl mt-4 max-w-2xl text-shadow">A Growth & Innovation Roadmap for</p>
+          <p className="font-serif text-4xl mt-2 text-brand-orange font-bold text-shadow">{businessName}</p>
         </header>
 
         <main>
           {sections.map((section, index) => (
-            <section key={index} className="bg-white border-b-2 border-gray-100">
+            <section key={index} className="report-section bg-white border-b-2 border-gray-100">
               {section.imageUrl && (
-                 <ReportHeader number={(index + 1).toString().padStart(2, '0')} title={section.title} imageUrl={section.imageUrl} />
+                <ReportHeader number={(index + 1).toString().padStart(2, '0')} title={section.title} imageUrl={section.imageUrl} />
               )}
               <div className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-                <div className="lg:col-span-2 text-lg text-gray-800 space-y-6 leading-relaxed overflow-hidden">
-                  <div className="break-words">
-                    <DynamicContentRenderer content={section.mainContent} />
-                  </div>
+                <div className="lg:col-span-2 text-lg text-gray-800 space-y-6 leading-relaxed">
+                  <DynamicContentRenderer content={section.mainContent} />
                   {section.pullQuote && <PullQuote quote={section.pullQuote} />}
                 </div>
-                <aside className="lg:col-span-1 space-y-6 overflow-hidden">
+                <aside className="lg:col-span-1 space-y-6">
                   {section.statistic && <StatHighlight value={section.statistic.value} description={section.statistic.description}/>}
                   {section.keyTakeaways && section.keyTakeaways.length > 0 && (
-                    <div className="break-words">
-                      <KeyTakeaways items={section.keyTakeaways} />
-                    </div>
+                    <KeyTakeaways items={section.keyTakeaways} />
                   )}
                 </aside>
               </div>
@@ -376,11 +453,11 @@ const EnhancedReport: React.FC<EnhancedReportProps> = ({ sections, onClose, busi
         </main>
 
         <footer className="bg-gray-800 text-white p-12 text-center">
-            <div className="font-serif text-2xl text-brand-teal">EZWAI Consulting</div>
-            <p className="text-brand-orange mt-1">Intelligent Automation for Growing Businesses</p>
-            <div className="mt-6 text-xs text-gray-400 max-w-2xl mx-auto">
-                This report was generated using proprietary AI analysis and creative direction. The information and recommendations contained herein are for strategic planning purposes and do not constitute financial or legal advice.
-            </div>
+          <div className="font-serif text-2xl text-brand-teal">EZWAI Consulting</div>
+          <p className="text-brand-orange mt-1">Intelligent Automation for Growing Businesses</p>
+          <div className="mt-6 text-xs text-gray-400 max-w-2xl mx-auto">
+            This report was generated using proprietary AI analysis and creative direction. The information and recommendations contained herein are for strategic planning purposes and do not constitute financial or legal advice.
+          </div>
         </footer>
       </div>
     </div>

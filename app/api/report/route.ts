@@ -4,6 +4,40 @@ import { callResponses } from "@/lib/openai";
 import { checkRate } from "@/lib/rateLimit";
 import { generateReportPdf } from "@/lib/generateReportPdf";
 
+// Helper function to sanitize text for PDF generation
+function sanitizeForPDF(text: string | null | undefined): string {
+  if (!text) return '';
+  
+  return text
+    // First replace special characters that can't be encoded in WinAnsi
+    .replace(/[\u2010-\u2015]/g, '-') // Various dashes to regular hyphen
+    .replace(/[\u2018-\u201F]/g, "'") // Smart quotes to regular quotes
+    .replace(/[\u201C-\u201D]/g, '"') // Smart double quotes
+    .replace(/[\u2026]/g, '...') // Ellipsis
+    .replace(/[\u00A0]/g, ' ') // Non-breaking spaces
+    .replace(/[\u2022]/g, '•') // Bullet points
+    .replace(/[\u2013]/g, '-') // En dash
+    .replace(/[\u2014]/g, '--') // Em dash
+    .replace(/[\u00AD]/g, '') // Soft hyphen
+    .replace(/[\u200B-\u200F]/g, '') // Zero-width spaces and formatting marks
+    
+    // Then clean citations and artifacts
+    .replace(/cite[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*[a-z0-9_-]*(?:turn\d+|search\d+|news\d+)*[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*/gi, '')
+    .replace(/\bturn\d+(?:search\d+|news\d+)*[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]*/gi, '')
+    .replace(/[⭐★☆✦✧✨✩✪✫✬✭✮✯✰⋆]+/g, '')
+    .replace(/\bcite[^.\s,;!?]*\*/gi, '')
+    .replace(/\[\d+\]/g, '')
+    .replace(/【[\d:]+†source】/g, '')
+    .replace(/〔[\d:]+－source〕/g, '')
+    .replace(/\s*\*+\s*/g, ' ')
+    .replace(/\s*\.\s*\*/g, '.')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .replace(/([.,!?;:])\s*([.,!?;:])/g, '$1')
+    .replace(/\s+/g, ' ')
+    .replace(/^\s*[•·]\s*/gm, '• ')
+    .trim();
+}
+
 const SYSTEM_PROMPT = `You are a senior AI Transformation Consultant creating a customized report for a specific client.
 
 YOUR APPROACH:
@@ -197,10 +231,29 @@ Create a report that feels like it was written specifically for THIS company, no
           // Generate PDF attachment
           let pdfAttachment;
           try {
+            // Sanitize the report data for PDF generation
+            const sanitizedReport: ReportResult = {
+              executiveSummary: sanitizeForPDF(result.executiveSummary),
+              quickWins: result.quickWins?.map(qw => ({
+                title: sanitizeForPDF(qw.title),
+                description: sanitizeForPDF(qw.description),
+                timeframe: sanitizeForPDF(qw.timeframe),
+                impact: sanitizeForPDF(qw.impact)
+              })) || [],
+              recommendations: result.recommendations?.map(rec => ({
+                title: sanitizeForPDF(rec.title),
+                description: sanitizeForPDF(rec.description),
+                roi: sanitizeForPDF(rec.roi)
+              })) || [],
+              competitiveAnalysis: sanitizeForPDF(result.competitiveAnalysis),
+              nextSteps: result.nextSteps?.map(step => sanitizeForPDF(step)) || [],
+              sources: result.sources || []
+            };
+            
             const pdfBuffer = await generateReportPdf(
-              result,
-              input.companyInfo.companyName || 'Your Company',
-              emailDetails.firstName
+              sanitizedReport,
+              sanitizeForPDF(input.companyInfo.companyName) || 'Your Company',
+              sanitizeForPDF(emailDetails.firstName)
             );
             pdfAttachment = {
               content: pdfBuffer.toString('base64'),

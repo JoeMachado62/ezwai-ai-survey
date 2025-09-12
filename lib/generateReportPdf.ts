@@ -1,6 +1,27 @@
 import { ReportResult } from './schemas';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
+// Helper function to ensure text is safe for PDF encoding
+function sanitizeText(text: string | null | undefined): string {
+  if (!text) return '';
+  
+  return text
+    // Replace problematic Unicode characters
+    .replace(/[\u2010-\u2015]/g, '-') // Various dashes
+    .replace(/[\u2018-\u201F]/g, "'") // Smart quotes
+    .replace(/[\u201C-\u201D]/g, '"') // Smart double quotes
+    .replace(/[\u2026]/g, '...') // Ellipsis
+    .replace(/[\u00A0]/g, ' ') // Non-breaking spaces
+    .replace(/[\u2013]/g, '-') // En dash
+    .replace(/[\u2014]/g, '--') // Em dash
+    .replace(/[\u00AD]/g, '') // Soft hyphen
+    .replace(/[\u200B-\u200F]/g, '') // Zero-width spaces
+    .replace(/[\uFEFF]/g, '') // Zero-width no-break space
+    // Remove any remaining non-printable or problematic characters
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '') // Keep only basic Latin and Latin-1 Supplement
+    .trim();
+}
+
 export async function generateReportPdf(
   report: ReportResult,
   companyName: string,
@@ -34,7 +55,8 @@ export async function generateReportPdf(
       color: any,
       lineHeight: number = 1.5
     ): number {
-      const words = text.split(' ');
+      const sanitized = sanitizeText(text);
+      const words = sanitized.split(' ');
       let line = '';
       let yPos = y;
       const actualLineHeight = fontSize * lineHeight;
@@ -87,7 +109,8 @@ export async function generateReportPdf(
       let yPos = startY;
       
       // Split by potential list patterns or paragraphs
-      const lines = text.split(/\n|\. (?=\d+\.)/);
+      const sanitized = sanitizeText(text);
+      const lines = sanitized.split(/\n|\. (?=\d+\.)/);
       
       for (const line of lines) {
         const trimmedLine = line.trim();
@@ -97,7 +120,7 @@ export async function generateReportPdf(
         const numberedMatch = trimmedLine.match(/^(\d+)\.\s*(.+)$/);
         if (numberedMatch) {
           // Draw the number in bold
-          page.drawText(`${numberedMatch[1]}.`, {
+          page.drawText(sanitizeText(`${numberedMatch[1]}.`), {
             x: x + 20,
             y: yPos,
             size: fontSize,
@@ -122,7 +145,7 @@ export async function generateReportPdf(
         // Check for headers ending with colon
         else if (trimmedLine.endsWith(':') && trimmedLine.length < 100) {
           // Draw header in bold
-          page.drawText(trimmedLine, {
+          page.drawText(sanitizeText(trimmedLine), {
             x,
             y: yPos,
             size: fontSize + 1,
@@ -135,7 +158,7 @@ export async function generateReportPdf(
         else if (trimmedLine.match(/^[•·-]\s*(.+)$/)) {
           const bulletMatch = trimmedLine.match(/^[•·-]\s*(.+)$/);
           if (bulletMatch) {
-            page.drawText('•', {
+            page.drawText(sanitizeText('•'), {
               x: x + 20,
               y: yPos,
               size: fontSize,
@@ -183,7 +206,7 @@ export async function generateReportPdf(
     const contentWidth = width - 100;
     
     // Title
-    page.drawText('AI Opportunities Report', {
+    page.drawText(sanitizeText('AI Opportunities Report'), {
       x: width / 2 - helveticaBold.widthOfTextAtSize('AI Opportunities Report', 32) / 2,
       y: height - 120,
       size: 32,
@@ -192,7 +215,7 @@ export async function generateReportPdf(
     });
     
     // Company Name
-    const companyText = companyName || 'Your Company';
+    const companyText = sanitizeText(companyName || 'Your Company');
     page.drawText(companyText, {
       x: width / 2 - helveticaBold.widthOfTextAtSize(companyText, 24) / 2,
       y: height - 170,
@@ -203,7 +226,7 @@ export async function generateReportPdf(
     
     // Prepared for
     if (firstName) {
-      const preparedText = `Prepared for ${firstName}`;
+      const preparedText = sanitizeText(`Prepared for ${firstName}`);
       page.drawText(preparedText, {
         x: width / 2 - helvetica.widthOfTextAtSize(preparedText, 16) / 2,
         y: height - 210,
@@ -236,7 +259,7 @@ export async function generateReportPdf(
     if (report.executiveSummary) {
       page = pdfDoc.addPage();
       
-      page.drawText('Executive Summary', {
+      page.drawText(sanitizeText('Executive Summary'), {
         x: 50,
         y: height - 60,
         size: 24,
@@ -275,7 +298,7 @@ export async function generateReportPdf(
     if (report.quickWins && report.quickWins.length > 0) {
       page = pdfDoc.addPage();
       
-      page.drawText('Quick Wins', {
+      page.drawText(sanitizeText('Quick Wins'), {
         x: 50,
         y: height - 60,
         size: 24,
@@ -338,14 +361,14 @@ export async function generateReportPdf(
         // Metadata
         if (win.timeframe) {
           yPos -= 5;
-          page.drawText('Timeframe:', {
+          page.drawText(sanitizeText('Timeframe:'), {
             x: 75,
             y: yPos,
             size: 10,
             font: helveticaBold,
             color: brandTeal,
           });
-          page.drawText(` ${win.timeframe}`, {
+          page.drawText(sanitizeText(` ${win.timeframe}`), {
             x: 135,
             y: yPos,
             size: 10,
@@ -356,14 +379,14 @@ export async function generateReportPdf(
         }
         
         if (win.impact) {
-          page.drawText('Impact:', {
+          page.drawText(sanitizeText('Impact:'), {
             x: 75,
             y: yPos,
             size: 10,
             font: helveticaBold,
             color: brandTeal,
           });
-          page.drawText(` ${win.impact}`, {
+          page.drawText(sanitizeText(` ${win.impact}`), {
             x: 120,
             y: yPos,
             size: 10,
@@ -381,7 +404,7 @@ export async function generateReportPdf(
     if (report.recommendations && report.recommendations.length > 0) {
       page = pdfDoc.addPage();
       
-      page.drawText('Strategic Recommendations', {
+      page.drawText(sanitizeText('Strategic Recommendations'), {
         x: 50,
         y: height - 60,
         size: 24,
@@ -444,14 +467,14 @@ export async function generateReportPdf(
         // ROI
         if (rec.roi) {
           yPos -= 5;
-          page.drawText('Expected ROI:', {
+          page.drawText(sanitizeText('Expected ROI:'), {
             x: 75,
             y: yPos,
             size: 10,
             font: helveticaBold,
             color: orange,
           });
-          page.drawText(` ${rec.roi}`, {
+          page.drawText(sanitizeText(` ${rec.roi}`), {
             x: 155,
             y: yPos,
             size: 10,
@@ -469,7 +492,7 @@ export async function generateReportPdf(
     if (report.competitiveAnalysis) {
       page = pdfDoc.addPage();
       
-      page.drawText('Competitive Analysis', {
+      page.drawText(sanitizeText('Competitive Analysis'), {
         x: 50,
         y: height - 60,
         size: 24,
@@ -501,7 +524,7 @@ export async function generateReportPdf(
     if (report.nextSteps && report.nextSteps.length > 0) {
       page = pdfDoc.addPage();
       
-      page.drawText('Next Steps', {
+      page.drawText(sanitizeText('Next Steps'), {
         x: 50,
         y: height - 60,
         size: 24,
@@ -572,7 +595,7 @@ export async function generateReportPdf(
     // Final CTA page
     page = pdfDoc.addPage();
     
-    const ctaTitle = 'Ready to Transform Your Business?';
+    const ctaTitle = sanitizeText('Ready to Transform Your Business?');
     page.drawText(ctaTitle, {
       x: width / 2 - helveticaBold.widthOfTextAtSize(ctaTitle, 24) / 2,
       y: height / 2 + 50,
@@ -581,7 +604,7 @@ export async function generateReportPdf(
       color: orange,
     });
     
-    const ctaSubtitle = 'Schedule your free AI Strategy Session today';
+    const ctaSubtitle = sanitizeText('Schedule your free AI Strategy Session today');
     page.drawText(ctaSubtitle, {
       x: width / 2 - helvetica.widthOfTextAtSize(ctaSubtitle, 16) / 2,
       y: height / 2,
@@ -590,7 +613,7 @@ export async function generateReportPdf(
       color: textGray,
     });
     
-    const ctaUrl = 'Visit: ezwai.com/scheduling-calendar/';
+    const ctaUrl = sanitizeText('Visit: ezwai.com/scheduling-calendar/');
     page.drawText(ctaUrl, {
       x: width / 2 - helvetica.widthOfTextAtSize(ctaUrl, 14) / 2,
       y: height / 2 - 50,
@@ -599,7 +622,7 @@ export async function generateReportPdf(
       color: brandTeal,
     });
     
-    const ctaContact = 'Email: joe@ezwai.com | Phone: 888-503-9924';
+    const ctaContact = sanitizeText('Email: joe@ezwai.com | Phone: 888-503-9924');
     page.drawText(ctaContact, {
       x: width / 2 - helvetica.widthOfTextAtSize(ctaContact, 12) / 2,
       y: height / 2 - 80,
@@ -608,7 +631,7 @@ export async function generateReportPdf(
       color: textGray,
     });
     
-    const copyright = '© 2025 EZWAI - AI Transformation Solutions';
+    const copyright = sanitizeText('© 2025 EZWAI - AI Transformation Solutions');
     page.drawText(copyright, {
       x: width / 2 - helvetica.widthOfTextAtSize(copyright, 10) / 2,
       y: 100,
@@ -617,7 +640,7 @@ export async function generateReportPdf(
       color: textGray,
     });
     
-    const confidential = 'This report is confidential and proprietary';
+    const confidential = sanitizeText('This report is confidential and proprietary');
     page.drawText(confidential, {
       x: width / 2 - helvetica.widthOfTextAtSize(confidential, 10) / 2,
       y: 80,
