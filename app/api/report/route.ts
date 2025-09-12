@@ -341,7 +341,7 @@ Create a report that feels like it was written specifically for THIS company, no
                       <strong>Joe Machado</strong><br>
                       Founder & AI Transformation Expert<br>
                       EZWAI | <a href="https://ezwai.com">ezwai.com</a><br>
-                      📧 joe@ezwai.com | 📱 (Your Phone)
+                      📧 joe@ezwai.com | 📱 888-503-9924
                     </p>
                     <p style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
                       P.S. The attached PDF contains your complete personalized report. 

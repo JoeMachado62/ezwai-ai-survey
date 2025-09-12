@@ -1,30 +1,31 @@
 import { ReportResult } from './schemas';
-import PDFDocument from 'pdfkit';
 
+// Create a minimal PDF without any external dependencies
 export async function generateReportPdf(
   report: ReportResult,
   companyName: string,
   firstName?: string
 ): Promise<Buffer> {
+  // Use a try-catch to handle the dynamic import
+  let PDFDocument: any;
+  try {
+    PDFDocument = require('pdfkit');
+  } catch (e) {
+    // If require fails (in some environments), try dynamic import
+    const pdfkitModule = await import('pdfkit');
+    PDFDocument = pdfkitModule.default || pdfkitModule;
+  }
+
   return new Promise((resolve, reject) => {
     try {
-      // Create PDF with autoFirstPage false to control page creation
-      // Use standard fonts only - no external font files
+      // Create a basic PDF with minimal configuration
+      // Avoid any font file system operations by using defaults
       const doc = new PDFDocument({
-        autoFirstPage: false,
         size: 'A4',
         margin: 50,
         bufferPages: true,
-        info: {
-          Title: 'AI Opportunities Report',
-          Author: 'EZWAI',
-          Subject: `AI Transformation Report for ${companyName}`,
-          Keywords: 'AI, automation, digital transformation'
-        }
+        autoFirstPage: true // Let PDFKit handle page creation normally
       });
-      
-      // Add first page manually
-      doc.addPage();
 
       const chunks: Buffer[] = [];
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -37,7 +38,7 @@ export async function generateReportPdf(
       const titleGray = '#1a202c';
       const orange = '#ff6b11';
 
-      // Title Page
+      // Title Page - use default font without explicitly setting it
       doc.fontSize(32)
          .fillColor(brandTeal)
          .text('AI Opportunities Report', { align: 'center' });
@@ -105,13 +106,13 @@ export async function generateReportPdf(
             doc.moveDown(0.5);
             doc.fontSize(10)
                .fillColor(brandTeal)
-               .text(`⏱ Timeframe: ${win.timeframe}`, { indent: 20 });
+               .text(`Timeframe: ${win.timeframe}`, { indent: 20 });
           }
           
           if (win.impact) {
             doc.fontSize(10)
                .fillColor(brandTeal)
-               .text(`📈 Impact: ${win.impact}`, { indent: 20 });
+               .text(`Impact: ${win.impact}`, { indent: 20 });
           }
           
           doc.moveDown(1.5);
@@ -144,7 +145,7 @@ export async function generateReportPdf(
             doc.moveDown(0.5);
             doc.fontSize(10)
                .fillColor(orange)
-               .text(`💰 Expected ROI: ${rec.roi}`, { indent: 20 });
+               .text(`Expected ROI: ${rec.roi}`, { indent: 20 });
           }
           
           doc.moveDown(1.5);
@@ -205,7 +206,7 @@ export async function generateReportPdf(
       doc.moveDown();
       doc.fontSize(12)
          .fillColor(textGray)
-         .text('Email: joe@ezwai.com', { align: 'center' });
+         .text('Email: joe@ezwai.com | Phone: 888-503-9924', { align: 'center' });
       
       doc.moveDown(4);
       doc.fontSize(10)
