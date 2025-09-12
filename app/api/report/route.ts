@@ -204,8 +204,8 @@ Create a report that feels like it was written specifically for THIS company, no
             );
             pdfAttachment = {
               content: pdfBuffer.toString('base64'),
-              filename: `AI_Opportunities_Report_${input.companyInfo.companyName || 'Company'}.html`,
-              type: 'text/html',
+              filename: `AI_Opportunities_Report_${input.companyInfo.companyName || 'Company'}.pdf`,
+              type: 'application/pdf',
               disposition: 'attachment'
             };
             console.log("[Report API] PDF generated successfully for attachment");
@@ -241,7 +241,7 @@ Create a report that feels like it was written specifically for THIS company, no
               <div class="container">
                 <div class="header">
                   <h1>🚀 ${emailDetails.firstName}, Your AI Transformation Starts Now!</h1>
-                  <p>Your custom AI Opportunities Report for ${input.companyInfo.companyName} is attached (HTML format - opens in any browser)</p>
+                  <p>Your custom AI Opportunities Report for ${input.companyInfo.companyName} is attached</p>
                 </div>
                 <div class="content">
                   <p style="font-size: 18px;">Hi ${emailDetails.firstName},</p>
@@ -344,7 +344,7 @@ Create a report that feels like it was written specifically for THIS company, no
                       📧 joe@ezwai.com | 📱 (Your Phone)
                     </p>
                     <p style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
-                      P.S. The attached HTML report contains your complete personalized analysis. 
+                      P.S. The attached PDF contains your complete personalized report. 
                       Review it with your team - the opportunities we've identified could transform your business.
                     </p>
                   </div>

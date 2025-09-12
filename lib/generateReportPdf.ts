@@ -1,104 +1,223 @@
 import { ReportResult } from './schemas';
+import PDFDocument from 'pdfkit';
 
-// Simple HTML-based PDF generation without external dependencies
 export async function generateReportPdf(
   report: ReportResult,
   companyName: string,
   firstName?: string
 ): Promise<Buffer> {
-  // Create a simple HTML representation of the report
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1 { color: #08b2c6; border-bottom: 3px solid #08b2c6; padding-bottom: 10px; }
-    h2 { color: #08b2c6; margin-top: 30px; }
-    h3 { color: #333; margin-top: 20px; }
-    .header { text-align: center; margin-bottom: 40px; }
-    .section { margin-bottom: 30px; page-break-inside: avoid; }
-    .quick-win { background: #f0f9ff; padding: 15px; margin: 15px 0; border-left: 4px solid #08b2c6; }
-    .recommendation { background: #f8fafc; padding: 15px; margin: 15px 0; border-left: 4px solid #ff6b11; }
-    .footer { margin-top: 50px; text-align: center; color: #666; font-size: 12px; }
-    ul { margin: 10px 0; padding-left: 25px; }
-    li { margin: 5px 0; }
-    .impact { color: #08b2c6; font-weight: bold; }
-    .timeframe { color: #666; font-style: italic; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>AI Opportunities Report</h1>
-    <h2>${companyName || 'Your Company'}</h2>
-    ${firstName ? `<p>Prepared for ${firstName}</p>` : ''}
-  </div>
+  return new Promise((resolve, reject) => {
+    try {
+      // Create PDF with autoFirstPage false to control page creation
+      // Use standard fonts only - no external font files
+      const doc = new PDFDocument({
+        autoFirstPage: false,
+        size: 'A4',
+        margin: 50,
+        bufferPages: true,
+        info: {
+          Title: 'AI Opportunities Report',
+          Author: 'EZWAI',
+          Subject: `AI Transformation Report for ${companyName}`,
+          Keywords: 'AI, automation, digital transformation'
+        }
+      });
+      
+      // Add first page manually
+      doc.addPage();
 
-  ${report.executiveSummary ? `
-  <div class="section">
-    <h2>Executive Summary</h2>
-    <p>${report.executiveSummary.replace(/\n/g, '<br>')}</p>
-  </div>
-  ` : ''}
+      const chunks: Buffer[] = [];
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
-  ${report.quickWins && report.quickWins.length > 0 ? `
-  <div class="section">
-    <h2>Quick Wins</h2>
-    ${report.quickWins.map((win, index) => `
-      <div class="quick-win">
-        <h3>${index + 1}. ${win.title}</h3>
-        <p>${win.description}</p>
-        ${win.timeframe ? `<p class="timeframe">Timeframe: ${win.timeframe}</p>` : ''}
-        ${win.impact ? `<p class="impact">Impact: ${win.impact}</p>` : ''}
-      </div>
-    `).join('')}
-  </div>
-  ` : ''}
+      // Define colors
+      const brandTeal = '#08b2c6';
+      const textGray = '#4a5568';
+      const titleGray = '#1a202c';
+      const orange = '#ff6b11';
 
-  ${report.recommendations && report.recommendations.length > 0 ? `
-  <div class="section">
-    <h2>Strategic Recommendations</h2>
-    ${report.recommendations.map((rec, index) => `
-      <div class="recommendation">
-        <h3>${index + 1}. ${rec.title}</h3>
-        <p>${rec.description}</p>
-        ${rec.roi ? `<p class="impact">Expected ROI: ${rec.roi}</p>` : ''}
-      </div>
-    `).join('')}
-  </div>
-  ` : ''}
+      // Title Page
+      doc.fontSize(32)
+         .fillColor(brandTeal)
+         .text('AI Opportunities Report', { align: 'center' });
+      
+      doc.moveDown();
+      doc.fontSize(24)
+         .fillColor(titleGray)
+         .text(companyName || 'Your Company', { align: 'center' });
+      
+      if (firstName) {
+        doc.moveDown();
+        doc.fontSize(16)
+           .fillColor(textGray)
+           .text(`Prepared for ${firstName}`, { align: 'center' });
+      }
 
-  ${report.competitiveAnalysis ? `
-  <div class="section">
-    <h2>Competitive Analysis</h2>
-    <p>${report.competitiveAnalysis.replace(/\n/g, '<br>')}</p>
-  </div>
-  ` : ''}
+      doc.moveDown(3);
+      doc.fontSize(14)
+         .fillColor(brandTeal)
+         .text('EZWAI - AI Transformation Solutions', { align: 'center' });
+      
+      doc.fontSize(12)
+         .fillColor(textGray)
+         .text('Intelligent Automation for Growing Businesses', { align: 'center' });
 
-  ${report.nextSteps && report.nextSteps.length > 0 ? `
-  <div class="section">
-    <h2>Next Steps</h2>
-    <ul>
-      ${report.nextSteps.map(step => `<li>${step}</li>`).join('')}
-    </ul>
-  </div>
-  ` : ''}
+      // Executive Summary
+      if (report.executiveSummary) {
+        doc.addPage();
+        doc.fontSize(24)
+           .fillColor(brandTeal)
+           .text('Executive Summary');
+        
+        doc.moveDown();
+        doc.fontSize(11)
+           .fillColor(textGray)
+           .text(report.executiveSummary, {
+             align: 'justify',
+             lineGap: 5
+           });
+      }
 
-  <div class="footer">
-    <p>© 2025 EZWAI - AI Transformation Solutions</p>
-    <p>https://ezwai.com</p>
-  </div>
-</body>
-</html>
-  `;
+      // Quick Wins
+      if (report.quickWins && report.quickWins.length > 0) {
+        doc.addPage();
+        doc.fontSize(24)
+           .fillColor(brandTeal)
+           .text('Quick Wins');
+        
+        doc.moveDown();
+        
+        report.quickWins.forEach((win, index) => {
+          doc.fontSize(14)
+             .fillColor(orange)
+             .text(`${index + 1}. ${win.title}`);
+          
+          doc.moveDown(0.5);
+          doc.fontSize(10)
+             .fillColor(textGray)
+             .text(win.description, {
+               align: 'justify',
+               indent: 20
+             });
+          
+          if (win.timeframe) {
+            doc.moveDown(0.5);
+            doc.fontSize(10)
+               .fillColor(brandTeal)
+               .text(`⏱ Timeframe: ${win.timeframe}`, { indent: 20 });
+          }
+          
+          if (win.impact) {
+            doc.fontSize(10)
+               .fillColor(brandTeal)
+               .text(`📈 Impact: ${win.impact}`, { indent: 20 });
+          }
+          
+          doc.moveDown(1.5);
+        });
+      }
 
-  // For now, return the HTML as a buffer
-  // In production, you might want to use a service like Puppeteer or a PDF API
-  // But this avoids the font file issues entirely
-  const buffer = Buffer.from(html, 'utf-8');
-  
-  // Return a simple text representation as PDF placeholder
-  // This ensures email attachment works without font dependencies
-  return buffer;
+      // Strategic Recommendations
+      if (report.recommendations && report.recommendations.length > 0) {
+        doc.addPage();
+        doc.fontSize(24)
+           .fillColor(brandTeal)
+           .text('Strategic Recommendations');
+        
+        doc.moveDown();
+        
+        report.recommendations.forEach((rec, index) => {
+          doc.fontSize(14)
+             .fillColor(titleGray)
+             .text(`${index + 1}. ${rec.title}`);
+          
+          doc.moveDown(0.5);
+          doc.fontSize(10)
+             .fillColor(textGray)
+             .text(rec.description, {
+               align: 'justify',
+               indent: 20
+             });
+          
+          if (rec.roi) {
+            doc.moveDown(0.5);
+            doc.fontSize(10)
+               .fillColor(orange)
+               .text(`💰 Expected ROI: ${rec.roi}`, { indent: 20 });
+          }
+          
+          doc.moveDown(1.5);
+        });
+      }
+
+      // Competitive Analysis
+      if (report.competitiveAnalysis) {
+        doc.addPage();
+        doc.fontSize(24)
+           .fillColor(brandTeal)
+           .text('Competitive Analysis');
+        
+        doc.moveDown();
+        doc.fontSize(11)
+           .fillColor(textGray)
+           .text(report.competitiveAnalysis, {
+             align: 'justify',
+             lineGap: 5
+           });
+      }
+
+      // Next Steps
+      if (report.nextSteps && report.nextSteps.length > 0) {
+        doc.addPage();
+        doc.fontSize(24)
+           .fillColor(brandTeal)
+           .text('Next Steps');
+        
+        doc.moveDown();
+        
+        report.nextSteps.forEach((step, index) => {
+          doc.fontSize(12)
+             .fillColor(textGray)
+             .text(`${index + 1}. ${step}`, {
+               lineGap: 8
+             });
+        });
+      }
+
+      // Final CTA page
+      doc.addPage();
+      doc.moveDown(4);
+      doc.fontSize(24)
+         .fillColor(orange)
+         .text('Ready to Transform Your Business?', { align: 'center' });
+      
+      doc.moveDown();
+      doc.fontSize(16)
+         .fillColor(textGray)
+         .text('Schedule your free AI Strategy Session today', { align: 'center' });
+      
+      doc.moveDown(2);
+      doc.fontSize(14)
+         .fillColor(brandTeal)
+         .text('Visit: ezwai.com/scheduling-calendar/', { align: 'center' });
+      
+      doc.moveDown();
+      doc.fontSize(12)
+         .fillColor(textGray)
+         .text('Email: joe@ezwai.com', { align: 'center' });
+      
+      doc.moveDown(4);
+      doc.fontSize(10)
+         .fillColor(textGray)
+         .text('© 2025 EZWAI - AI Transformation Solutions', { align: 'center' });
+      doc.text('This report is confidential and proprietary', { align: 'center' });
+
+      // Finalize the PDF
+      doc.end();
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      reject(error);
+    }
+  });
 }
