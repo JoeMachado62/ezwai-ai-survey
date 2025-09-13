@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import EnhancedReport from '@/components/report/EnhancedReport';
 
 export default function ViewReportPage() {
@@ -15,6 +15,7 @@ export default function ViewReportPage() {
   useEffect(() => {
     async function fetchReport() {
       try {
+        const supabase = getSupabase();
         const { data, error } = await supabase
           .from('reports')
           .select('*')

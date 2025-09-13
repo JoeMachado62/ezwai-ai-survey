@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import sgMail from '@sendgrid/mail';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 // Initialize SendGrid with API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     
     if (reportData || reportSections) {
       try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { data, error } = await supabaseAdmin
           .from('reports')
           .insert({
