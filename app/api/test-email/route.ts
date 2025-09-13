@@ -28,6 +28,7 @@ Your primary challenge of generating new leads can be directly addressed through
         value: "287%",
         description: "Average ROI for businesses using GoHighLevel's full automation suite"
       },
+      imagePrompt: "Professional business executive reviewing AI analytics dashboard",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45427b03233d423f353f.webp"
     },
     {
@@ -51,6 +52,7 @@ Set up GoHighLevel's AI-driven email and SMS sequences that nurture leads based 
         "No additional software or integrations required",
         "Expected combined impact: 200%+ increase in qualified leads"
       ],
+      imagePrompt: "Team celebrating quick wins and achievements with charts",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb055f7235614c5090e379.webp"
     },
     {
@@ -87,6 +89,7 @@ Set up GoHighLevel's AI-driven email and SMS sequences that nurture leads based 
         value: "$47,000",
         description: "Average annual savings from consolidating tools into GoHighLevel"
       },
+      imagePrompt: "Strategic roadmap with AI integration milestones and timeline",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f916e86860b82f699ef.jpeg"
     },
     {
@@ -113,6 +116,7 @@ By implementing GoHighLevel now, you'll leapfrog competitors still using fragmen
         "Platform consolidation reduces technical debt and training time",
         "AI features give sustainable competitive advantage"
       ],
+      imagePrompt: "Competitive analysis dashboard showing market positioning",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/6829ebbb8e6261cf7632eb06.webp"
     },
     {
@@ -155,6 +159,7 @@ By implementing GoHighLevel now, you'll leapfrog competitors still using fragmen
         "EZWAI team available for personalized assistance"
       ],
       pullQuote: "The best time to implement AI was yesterday. The second best time is now.",
+      imagePrompt: "Implementation roadmap with clear action steps and timeline",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687bcc9d67354ea6fab47017.jpeg"
     }
   ];
@@ -239,6 +244,8 @@ function sanitizeForPDF(text: string | null | undefined): string {
 }
 
 export async function POST(request: Request) {
+  let pdfBuffer: Buffer | null = null;
+  
   try {
     const { email, firstName, companyName } = await request.json();
     
@@ -252,7 +259,7 @@ export async function POST(request: Request) {
     const testSections = transformToSections(companyName || 'Test Company').slice(0, 2); // Only 2 sections for testing
     
     // Generate PDF using Railway-compatible renderer
-    const pdfBuffer = await generateRailwayPdfBuffer(
+    pdfBuffer = await generateRailwayPdfBuffer(
       testSections,
       companyName || 'Test Company'
     );

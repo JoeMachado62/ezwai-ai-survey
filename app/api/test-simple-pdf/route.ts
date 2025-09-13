@@ -12,6 +12,7 @@ export async function GET() {
         title: "Test Section 1",
         mainContent: "This is a simple test of PDF generation. If you can read this, the PDF is working correctly.",
         keyTakeaways: ["Test point 1", "Test point 2"],
+        imagePrompt: "Simple test image prompt",
         imageUrl: ""
       },
       {
@@ -22,6 +23,7 @@ export async function GET() {
           value: "100%",
           description: "Success rate"
         },
+        imagePrompt: "Another test image prompt",
         imageUrl: ""
       }
     ];

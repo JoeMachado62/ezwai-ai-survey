@@ -18,6 +18,7 @@ function transformToSections(companyName: string): ReportSection[] {
         value: "287%",
         description: "Average ROI for businesses using GoHighLevel"
       },
+      imagePrompt: "Professional business executive reviewing AI analytics dashboard",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/682e45427b03233d423f353f.webp"
     },
     {
@@ -27,6 +28,7 @@ function transformToSections(companyName: string): ReportSection[] {
         "All quick wins can be implemented within GoHighLevel's platform",
         "No additional software or integrations required"
       ],
+      imagePrompt: "Team celebrating quick wins and achievements with charts",
       imageUrl: "https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68bb055f7235614c5090e379.webp"
     }
   ];
