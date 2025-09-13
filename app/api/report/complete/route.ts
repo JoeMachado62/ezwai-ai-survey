@@ -22,6 +22,7 @@ function transformReportToSections(report: ReportResult): ReportSection[] {
       "Immediate ROI through automation and efficiency gains",
       "Competitive advantage through early AI adoption"
     ],
+    imagePrompt: "Professional business executive reviewing AI analytics dashboard",
     imageUrl: process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || ''
   });
   
@@ -35,6 +36,7 @@ function transformReportToSections(report: ReportResult): ReportSection[] {
       title: "Quick Wins - 30 Day Implementation",
       mainContent: quickWinsContent,
       keyTakeaways: report.quickWins.map(win => win.title),
+      imagePrompt: "Team celebrating quick wins and achievements with charts",
       imageUrl: process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || ''
     });
   }
@@ -53,6 +55,7 @@ function transformReportToSections(report: ReportResult): ReportSection[] {
         value: "300%",
         description: "Average ROI from AI implementation"
       },
+      imagePrompt: "Strategic roadmap with AI integration milestones and timeline",
       imageUrl: process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || ''
     });
   }
@@ -63,6 +66,7 @@ function transformReportToSections(report: ReportResult): ReportSection[] {
       title: "Competitive Intelligence",
       mainContent: report.competitiveAnalysis,
       pullQuote: "The businesses that adopt AI now will dominate their markets in the next 2-3 years",
+      imagePrompt: "Competitive analysis dashboard showing market positioning",
       imageUrl: process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || ''
     });
   }
@@ -77,6 +81,7 @@ function transformReportToSections(report: ReportResult): ReportSection[] {
         "Implement quick wins first for immediate ROI",
         "Scale gradually based on results"
       ],
+      imagePrompt: "Implementation roadmap with clear action steps and timeline",
       imageUrl: process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || ''
     });
   }
