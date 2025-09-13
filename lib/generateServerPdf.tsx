@@ -350,7 +350,7 @@ export async function generateServerPdfBase64(sections: ReportSection[], busines
 export async function generateServerPdfBuffer(sections: ReportSection[], businessName: string): Promise<Buffer> {
   try {
     const doc = <ReportPDF sections={sections} businessName={businessName} />;
-    const stream = await pdf(doc).toBuffer();
+    const stream = await pdf(doc as any).toBuffer();
     
     // Convert stream to buffer
     const chunks: Buffer[] = [];

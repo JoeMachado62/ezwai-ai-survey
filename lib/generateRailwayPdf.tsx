@@ -391,8 +391,73 @@ export async function generateRailwayPdfBase64(sections: ReportSection[], busine
 export async function generateRailwayPdfBuffer(sections: ReportSection[], businessName: string): Promise<Buffer> {
   try {
     console.log('[Railway PDF] Starting generation for', businessName);
-    const doc = React.createElement(ReportPDF, { sections, businessName });
-    const pdfInstance = pdf(doc);
+    // Create the document element directly without type checking issues
+    const doc = (
+      <Document>
+        {/* Cover Page */}
+        <Page size="A4" style={styles.page}>
+          <View style={styles.coverPage}>
+            <View style={styles.coverOverlay} />
+            <Text style={styles.coverTitle}>AI Strategic Brief</Text>
+            <Text style={styles.coverSubtitle}>A Growth & Innovation Roadmap for</Text>
+            <Text style={styles.coverCompany}>{businessName}</Text>
+          </View>
+        </Page>
+        
+        {/* Content Pages */}
+        {sections.map((section, index) => (
+          <Page key={index} size="A4" style={styles.page}>
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionNumber}>
+                  {(index + 1).toString().padStart(2, '0')}.
+                </Text>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+              </View>
+            </View>
+            
+            {/* Main Content */}
+            <View>{renderContent(section.mainContent)}</View>
+            
+            {/* Pull Quote */}
+            {section.pullQuote && (
+              <Text style={styles.pullQuote}>"{cleanText(section.pullQuote)}"</Text>
+            )}
+            
+            {/* Statistic */}
+            {section.statistic && (
+              <View style={styles.statisticBox}>
+                <Text style={styles.statisticValue}>{section.statistic.value}</Text>
+                <Text style={styles.statisticDescription}>{section.statistic.description}</Text>
+              </View>
+            )}
+            
+            {/* Key Takeaways */}
+            {section.keyTakeaways && section.keyTakeaways.length > 0 && (
+              <View style={styles.keyTakeawaysBox}>
+                <Text style={styles.keyTakeawaysTitle}>Key Takeaways</Text>
+                {section.keyTakeaways.map((item, i) => (
+                  <View key={i} style={styles.keyTakeawayItem}>
+                    <Text style={styles.keyTakeawayBullet}>✓</Text>
+                    <Text style={styles.keyTakeawayText}>{cleanText(item)}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                {businessName} | AI Strategic Brief | Page {index + 2}
+              </Text>
+            </View>
+          </Page>
+        ))}
+      </Document>
+    );
+    
+    const pdfInstance = pdf(doc as any);
     
     // Generate the buffer properly - toBuffer returns a stream that needs to be converted
     const stream = await pdfInstance.toBuffer();
