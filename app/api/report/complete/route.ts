@@ -9,7 +9,7 @@ import sgMail from '@sendgrid/mail';
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
-// Transform report to sections
+// Transform report to sections - Fixed TypeScript issues
 function transformReportToSections(report: ReportResult): ReportSection[] {
   const sections: ReportSection[] = [];
   
