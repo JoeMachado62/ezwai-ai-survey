@@ -127,13 +127,16 @@ Focus on how GoHighLevel can solve their challenges.`;
 
     console.log('[Complete Report] Generating report...');
     
-    const result = await callResponses({
-      input: userPrompt,
-      systemPrompt: SYSTEM_PROMPT,
-      jsonSchema: ReportJsonSchema,
+    const result = await callResponses<ReportResult>({
+      input: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt }
+      ],
+      schema: ReportJsonSchema,
+      tools: [{ type: "web_search" }],
       model: process.env.OPENAI_MODEL_REPORT || 'gpt-5',
-      temperature: 0.7,
-      max_tokens: 6000
+      reasoning_effort: "low",
+      verbosity: "medium"
     });
     
     const report = result as ReportResult;
