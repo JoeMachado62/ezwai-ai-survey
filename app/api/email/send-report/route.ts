@@ -95,18 +95,21 @@ export async function POST(req: NextRequest) {
             `}
             
             ${reportUrl ? `
-              <center style="margin: 30px 0;">
-                <a href="${reportUrl}" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                  📊 View Your Interactive Report
+              <center style="margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #f0feff, #e6fafe); border-radius: 12px;">
+                <h2 style="color: #08b2c6; margin-bottom: 20px;">Your Report is Ready!</h2>
+                <a href="${reportUrl}" style="display: inline-block; padding: 18px 40px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(8, 178, 198, 0.3);">
+                  📊 View Your Interactive Report Now
                 </a>
+                <p style="color: #4b5563; font-size: 16px; margin-top: 20px;">
+                  <strong>Click the button above to:</strong><br>
+                  ✓ View your beautifully formatted report<br>
+                  ✓ Download the stylized PDF with all images<br>
+                  ✓ Access your report anytime from any device
+                </p>
               </center>
-              <p style="text-align: center; color: #6b7280; font-size: 14px;">
-                Click the button above to view your beautifully formatted report online.<br>
-                You can download a PDF version directly from the report viewer.
-              </p>
             ` : reportPdfBase64 ? `
               <p><strong>Your report is attached to this email as a PDF.</strong></p>
-            ` : ''}
+            ` : '<p><strong>Error: Report link could not be generated. Please contact support.</strong></p>'}
             
             <h3>What's Inside Your Report:</h3>
             <ul>

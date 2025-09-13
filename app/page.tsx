@@ -406,6 +406,7 @@ export default function Page() {
           techStack, 
           socialMedia, 
           aiSummary: summary, 
+          questions,  // Pass the questions so AI can see the actual question text
           answers,
           // Always include email details - email is sent for ALL reports
           emailDetails: {
@@ -705,24 +706,11 @@ export default function Page() {
       // Only send email if we have actual report content
       if (enhancedSectionsForEmail && enhancedSectionsForEmail.length > 0) {
         try {
-          // Generate the styled PDF server-side
-          console.log('Generating styled PDF server-side for email...');
-          const pdfResponse = await fetch('/api/report/generate-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sections: enhancedSectionsForEmail,
-              businessName: companyInfo.companyName || 'Your Business'
-            })
-          });
+          // Don't generate PDF here - just send email with the Supabase link
+          // The user can download the stylized PDF from the web viewer
+          console.log('Sending email with report link...');
           
-          if (!pdfResponse.ok) {
-            throw new Error('Failed to generate PDF');
-          }
-          
-          const { pdfBase64 } = await pdfResponse.json();
-          
-          // Send email with the styled PDF
+          // Send email WITHOUT PDF attachment - just the link
           const response = await fetch('/api/email/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -732,7 +720,7 @@ export default function Page() {
               lastName,
               companyName: companyInfo.companyName,
               reportSections: enhancedSectionsForEmail,
-              reportPdfBase64: pdfBase64,  // Include the styled PDF
+              // reportPdfBase64: pdfBase64,  // REMOVED - no PDF attachment
               reportData: report,
               questions: questions,
               answers: answers,

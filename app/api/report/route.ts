@@ -147,24 +147,36 @@ ${input.aiSummary || 'Assessment pending'}
 
 ==== DETAILED RESPONSES ====
 ${Object.entries(input.answers || {}).map(([qKey, a]) => {
+  // Get the actual question text from the questions array
+  const questionIndex = parseInt(qKey.replace('q_', ''));
+  const question = input.questions?.[questionIndex];
+  const questionText = question?.text || qKey;
+  
   // Handle both single values and arrays from multi-select questions
   let answer = Array.isArray(a) ? a : [a];
   
   // Smart handling for "All of the above" or "Multiple of the above"
-  // Since we don't have the questions here, we'll provide clear context to the AI
   if (answer.some(ans => 
     typeof ans === 'string' && 
     (ans.toLowerCase().includes('all of the above') || 
      ans.toLowerCase().includes('multiple of the above'))
   )) {
-    // Make it clear to the AI that this means ALL options apply
-    const answerText = answer.join(', ');
-    return `Q: ${qKey}\nA: ${answerText} [IMPORTANT: This means the user needs help with ALL the options that were presented in this question, not just one]`;
+    // If "All/Multiple of the above" is selected, include all options as context
+    if (question?.options && question.options.length > 0) {
+      // Filter out the "all/multiple of the above" option itself
+      const allOptions = question.options.filter(opt => 
+        !opt.toLowerCase().includes('all of the above') && 
+        !opt.toLowerCase().includes('multiple of the above')
+      );
+      // Provide full context to the AI
+      const answerText = answer.join(', ');
+      return `Q: ${questionText}\nA: User selected "${answerText}" which means they need help with ALL of these: ${allOptions.join(', ')}`;
+    }
   }
   
   // Regular answer handling
   const answerText = answer.filter(a => a).join(', ');
-  return `Q: ${qKey}\nA: ${answerText}`;
+  return `Q: ${questionText}\nA: ${answerText}`;
 }).join('\n\n')}
 
 ==== CRITICAL FOCUS AREAS ====

@@ -67,6 +67,12 @@ export const ReportInputZ = z.object({
   techStack: QuestionsInputZ.shape.techStack,
   socialMedia: QuestionsInputZ.shape.socialMedia,
   aiSummary: z.string().min(1),
+  questions: z.array(z.object({
+    type: z.enum(["multiple_choice", "text"]),
+    text: z.string(),
+    options: z.array(z.string()).optional(),
+    multiSelect: z.boolean().optional()
+  })).optional(),
   answers: z.record(z.any())
 });
 
