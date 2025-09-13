@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import EnhancedReport from '@/components/report/EnhancedReport';
-import LoadingOverlay from '@/components/LoadingOverlay';
 
 export default function ViewReportPage() {
   const params = useParams();
@@ -54,7 +53,18 @@ export default function ViewReportPage() {
   }, [reportId]);
 
   if (loading) {
-    return <LoadingOverlay message="Loading your report..." />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <div className="text-center">
+          <div className="loading-dots mb-4">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="text-xl text-gray-600">Loading your report...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
