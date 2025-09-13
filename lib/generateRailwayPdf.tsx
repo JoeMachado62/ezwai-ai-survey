@@ -387,14 +387,24 @@ export async function generateRailwayPdfBase64(sections: ReportSection[], busine
   }
 }
 
-// For server-side usage (Node.js) - This is what Railway will use
+// For server-side usage (Node.js) - This is what Railway will use  
 export async function generateRailwayPdfBuffer(sections: ReportSection[], businessName: string): Promise<Buffer> {
   try {
-    const doc = <ReportPDF sections={sections} businessName={businessName} />;
-    const buffer = await pdf(doc).toBuffer();
+    console.log('[Railway PDF] Starting generation for', businessName);
+    const doc = React.createElement(ReportPDF, { sections, businessName });
+    const pdfInstance = pdf(doc);
+    
+    // Generate the buffer properly
+    const buffer = await pdfInstance.toBuffer();
+    console.log('[Railway PDF] Generated buffer size:', buffer?.length || 0);
+    
+    if (!buffer || buffer.length === 0) {
+      throw new Error('PDF generation resulted in empty buffer');
+    }
+    
     return buffer;
   } catch (error) {
-    console.error('Error generating PDF buffer:', error);
+    console.error('[Railway PDF] Error generating PDF buffer:', error);
     throw error;
   }
 }

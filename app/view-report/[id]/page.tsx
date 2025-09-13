@@ -1,0 +1,93 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import EnhancedReport from '@/components/report/EnhancedReport';
+import LoadingOverlay from '@/components/LoadingOverlay';
+
+export default function ViewReportPage() {
+  const params = useParams();
+  const reportId = params.id as string;
+  const [reportData, setReportData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchReport() {
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('id', reportId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching report:', error);
+          setError('Report not found');
+          return;
+        }
+
+        if (data) {
+          setReportData(data.report_data);
+          
+          // Update access tracking
+          await supabase
+            .from('reports')
+            .update({
+              accessed_at: new Date().toISOString(),
+              access_count: (data.access_count || 0) + 1
+            })
+            .eq('id', reportId);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        setError('Failed to load report');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (reportId) {
+      fetchReport();
+    }
+  }, [reportId]);
+
+  if (loading) {
+    return <LoadingOverlay message="Loading your report..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reportData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+          <p className="text-gray-600">No report data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <EnhancedReport 
+        questions={reportData.questions || []}
+        answers={reportData.answers || {}}
+        businessInfo={reportData.businessInfo || {}}
+        contactInfo={reportData.contactInfo || {}}
+        reportData={reportData.report || {}}
+        onDownloadPDF={() => {}}
+      />
+    </div>
+  );
+}

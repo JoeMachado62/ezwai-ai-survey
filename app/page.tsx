@@ -393,6 +393,32 @@ export default function Page() {
       const data: ReportResult = await response.json();
       setReport(data);
       
+      // Save report to Supabase for persistent access
+      try {
+        const saveResponse = await fetch('/api/report/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyName: companyInfo.companyName,
+            email: email,
+            reportData: {
+              businessInfo: companyInfo,
+              contactInfo: { firstName, lastName, email, phone },
+              report: data,
+              questions: questions,
+              answers: answers
+            }
+          })
+        });
+        
+        if (saveResponse.ok) {
+          const { reportUrl } = await saveResponse.json();
+          console.log('Report saved and accessible at:', reportUrl);
+        }
+      } catch (error) {
+        console.error('Failed to save report to Supabase:', error);
+      }
+      
       // Now process the visual report - pass data directly to avoid state timing issues
       await processContactAndGenerateVisualReport(data);
       
@@ -673,12 +699,19 @@ export default function Page() {
               companyName: companyInfo.companyName,
               reportSections: enhancedSectionsForEmail,
               reportPdfBase64: pdfBase64,  // Include the styled PDF
+              reportData: report,
+              questions: questions,
+              answers: answers,
               skipWait: true
             })
           });
           
           if (response.ok) {
-            alert(`Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately (prioritizing GoHighLevel solutions)\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the professionally formatted PDF report!`);
+            const { reportUrl } = await response.json();
+            const message = reportUrl 
+              ? `Perfect! Your comprehensive AI report has been sent to ${email}.\n\nYou can also view it online anytime at:\n${reportUrl}\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks`
+              : `Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately (prioritizing GoHighLevel solutions)\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the professionally formatted PDF report!`;
+            alert(message);
           } else {
             alert('There was an issue sending the email. Please try again or wait for the report to generate on screen.');
           }

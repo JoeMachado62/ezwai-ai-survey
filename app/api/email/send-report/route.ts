@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import sgMail from '@sendgrid/mail';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Initialize SendGrid with API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
@@ -23,6 +24,41 @@ export async function POST(req: NextRequest) {
         { error: "Email is required" },
         { status: 400 }
       );
+    }
+
+    // Save report to Supabase and get shareable link
+    let reportUrl = '';
+    let reportId = '';
+    
+    if (reportData || reportSections) {
+      try {
+        const { data, error } = await supabaseAdmin
+          .from('reports')
+          .insert({
+            company_name: companyName || 'Unknown Company',
+            email: email,
+            report_data: {
+              businessInfo: { companyName },
+              contactInfo: { firstName, lastName, email },
+              report: reportData,
+              sections: reportSections,
+              questions: body.questions || [],
+              answers: body.answers || {}
+            }
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          reportId = data.id;
+          reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
+          console.log('Report saved to Supabase with ID:', reportId);
+        } else {
+          console.error('Failed to save report to Supabase:', error);
+        }
+      } catch (err) {
+        console.error('Error saving to Supabase:', err);
+      }
     }
 
     // For now, we'll use a simple email service
@@ -50,12 +86,26 @@ export async function POST(req: NextRequest) {
             <p>Hi ${firstName || 'there'},</p>
             
             ${skipWait ? `
-              <p>Thank you for your patience! We've completed the comprehensive analysis of ${companyName || 'your business'} and your personalized AI Opportunities Report is attached to this email.</p>
+              <p>Thank you for your patience! We've completed the comprehensive analysis of ${companyName || 'your business'} and your personalized AI Opportunities Report is ready.</p>
               <p>While you were away, our AI conducted deep research across multiple sources to identify specific opportunities for your business.</p>
             ` : `
-              <p>Thank you for taking the time to complete our AI assessment! Your personalized AI Opportunities Report for ${companyName || 'your business'} is attached to this email.</p>
+              <p>Thank you for taking the time to complete our AI assessment! Your personalized AI Opportunities Report for ${companyName || 'your business'} is ready.</p>
               <p>We've identified several immediate opportunities where AI can transform your operations and drive growth.</p>
             `}
+            
+            ${reportUrl ? `
+              <center style="margin: 30px 0;">
+                <a href="${reportUrl}" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                  📊 View Your Interactive Report
+                </a>
+              </center>
+              <p style="text-align: center; color: #6b7280; font-size: 14px;">
+                Click the button above to view your beautifully formatted report online.<br>
+                You can download a PDF version directly from the report viewer.
+              </p>
+            ` : reportPdfBase64 ? `
+              <p><strong>Your report is attached to this email as a PDF.</strong></p>
+            ` : ''}
             
             <h3>What's Inside Your Report:</h3>
             <ul>
@@ -127,7 +177,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Email sent successfully",
-      recipient: email
+      recipient: email,
+      reportUrl: reportUrl,
+      reportId: reportId
     });
 
   } catch (error) {
