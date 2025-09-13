@@ -350,7 +350,15 @@ export async function generateServerPdfBase64(sections: ReportSection[], busines
 export async function generateServerPdfBuffer(sections: ReportSection[], businessName: string): Promise<Buffer> {
   try {
     const doc = <ReportPDF sections={sections} businessName={businessName} />;
-    const buffer = await pdf(doc).toBuffer();
+    const stream = await pdf(doc).toBuffer();
+    
+    // Convert stream to buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream as any) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const buffer = Buffer.concat(chunks);
+    
     return buffer;
   } catch (error) {
     console.error('Error generating PDF buffer:', error);

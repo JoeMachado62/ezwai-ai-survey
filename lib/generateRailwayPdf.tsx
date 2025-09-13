@@ -394,8 +394,16 @@ export async function generateRailwayPdfBuffer(sections: ReportSection[], busine
     const doc = React.createElement(ReportPDF, { sections, businessName });
     const pdfInstance = pdf(doc);
     
-    // Generate the buffer properly
-    const buffer = await pdfInstance.toBuffer();
+    // Generate the buffer properly - toBuffer returns a stream that needs to be converted
+    const stream = await pdfInstance.toBuffer();
+    
+    // Convert stream to buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream as any) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const buffer = Buffer.concat(chunks);
+    
     console.log('[Railway PDF] Generated buffer size:', buffer?.length || 0);
     
     if (!buffer || buffer.length === 0) {

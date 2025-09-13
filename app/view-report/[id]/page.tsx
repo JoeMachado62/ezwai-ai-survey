@@ -88,15 +88,19 @@ export default function ViewReportPage() {
     );
   }
 
+  // Convert report data to sections format if needed
+  const sections = reportData.sections || reportData.report?.sections || [];
+  const businessName = reportData.businessInfo?.companyName || reportData.companyName || 'Your Business';
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <EnhancedReport 
-        questions={reportData.questions || []}
-        answers={reportData.answers || {}}
-        businessInfo={reportData.businessInfo || {}}
-        contactInfo={reportData.contactInfo || {}}
-        reportData={reportData.report || {}}
-        onDownloadPDF={() => {}}
+        sections={sections}
+        businessName={businessName}
+        onClose={() => {
+          // Optional: redirect or show a message
+          console.log('Report closed');
+        }}
       />
     </div>
   );

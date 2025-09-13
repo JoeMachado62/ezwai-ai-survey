@@ -15,7 +15,7 @@ const cleanText = (text: string): string => {
 
 export async function generatePuppeteerPdf(sections: ReportSection[], businessName: string): Promise<Buffer> {
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none']
   });
   
@@ -348,7 +348,7 @@ export async function generatePuppeteerPdf(sections: ReportSection[], businessNa
     
     // Generate PDF
     const pdfBuffer = await page.pdf({
-      format: 'A4',
+      format: 'a4',
       printBackground: true,
       margin: { top: 0, right: 0, bottom: 0, left: 0 }
     });
