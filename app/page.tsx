@@ -114,9 +114,35 @@ function MultipleChoiceQuestion({
   const handleOptionClick = (option: string) => {
     if (isMultiSelect) {
       // Multi-select logic
-      const newValues = selectedValues.includes(option)
-        ? selectedValues.filter(v => v !== option)
-        : [...selectedValues, option];
+      let newValues: string[];
+      
+      // Special handling for "All of the above" or "Multiple of the above"
+      if (option.toLowerCase().includes('all of the above') || 
+          option.toLowerCase().includes('multiple of the above')) {
+        if (selectedValues.includes(option)) {
+          // Deselecting "all of the above" - just remove it
+          newValues = selectedValues.filter(v => v !== option);
+        } else {
+          // Selecting "all of the above" - clear other selections and just select this
+          newValues = [option];
+        }
+      } else {
+        // Regular option clicked
+        // If "all of the above" is currently selected, remove it first
+        const filteredValues = selectedValues.filter(v => 
+          !v.toLowerCase().includes('all of the above') && 
+          !v.toLowerCase().includes('multiple of the above')
+        );
+        
+        if (filteredValues.includes(option)) {
+          // Remove the option
+          newValues = filteredValues.filter(v => v !== option);
+        } else {
+          // Add the option
+          newValues = [...filteredValues, option];
+        }
+      }
+      
       onChange(newValues);
     } else {
       // Single-select logic
@@ -129,7 +155,15 @@ function MultipleChoiceQuestion({
       <label className="label-ez">
         {question.text}
         {isMultiSelect && (
-          <span className="text-sm text-gray-500 ml-2">(Select all that apply)</span>
+          <span className="text-sm text-gray-500 ml-2">
+            {selectedValues.some(v => 
+              v.toLowerCase().includes('all of the above') || 
+              v.toLowerCase().includes('multiple of the above')
+            ) 
+              ? "(All options selected)" 
+              : "(Select all that apply)"
+            }
+          </span>
         )}
       </label>
       <div className="question-options">

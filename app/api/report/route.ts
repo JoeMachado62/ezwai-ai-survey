@@ -146,10 +146,25 @@ ${input.socialMedia.channels?.length ? `This indicates opportunity for AI conten
 ${input.aiSummary || 'Assessment pending'}
 
 ==== DETAILED RESPONSES ====
-${Object.entries(input.answers || {}).map(([q, a]) => {
+${Object.entries(input.answers || {}).map(([qKey, a]) => {
   // Handle both single values and arrays from multi-select questions
-  const answer = Array.isArray(a) ? a.join(', ') : a;
-  return `Q: ${q}\nA: ${answer}`;
+  let answer = Array.isArray(a) ? a : [a];
+  
+  // Smart handling for "All of the above" or "Multiple of the above"
+  // Since we don't have the questions here, we'll provide clear context to the AI
+  if (answer.some(ans => 
+    typeof ans === 'string' && 
+    (ans.toLowerCase().includes('all of the above') || 
+     ans.toLowerCase().includes('multiple of the above'))
+  )) {
+    // Make it clear to the AI that this means ALL options apply
+    const answerText = answer.join(', ');
+    return `Q: ${qKey}\nA: ${answerText} [IMPORTANT: This means the user needs help with ALL the options that were presented in this question, not just one]`;
+  }
+  
+  // Regular answer handling
+  const answerText = answer.filter(a => a).join(', ');
+  return `Q: ${qKey}\nA: ${answerText}`;
 }).join('\n\n')}
 
 ==== CRITICAL FOCUS AREAS ====
