@@ -32,6 +32,11 @@ const HtmlReportJsonSchema = {
 
 const HTML_DESIGN_SYSTEM_PROMPT = `You are an expert HTML report designer creating magazine-quality business reports.
 
+CRITICAL RULES:
+1. NO citation artifacts like [1], [2], etc. in the text
+2. NO emoji headers - use proper HTML hero sections
+3. Create magazine-style layouts with image overlays
+
 DESIGN SYSTEM:
 - Primary: Teal (#08b2c6) with gradients to (#b5feff)
 - Accent: Orange (#ff6b35) with gradients to (#ffa947) 
@@ -39,23 +44,28 @@ DESIGN SYSTEM:
 - Border-radius: 16px for cards, 8px for elements
 - Font: system-ui, -apple-system, sans-serif
 
+HERO SECTION TEMPLATE FOR EACH MAJOR SECTION:
+<div style="height:400px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%), url('[IMAGE:section-name]'); background-size:cover; background-position:center; display:flex; align-items:flex-end; color:white; padding:48px; border-radius:16px; margin-bottom:32px;">
+  <div>
+    <div style="font-size:24px; opacity:0.9; margin-bottom:8px;">Section {number}</div>
+    <h2 style="font-size:48px; font-weight:bold; margin:0;">{Section Title}</h2>
+  </div>
+</div>
+
 REQUIRED STRUCTURE:
-1. Hero section with teal-to-orange gradient
-2. Executive Summary card with gradient header
-3. Quick Wins in alternating teal/orange gradient cards
+1. Main hero with company name (full width gradient overlay)
+2. Each section starts with hero banner (image with dark overlay)
+3. Content in white cards below hero
 4. Blue callout boxes (#e0f7ff) with left border
-5. Recommendations with purple accents (#7c3aed)
-6. Competitive analysis with comparison tables
-7. Implementation roadmap with timeline
-8. Next steps with numbered gradient bullets
+5. Quick wins in gradient cards (no emojis in headers)
+6. Tables with alternating row colors
 
 FORMATTING RULES:
-- Use inline styles only
-- Add [IMAGE:section-name] after each section header
-- Include emojis strategically (📊 🎯 💡 ⚡ 🚀 ✓)
-- Format lists with proper spacing (line-height: 1.8)
-- Create visual hierarchy with font sizes
-- Ensure mobile responsiveness`;
+- Use hero banners, NOT emoji headers
+- Clean text without citation marks
+- Professional typography
+- Image placeholders in hero backgrounds
+- Proper spacing and hierarchy`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -158,7 +168,14 @@ Use web search to find real data about:
 - GoHighLevel success stories
 - Industry benchmarks and trends
 
-Return comprehensive HTML (up to 10,000 chars) with 5+ real sources.`;
+Return comprehensive HTML (up to 10,000 chars) with 5+ real sources.
+
+IMPORTANT HTML REQUIREMENTS:
+- Each section MUST have a hero banner with image overlay (not emoji headers)
+- NO citation artifacts [1], [2] etc. in the body text
+- Professional magazine layout like high-end business reports
+- Use the hero section template provided for each major section
+- Sources should be listed at the end, not inline`;
 
     console.log('[HTML Test] Generating HTML report with GPT-5...');
     
@@ -171,7 +188,7 @@ Return comprehensive HTML (up to 10,000 chars) with 5+ real sources.`;
       tools: [{ type: "web_search" }],  // Enable web search for real data
       model: process.env.OPENAI_MODEL_REPORT || "gpt-5",  // Use FULL GPT-5 model
       reasoning_effort: "low",  // Minimum required for web search
-      verbosity: "high"  // Detailed HTML output
+      verbosity: "medium"  // Balanced output without artifacts
     });
 
     console.log('[HTML Test] Successfully generated HTML report');
