@@ -3,7 +3,19 @@ import { z } from "zod";
 export const QuestionsInputZ = z.object({
   companyInfo: z.object({
     companyName: z.string().min(1),
-    websiteURL: z.string().url().optional().or(z.literal("")),
+    websiteURL: z.string().optional().transform(val => {
+      // Handle empty string or undefined
+      if (!val || val === "") return "";
+      // Add https:// if no protocol specified
+      if (!val.startsWith('http://') && !val.startsWith('https://')) {
+        val = 'https://' + val;
+      }
+      // Basic URL validation - just check if it looks like a domain
+      if (val.match(/^https?:\/\/[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)+/)) {
+        return val;
+      }
+      return ""; // Return empty string if invalid
+    }),
     industry: z.string().min(1),
     employees: z.string().optional(),
     revenue: z.string().optional()
@@ -63,7 +75,22 @@ export const QuestionsJsonSchema = {
 } as const;
 
 export const ReportInputZ = z.object({
-  companyInfo: QuestionsInputZ.shape.companyInfo,
+  companyInfo: z.object({
+    companyName: z.string().min(1),
+    websiteURL: z.string().optional().transform(val => {
+      if (!val || val === "") return "";
+      if (!val.startsWith('http://') && !val.startsWith('https://')) {
+        val = 'https://' + val;
+      }
+      if (val.match(/^https?:\/\/[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)+/)) {
+        return val;
+      }
+      return "";
+    }),
+    industry: z.string().min(1),
+    employees: z.string().optional(),
+    revenue: z.string().optional()
+  }),
   techStack: QuestionsInputZ.shape.techStack,
   socialMedia: QuestionsInputZ.shape.socialMedia,
   aiSummary: z.string().min(1),
