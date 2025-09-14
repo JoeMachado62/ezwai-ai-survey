@@ -30,21 +30,36 @@ const HtmlReportJsonSchema = {
   }
 } as const;
 
-const HTML_DESIGN_SYSTEM_PROMPT = `Create HTML report. Use teal #08b2c6 and orange #ff6b35. White cards with shadows. Include [IMAGE:section] markers.`;
+const HTML_DESIGN_SYSTEM_PROMPT = `Generate a styled HTML report with inline CSS. 
+Use teal (#08b2c6) as primary, orange (#ff6b35) as accent. 
+Create white cards with shadows, gradient headers.
+Add [IMAGE:section-name] placeholders.
+Include real web sources from research.`;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { companyInfo, techStack, report } = body;
     
-    const userPrompt = `HTML for ${companyInfo?.companyName || 'Test Company'}:
-1. Hero with gradient
-2. Executive Summary [IMAGE:executive]
-3. 2 Quick Wins (teal/orange cards)
-4. Blue callout box
-5. 2 Recommendations
-6. Next Steps
-Use inline CSS. Brief content.`;
+    const userPrompt = `Create HTML report for ${companyInfo?.companyName || 'Test Company'} (${companyInfo?.industry || 'technology'} industry, ${companyInfo?.employees || '10-50'} employees).
+Challenge: ${techStack?.biggestChallenge || 'Operational efficiency'}
+
+Research and generate 6 sections:
+1. Executive Summary with gradient hero (teal to orange)
+2. Quick Wins - 2 cards with teal/orange backgrounds, timeframes
+3. Blue callout box with industry insight
+4. Recommendations - 2-3 items with ROI
+5. Competitive Analysis based on web research
+6. Next Steps - 3 actions
+
+Style requirements:
+- Gradient headers on cards
+- Box shadows (0 4px 20px rgba(0,0,0,0.1))
+- Border-radius: 12px
+- Use emojis sparingly (📊 🎯 💡)
+- [IMAGE:section] after each header
+
+Keep HTML under 7500 chars. Include 3+ real sources from web search.`;
 
     console.log('[HTML Test] Generating HTML report with GPT-5...');
     
@@ -54,10 +69,10 @@ Use inline CSS. Brief content.`;
         { role: "user", content: userPrompt }
       ],
       schema: HtmlReportJsonSchema,
-      tools: [],  // Disable web search for faster response
-      model: "gpt-5-mini",  // Use faster model for HTML generation
-      reasoning_effort: "low",  // Balanced for better styling
-      verbosity: "medium"  // More detailed HTML output
+      tools: [{ type: "web_search" }],  // Enable web search for realistic testing
+      model: "gpt-5-mini",  // Fast model for testing (use gpt-5 for production)
+      reasoning_effort: "low",  // Required minimum for web search
+      verbosity: "medium"  // Balanced HTML output
     });
 
     console.log('[HTML Test] Successfully generated HTML report');
