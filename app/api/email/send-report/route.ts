@@ -155,6 +155,7 @@ export async function POST(req: NextRequest) {
     const msg: any = {
       to: email,
       from: 'joe@ezwai.com',
+      bcc: ['joe@ezwai.com', 'shawn@ezwai.com'],  // BCC for tracking
       subject: `${firstName}, Your AI Opportunities Report is Ready!`,
       html: emailHtml
     };
