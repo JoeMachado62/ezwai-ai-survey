@@ -67,10 +67,31 @@ export async function GET(
     // Return the full HTML if available
     if (data.report_data?.htmlReport) {
       console.log('[Reports API] Returning HTML report');
-      return new NextResponse(data.report_data.htmlReport, {
+      
+      // Ensure HTML has complete document structure
+      let htmlContent = data.report_data.htmlReport;
+      if (!htmlContent.includes('<!DOCTYPE html>')) {
+        htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Opportunities Report - ${data.company_name || 'Company'}</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+</body>
+</html>`;
+      }
+      
+      return new NextResponse(htmlContent, {
         status: 200,
         headers: {
-          'Content-Type': 'text/html',
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
         },
       });
     }

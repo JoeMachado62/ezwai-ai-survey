@@ -11,15 +11,18 @@ if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Helper function to replace image placeholders with actual URLs
+// Helper function to replace image placeholders with actual URLs and wrap in complete HTML
 function processHtmlImages(html: string): string {
+  // Use absolute URLs for images so they work when HTML is served directly
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app';
+  
   const imageMap: Record<string, string> = {
-    '[IMAGE:executive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || '/images/executive-summary.jpg',
-    '[IMAGE:quickwins]': process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || '/images/quick-wins.jpg',
-    '[IMAGE:recommendations]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || '/images/roadmap.jpg',
-    '[IMAGE:competitive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || '/images/competitive.jpg',
-    '[IMAGE:roadmap]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || '/images/roadmap.jpg',
-    '[IMAGE:nextsteps]': process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || '/images/implementation.jpg',
+    '[IMAGE:executive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || `${baseUrl}/images/executive-summary.jpg`,
+    '[IMAGE:quickwins]': process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || `${baseUrl}/images/quick-wins.jpg`,
+    '[IMAGE:recommendations]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || `${baseUrl}/images/roadmap.jpg`,
+    '[IMAGE:competitive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || `${baseUrl}/images/competitive.jpg`,
+    '[IMAGE:roadmap]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || `${baseUrl}/images/roadmap.jpg`,
+    '[IMAGE:nextsteps]': process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || `${baseUrl}/images/implementation.jpg`,
   };
   
   let processedHtml = html;
@@ -30,6 +33,24 @@ function processHtmlImages(html: string): string {
       url
     );
   });
+  
+  // Ensure the HTML is wrapped in a complete document structure
+  if (!processedHtml.includes('<!DOCTYPE html>')) {
+    processedHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Opportunities Report</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  ${processedHtml}
+</body>
+</html>`;
+  }
   
   return processedHtml;
 }
