@@ -64,7 +64,7 @@ HTML STRUCTURE EXAMPLE:
   <div style="background:#e0f7ff; border-left:4px solid #08b2c6; padding:20px; margin:20px 0; border-radius:8px">
     <strong>💡 Key Insight:</strong> Call-out box content
   </div>
-</div>`;`;
+</div>`;
 
 export async function POST(req: NextRequest) {
   try {
