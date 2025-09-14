@@ -107,7 +107,7 @@ export function buildHtmlUserPrompt(
        ans.toLowerCase().includes('multiple of the above'))
     )) {
       if (question?.options && question.options.length > 0) {
-        const allOptions = question.options.filter(opt => 
+        const allOptions = question.options.filter((opt: string) => 
           !opt.toLowerCase().includes('all of the above') && 
           !opt.toLowerCase().includes('multiple of the above')
         );
