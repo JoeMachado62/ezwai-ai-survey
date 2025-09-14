@@ -5,6 +5,9 @@ import { useParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
 import EnhancedReport from '@/components/report/EnhancedReport';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export default function ViewReportPage() {
   const params = useParams();
   const reportId = params.id as string;
