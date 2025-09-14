@@ -152,7 +152,7 @@ export async function POST(req: Request) {
 
           if (!error && data) {
             reportId = data.id;
-            reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
+            reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/r/${data.id}`;
             supabaseSaved = true;
             console.log('Report saved to Supabase with ID:', reportId);
           } else {
