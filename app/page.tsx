@@ -425,37 +425,59 @@ export default function Page() {
         throw new Error(error);
       }
       
-      const data: ReportResult = await response.json();
-      setReport(data);
+      const data = await response.json();
       
-      // Save report to Supabase for persistent access
-      try {
-        const saveResponse = await fetch('/api/report/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            companyName: companyInfo.companyName,
-            email: email,
-            reportData: {
-              businessInfo: companyInfo,
-              contactInfo: { firstName, lastName, email, phone },
-              report: data,
-              questions: questions,
-              answers: answers
-            }
-          })
-        });
+      // Check if we got an HTML report (new format) or JSON report (old format)
+      if (data.htmlReport && data.reportUrl) {
+        // HTML report successfully generated and saved
+        console.log('HTML Report generated and saved at:', data.reportUrl);
         
-        if (saveResponse.ok) {
-          const { reportUrl } = await saveResponse.json();
-          console.log('Report saved and accessible at:', reportUrl);
+        // Store the report URL for later use
+        const reportUrl = data.reportUrl;
+        
+        // Close loading overlay
+        setLoading(false);
+        setLoadingPhase(undefined);
+        setIsGeneratingVisuals(false);
+        
+        // Redirect to the report viewer
+        window.location.href = reportUrl;
+        
+      } else if (data.executiveSummary) {
+        // Old JSON format (fallback)
+        setReport(data as ReportResult);
+        
+        // Save report to Supabase for persistent access
+        try {
+          const saveResponse = await fetch('/api/report/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              companyName: companyInfo.companyName,
+              email: email,
+              reportData: {
+                businessInfo: companyInfo,
+                contactInfo: { firstName, lastName, email, phone },
+                report: data,
+                questions: questions,
+                answers: answers
+              }
+            })
+          });
+          
+          if (saveResponse.ok) {
+            const { reportUrl } = await saveResponse.json();
+            console.log('Report saved and accessible at:', reportUrl);
+          }
+        } catch (error) {
+          console.error('Failed to save report to Supabase:', error);
         }
-      } catch (error) {
-        console.error('Failed to save report to Supabase:', error);
+        
+        // Now process the visual report - pass data directly to avoid state timing issues
+        await processContactAndGenerateVisualReport(data as ReportResult);
+      } else {
+        throw new Error('Invalid report response format');
       }
-      
-      // Now process the visual report - pass data directly to avoid state timing issues
-      await processContactAndGenerateVisualReport(data);
       
       // Clear the main timeout if everything succeeded
       clearTimeout(reportTimeout);
@@ -666,91 +688,18 @@ export default function Page() {
     try {
       setSkipWaitMode(true);
       
-      // If report generation hasn't started or is in progress
-      if (!report) {
-        // Report is already being generated with email delivery (standard flow)
-        // Just close the overlay and inform the user
-        console.log("Report generation already in progress with automatic email delivery");
-        
-        // Close the overlay and show success message
-        setLoading(false);
-        setIsGeneratingVisuals(false);
-        
-        alert(`Perfect! Your report is already being generated and will automatically be sent to ${email}.\n\nThis helps us validate your email and starts our conversation about your AI opportunities.\n\nYou can safely close this page - the report will arrive in 5-10 minutes.`);
-        
-        // Don't reset - let the existing request continue
-        return;
-      }
+      // With HTML reports, the report is automatically saved and emailed
+      // Just close the overlay and inform the user
+      console.log("Report generation in progress with automatic email delivery");
       
-      // Transform report to sections for email
-      const reportSections = transformReportToSections(report);
-      const enhancedSectionsForEmail = reportSections.map((section, index) => {
-        let imageUrl = '';
-        
-        // Assign images based on section title
-        if (section.title.includes('Executive Summary')) {
-          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || '';
-        } else if (section.title.includes('Quick Wins')) {
-          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || '';
-        } else if (section.title.includes('Strategic AI Roadmap')) {
-          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || '';
-        } else if (section.title.includes('Competitive')) {
-          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || '';
-        } else if (section.title.includes('Implementation')) {
-          imageUrl = process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || '';
-        }
-        
-        return { ...section, imageUrl };
-      });
-      
-      // Only send email if we have actual report content
-      if (enhancedSectionsForEmail && enhancedSectionsForEmail.length > 0) {
-        try {
-          // Don't generate PDF here - just send email with the Supabase link
-          // The user can download the stylized PDF from the web viewer
-          console.log('Sending email with report link...');
-          
-          // Send email WITHOUT PDF attachment - just the link
-          const response = await fetch('/api/email/send-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email,
-              firstName,
-              lastName,
-              companyName: companyInfo.companyName,
-              reportSections: enhancedSectionsForEmail,
-              // reportPdfBase64: pdfBase64,  // REMOVED - no PDF attachment
-              reportData: report,
-              questions: questions,
-              answers: answers,
-              skipWait: true
-            })
-          });
-          
-          if (response.ok) {
-            const { reportUrl } = await response.json();
-            const message = reportUrl 
-              ? `Perfect! Your comprehensive AI report has been sent to ${email}.\n\nYou can also view it online anytime at:\n${reportUrl}\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks`
-              : `Perfect! Your comprehensive AI report has been sent to ${email}.\n\nThe report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately (prioritizing GoHighLevel solutions)\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nCheck your email for the professionally formatted PDF report!`;
-            alert(message);
-          } else {
-            alert('There was an issue sending the email. Please try again or wait for the report to generate on screen.');
-          }
-        } catch (emailError) {
-          console.error('Email sending failed:', emailError);
-          alert('Failed to send the email. You can still view and download the report on screen.');
-        }
-      } else {
-        alert('Report generation completed but no content was generated. Please try again.');
-      }
-      
-      // Clear loading state and close overlay
+      // Close the overlay and show success message
       setLoading(false);
       setIsGeneratingVisuals(false);
       
-      // Don't reset - keep the report data available
-      // handleCloseReport();
+      alert(`Perfect! Your AI Opportunities Report is being generated and will be sent to ${email}.\n\nThis professionally designed report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nYou'll receive an email with a link to view your interactive report online.\n\nYou can safely close this page - the report will arrive in 5-10 minutes.`);
+      
+      // Don't reset - let the existing request continue
+      return;
       
     } catch (error) {
       console.error('Error sending email:', error);

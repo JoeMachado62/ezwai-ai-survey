@@ -89,7 +89,40 @@ export default function ViewReportPage() {
     );
   }
 
-  // Convert report data to sections format if needed
+  // Check if we have an HTML report (new format)
+  if (reportData.htmlReport) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div 
+          className="report-html-container"
+          dangerouslySetInnerHTML={{ __html: reportData.htmlReport }}
+        />
+        
+        {/* Add print/download button */}
+        <div className="fixed bottom-8 right-8 flex gap-4">
+          <button
+            onClick={() => window.print()}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
+          >
+            Print / Save PDF
+          </button>
+        </div>
+        
+        {/* Print styles */}
+        <style jsx global>{`
+          @media print {
+            .fixed { display: none; }
+            body { margin: 0; }
+          }
+          .report-html-container {
+            min-height: 100vh;
+          }
+        `}</style>
+      </div>
+    );
+  }
+  
+  // Fallback to old format (sections-based report)
   const sections = reportData.sections || reportData.report?.sections || [];
   const businessName = reportData.businessInfo?.companyName || reportData.companyName || 'Your Business';
   
