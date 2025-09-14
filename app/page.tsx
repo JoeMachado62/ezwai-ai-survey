@@ -428,20 +428,59 @@ export default function Page() {
       const data = await response.json();
       
       // Check if we got an HTML report (new format) or JSON report (old format)
-      if (data.htmlReport && data.reportUrl) {
-        // HTML report successfully generated and saved
-        console.log('HTML Report generated and saved at:', data.reportUrl);
+      if (data.htmlReport) {
+        // HTML report successfully generated
+        console.log('HTML Report generated');
         
-        // Store the report URL for later use
-        const reportUrl = data.reportUrl;
-        
-        // Close loading overlay
-        setLoading(false);
-        setLoadingPhase(undefined);
-        setIsGeneratingVisuals(false);
-        
-        // Redirect to the report viewer
-        window.location.href = reportUrl;
+        if (data.reportUrl) {
+          // Report was saved to Supabase
+          console.log('Report saved at:', data.reportUrl);
+          
+          // Close loading overlay
+          setLoading(false);
+          setLoadingPhase(undefined);
+          setIsGeneratingVisuals(false);
+          
+          // Redirect to the report viewer
+          window.location.href = data.reportUrl;
+        } else {
+          // Supabase not configured - show HTML directly
+          console.log('Supabase not configured - displaying HTML directly');
+          
+          // Close loading overlay
+          setLoading(false);
+          setLoadingPhase(undefined);
+          setIsGeneratingVisuals(false);
+          
+          // Display the HTML report directly
+          const reportWindow = window.open('', '_blank');
+          if (reportWindow) {
+            reportWindow.document.write(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>AI Opportunities Report - ${companyInfo.companyName}</title>
+                <style>
+                  @media print {
+                    body { margin: 0; }
+                  }
+                </style>
+              </head>
+              <body style="margin: 0; background: #f9fafb;">
+                ${data.htmlReport}
+                <div style="position: fixed; bottom: 20px; right: 20px;">
+                  <button onclick="window.print()" style="padding: 12px 24px; background: #08b2c6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                    Print / Save PDF
+                  </button>
+                </div>
+              </body>
+              </html>
+            `);
+            reportWindow.document.close();
+          }
+          
+          alert(`Your AI report has been generated!\n\nA new tab has opened with your report.\nYou can print or save it as a PDF from there.\n\nAn email has also been sent to ${email}.`);
+        }
         
       } else if (data.executiveSummary) {
         // Old JSON format (fallback)

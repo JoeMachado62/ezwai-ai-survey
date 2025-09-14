@@ -120,46 +120,54 @@ export async function POST(req: Request) {
       // Save to Supabase if configured
       let reportUrl = '';
       let reportId = '';
+      let supabaseSaved = false;
       
-      try {
-        const supabaseAdmin = getSupabaseAdmin();
-        const { data, error } = await supabaseAdmin
-          .from('reports')
-          .insert({
-            company_name: input.companyInfo.companyName || 'Unknown Company',
-            email: emailDetails?.email || '',
-            report_data: {
-              businessInfo: input.companyInfo,
-              contactInfo: {
-                firstName: emailDetails?.firstName,
-                lastName: emailDetails?.lastName,
-                email: emailDetails?.email
-              },
-              htmlReport: processedHtml,  // Store processed HTML
-              sources: result.sources,
-              questions: input.questions || [],
-              answers: input.answers || {},
-              techStack: input.techStack,
-              socialMedia: input.socialMedia,
-              aiSummary: input.aiSummary
-            }
-          })
-          .select()
-          .single();
+      // Check if Supabase is configured
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+          const supabaseAdmin = getSupabaseAdmin();
+          const { data, error } = await supabaseAdmin
+            .from('reports')
+            .insert({
+              company_name: input.companyInfo.companyName || 'Unknown Company',
+              email: emailDetails?.email || '',
+              report_data: {
+                businessInfo: input.companyInfo,
+                contactInfo: {
+                  firstName: emailDetails?.firstName,
+                  lastName: emailDetails?.lastName,
+                  email: emailDetails?.email
+                },
+                htmlReport: processedHtml,  // Store processed HTML
+                sources: result.sources,
+                questions: input.questions || [],
+                answers: input.answers || {},
+                techStack: input.techStack,
+                socialMedia: input.socialMedia,
+                aiSummary: input.aiSummary
+              }
+            })
+            .select()
+            .single();
 
-        if (!error && data) {
-          reportId = data.id;
-          reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
-          console.log('Report saved to Supabase with ID:', reportId);
-        } else {
-          console.error('Failed to save report to Supabase:', error);
+          if (!error && data) {
+            reportId = data.id;
+            reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
+            supabaseSaved = true;
+            console.log('Report saved to Supabase with ID:', reportId);
+          } else {
+            console.error('Failed to save report to Supabase:', error);
+          }
+        } catch (err) {
+          console.error('Error saving to Supabase:', err);
+          // Continue without Supabase - report is still generated
         }
-      } catch (err) {
-        console.error('Error saving to Supabase:', err);
+      } else {
+        console.log('Supabase not configured - skipping save');
       }
       
-      // Send email if requested
-      if (emailDetails?.email && reportUrl) {
+      // Send email if requested (even without Supabase URL)
+      if (emailDetails?.email) {
         console.log("[Report API] Sending report via email to:", emailDetails.email);
         
         try {
@@ -183,14 +191,19 @@ export async function POST(req: Request) {
                 </div>
                 <div class="content">
                   <p>Hi ${emailDetails.firstName || 'there'},</p>
-                  <p>Your comprehensive AI Opportunities Report for ${input.companyInfo.companyName || 'your business'} is ready.</p>
+                  <p>Your comprehensive AI Opportunities Report for ${input.companyInfo.companyName || 'your business'} has been generated.</p>
                   
+                  ${reportUrl ? `
                   <center style="margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #f0feff, #e6fafe); border-radius: 12px;">
                     <h2 style="color: #08b2c6; margin-bottom: 20px;">Your Report is Ready!</h2>
                     <a href="${reportUrl}" style="display: inline-block; padding: 18px 40px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">
                       📊 View Your Report Now
                     </a>
                   </center>
+                  ` : `
+                  <p><strong>Your report has been generated successfully.</strong></p>
+                  <p>For immediate access to your report, please contact our team at joe@ezwai.com with your company name: ${input.companyInfo.companyName}</p>
+                  `}
                   
                   <p>Best regards,<br>The EZWAI Team</p>
                 </div>
