@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LoadingDots } from '@/components/LoadingDots';
+import LoadingDots from '@/components/LoadingDots';
 
 export default function TestHtmlReport() {
   const [loading, setLoading] = useState(false);
