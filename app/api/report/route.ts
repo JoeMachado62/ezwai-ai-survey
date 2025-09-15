@@ -16,13 +16,29 @@ function processHtmlImages(html: string): string {
   // Use absolute URLs for images so they work when HTML is served directly
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ezwai-ai-survey-production.up.railway.app';
   
+  // Map image placeholders to environment variables - matches exact section order
   const imageMap: Record<string, string> = {
-    '[IMAGE:executive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || `${baseUrl}/images/executive-summary.jpg`,
-    '[IMAGE:quickwins]': process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || `${baseUrl}/images/quick-wins.jpg`,
-    '[IMAGE:recommendations]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || `${baseUrl}/images/roadmap.jpg`,
-    '[IMAGE:competitive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || `${baseUrl}/images/competitive.jpg`,
-    '[IMAGE:roadmap]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || `${baseUrl}/images/roadmap.jpg`,
-    '[IMAGE:nextsteps]': process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || `${baseUrl}/images/implementation.jpg`,
+    // Section 1: Executive Summary
+    '[IMAGE:executive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68c0f9d6fc36707db01f8ff6.jpeg',
+
+    // Section 2: Quick Wins
+    '[IMAGE:quickwins]': process.env.NEXT_PUBLIC_REPORT_IMAGE_QUICKWINS || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a42c4db7a3e6bafee331e.jpeg',
+
+    // Section 3: Strategic AI Roadmap
+    '[IMAGE:roadmap]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a588388de253b412b435d.jpeg',
+
+    // Section 4: Competitive Intelligence
+    '[IMAGE:competitive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_COMPETITIVE || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f910657f02bf1e88160.jpeg',
+
+    // Section 5: Your Implementation Roadmap
+    '[IMAGE:implementation]': process.env.NEXT_PUBLIC_REPORT_IMAGE_IMPLEMENTATION || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a3f91cac6682b0fc37eeb.jpeg',
+
+    // Section 6: Next Steps
+    '[IMAGE:fallback]': process.env.NEXT_PUBLIC_REPORT_IMAGE_FALLBACK || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68c0f9d6fc3670b8d41f8ff7.jpeg',
+
+    // Legacy mappings (for backwards compatibility)
+    '[IMAGE:nextsteps]': process.env.NEXT_PUBLIC_REPORT_IMAGE_FALLBACK || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/68c0f9d6fc3670b8d41f8ff7.jpeg',
+    '[IMAGE:recommendations]': process.env.NEXT_PUBLIC_REPORT_IMAGE_ROADMAP || 'https://storage.googleapis.com/msgsndr/6LvSeUzOMEkQrC9oF5AI/media/687a588388de253b412b435d.jpeg'
   };
   
   let processedHtml = html;

@@ -51,13 +51,21 @@ DESIGN SYSTEM:
 - Border-radius: 16px for cards, 8px for elements
 - Font: system-ui, -apple-system, sans-serif
 
-HERO SECTION TEMPLATE FOR EACH MAJOR SECTION:
-<div style="height:400px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%), url('[IMAGE:section-name]'); background-size:cover; background-position:center; display:flex; align-items:flex-end; color:white; padding:48px; border-radius:16px; margin-bottom:32px;">
+HERO SECTION TEMPLATE (USE EXACT TITLES):
+<div style="height:400px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 100%), url('[IMAGE:placeholder]'); background-size:cover; background-position:center; display:flex; align-items:flex-end; color:white; padding:48px; border-radius:16px; margin-bottom:32px;">
   <div>
     <div style="font-size:24px; opacity:0.9; margin-bottom:8px;">Section {number}</div>
-    <h2 style="font-size:48px; font-weight:bold; margin:0;">{Section Title}</h2>
+    <h2 style="font-size:48px; font-weight:bold; margin:0;">{Exact Title from Instructions}</h2>
   </div>
 </div>
+
+CRITICAL: Use these EXACT section titles:
+- Section 1: "Executive Summary"
+- Section 2: "Quick Wins"
+- Section 3: "Strategic AI Roadmap"
+- Section 4: "Competitive Intelligence"
+- Section 5: "Your Implementation Roadmap"
+- Section 6: "Next Steps"
 
 CONTENT CARD TEMPLATE:
 <div style="background:white; padding:40px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1); margin-bottom:24px;">
@@ -149,56 +157,62 @@ ${surveyContext}
 
 ==== HTML REPORT REQUIREMENTS ====
 
-Generate a complete HTML report with these EXACT sections in this order:
+Generate a complete HTML report with these EXACT sections in this EXACT order with EXACT titles:
 
 1. MAIN HERO: Full-width gradient (teal to orange), company name, "AI Transformation Report"
 
-2. EXECUTIVE SUMMARY:
+2. SECTION: "EXECUTIVE SUMMARY"
    - Hero banner with [IMAGE:executive] ONLY
+   - Section title must be exactly: "Executive Summary"
    - White card with 4-5 detailed paragraphs
    - Reference their specific challenge
    - Highlight GoHighLevel if applicable
    - Key opportunities summary
    - Industry-specific insights
 
-3. QUICK WINS - 30 DAY IMPLEMENTATION:
+3. SECTION: "QUICK WINS"
    - Hero banner with [IMAGE:quickwins] ONLY
+   - Section title must be exactly: "Quick Wins"
    - 3-4 gradient cards (alternating teal/orange)
-   - Each with title, detailed description (2-3 paragraphs), timeframe, impact
+   - Each with title, detailed description (2-3 paragraphs), timeframe (2-4 weeks), impact
    - Focus on GoHighLevel solutions first
    - Include specific tools and integrations
    - Estimated time savings or revenue impact
 
-4. STRATEGIC AI ROADMAP:
-   - Hero banner with [IMAGE:roadmap] ONLY (not recommendations image)
+4. SECTION: "STRATEGIC AI ROADMAP"
+   - Hero banner with [IMAGE:roadmap] ONLY
+   - Section title must be exactly: "Strategic AI Roadmap"
    - White cards with 3-4 detailed long-term strategies
    - Each strategy should have 2-3 paragraphs
    - ROI projections for each
    - Implementation complexity ratings
    - GoHighLevel-centric when applicable
 
-5. COMPETITIVE INTELLIGENCE:
+5. SECTION: "COMPETITIVE INTELLIGENCE"
    - Hero banner with [IMAGE:competitive] ONLY
+   - Section title must be exactly: "Competitive Intelligence"
    - Research their industry competitors using web search
    - Detailed comparison (3-4 paragraphs)
    - Market positioning opportunities
    - How AI gives competitive advantage
 
-6. YOUR IMPLEMENTATION ROADMAP:
-   - Hero banner with [IMAGE:nextsteps] ONLY (not duplicate roadmap)
+6. SECTION: "YOUR IMPLEMENTATION ROADMAP"
+   - Hero banner with [IMAGE:implementation] ONLY
+   - Section title must be exactly: "Your Implementation Roadmap"
    - Timeline with 3 phases (Month 1, 2, 3)
    - Specific milestones and deliverables
    - Resource requirements
-   - Clear action items
+   - Success metrics
 
+7. SECTION: "NEXT STEPS"
+   - Hero banner with [IMAGE:fallback] ONLY
+   - Section title must be exactly: "Next Steps"
+   - Clear numbered action items (5-7)
+   - Start with scheduling consultation
+   - Include GoHighLevel demo if relevant
+   - Contact information emphasis
 
-8. IMPLEMENTATION ROADMAP:
-   - Hero banner with [IMAGE:roadmap]
-   - Timeline with 3 phases (Month 1, 2, 3)
-   - Specific milestones and deliverables
-   - Resource requirements
-
-7. FINAL CALL TO ACTION (REQUIRED - MUST BE COMPELLING):
+8. FINAL CALL TO ACTION (REQUIRED - MUST BE COMPELLING):
    Create a full-width gradient section (teal to orange) with:
    <div style="background:linear-gradient(135deg, #08b2c6, #ff6b35); padding:60px 40px; border-radius:16px; text-align:center; color:white; margin-top:40px;">
      <h2 style="font-size:42px; margin:0 0 20px 0;">Ready to Transform Your Business with AI?</h2>
@@ -222,7 +236,7 @@ Generate a complete HTML report with these EXACT sections in this order:
      </p>
    </div>
 
-8. SOURCES SECTION:
+9. SOURCES SECTION:
    List all sources at the end in a clean format
 
 IMPORTANT:
