@@ -4,14 +4,13 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 // Direct server-side HTML route - no client JavaScript needed
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   console.log('[Direct Report Route] Starting request');
   
   try {
-    // In Next.js 15, params is a Promise
-    const resolvedParams = await params;
-    const reportId = resolvedParams.id;
+    // Next.js 14 - params are directly accessible
+    const reportId = params.id;
     console.log('[Direct Report Route] Report ID:', reportId);
     
     if (!reportId) {

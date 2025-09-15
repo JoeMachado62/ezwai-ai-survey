@@ -3,14 +3,13 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   console.log('[Reports API] Starting request');
   
   try {
-    // In Next.js 15, params is a Promise that needs to be awaited
-    const resolvedParams = await params;
-    const reportId = resolvedParams.id;
+    // Next.js 14 - params are directly accessible
+    const reportId = params.id;
     console.log('[Reports API] Report ID:', reportId);
     
     if (!reportId) {
