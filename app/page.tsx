@@ -380,21 +380,21 @@ export default function Page() {
     setLoadingPhase("report");
     setIsGeneratingVisuals(true);
     
-    // Set a timeout for the entire process (5 minutes to match server timeout)
+    // Set a timeout for the entire process (10 minutes for comprehensive GPT-5 reports)
     const reportTimeout = setTimeout(() => {
       if (loading) {
-        console.error("Report generation timed out after 5 minutes");
+        console.error("Report generation timed out after 10 minutes");
         alert("Report generation is taking longer than expected. We'll email you the report once it's ready.");
         setLoading(false);
         setLoadingPhase(undefined);
         setIsGeneratingVisuals(false);
       }
-    }, 300000); // 5 minutes to match server timeout
+    }, 600000); // 10 minutes for GPT-5 comprehensive reports
     
     try {
       // Create an AbortController for fetch timeout
       const controller = new AbortController();
-      const fetchTimeout = setTimeout(() => controller.abort(), 240000); // 4 minute fetch timeout (less than total timeout)
+      const fetchTimeout = setTimeout(() => controller.abort(), 540000); // 9 minute fetch timeout (less than 10 min total)
       
       // Make report API call WHILE overlay is showing
       // ALWAYS include email details for automatic email delivery
@@ -525,8 +525,9 @@ export default function Page() {
       clearTimeout(reportTimeout);
       
       if (error.name === 'AbortError') {
-        console.error("Report API call timed out");
-        alert("Report generation is taking longer than expected. Please try again or use the email option.");
+        console.error("Report API call timed out on client side");
+        // The server likely continued processing and will email the report
+        alert(`Your report is still being generated!\n\nDue to the comprehensive nature of your report (15,000+ characters with web research), it's taking longer than expected.\n\nDon't worry - we'll email the complete report to ${email} within the next few minutes.\n\nYou can safely close this page.`);
       } else {
         console.error("Error in report generation:", error);
         alert("Could not generate the report. Please try again.");

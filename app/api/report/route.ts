@@ -6,6 +6,9 @@ import { checkRate } from "@/lib/rateLimit";
 import { getSupabaseAdmin } from '@/lib/supabase';
 import sgMail from '@sendgrid/mail';
 
+// Extended timeout for comprehensive GPT-5 reports
+export const maxDuration = 600; // 10 minutes for Railway/Vercel
+
 // Initialize SendGrid
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
