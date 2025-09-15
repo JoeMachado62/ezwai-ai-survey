@@ -14,7 +14,7 @@ if (process.env.SENDGRID_API_KEY) {
 // Helper function to replace image placeholders with actual URLs and wrap in complete HTML
 function processHtmlImages(html: string): string {
   // Use absolute URLs for images so they work when HTML is served directly
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ezwai-ai-survey-production.up.railway.app';
   
   const imageMap: Record<string, string> = {
     '[IMAGE:executive]': process.env.NEXT_PUBLIC_REPORT_IMAGE_EXECUTIVE || `${baseUrl}/images/executive-summary.jpg`,
@@ -173,7 +173,7 @@ export async function POST(req: Request) {
 
           if (!error && data) {
             reportId = data.id;
-            reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/r/${data.id}`;
+            reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ezwai-ai-survey-production.up.railway.app'}/r/${data.id}`;
             supabaseSaved = true;
             console.log('Report saved to Supabase with ID:', reportId);
           } else {

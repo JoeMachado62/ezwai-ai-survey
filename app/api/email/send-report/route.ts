@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
         if (!error && data) {
           reportId = data.id;
-          reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
+          reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ezwai-ai-survey-production.up.railway.app'}/view-report/${data.id}`;
           console.log('Report saved to Supabase with ID:', reportId);
         } else {
           console.error('Failed to save report to Supabase:', error);

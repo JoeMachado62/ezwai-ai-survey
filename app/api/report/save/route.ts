@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-survey-production.up.railway.app'}/view-report/${data.id}`;
+    const reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://ezwai-ai-survey-production.up.railway.app'}/view-report/${data.id}`;
 
     return NextResponse.json({
       success: true,
