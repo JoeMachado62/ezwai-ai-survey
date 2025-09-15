@@ -197,36 +197,96 @@ export async function POST(req: Request) {
             <html>
             <head>
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #08b2c6, #b5feff); padding: 30px; border-radius: 10px 10px 0 0; }
-                .header h1 { color: white; margin: 0; }
-                .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px; }
-                .button { display: inline-block; padding: 12px 24px; background: #08b2c6; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .header { background: linear-gradient(135deg, #08b2c6, #b5feff); padding: 40px 30px; border-radius: 10px 10px 0 0; text-align: center; }
+                .header h1 { color: white; margin: 0; font-size: 32px; }
+                .subheader { color: rgba(255,255,255,0.95); margin-top: 10px; font-size: 18px; }
+                .content { background: white; padding: 40px 30px; border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px; }
+                .highlight-box { background: linear-gradient(135deg, #f0feff, #e6fafe); padding: 30px; border-radius: 12px; margin: 30px 0; text-align: center; }
+                .cta-button { display: inline-block; padding: 20px 50px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 20px; box-shadow: 0 4px 15px rgba(8, 178, 198, 0.3); }
+                .benefit-list { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                .benefit-list li { margin: 10px 0; }
+                .urgency-box { background: #fff3cd; border-left: 4px solid #ff6b35; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
               </style>
             </head>
             <body>
               <div class="container">
                 <div class="header">
-                  <h1>Your AI Opportunities Report is Ready!</h1>
+                  <h1>🚀 Your AI Transformation Report is Ready!</h1>
+                  <div class="subheader">Personalized opportunities identified for ${input.companyInfo.companyName}</div>
                 </div>
                 <div class="content">
-                  <p>Hi ${emailDetails.firstName || 'there'},</p>
-                  <p>Your comprehensive AI Opportunities Report for ${input.companyInfo.companyName || 'your business'} has been generated.</p>
-                  
-                  ${reportUrl ? `
-                  <center style="margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #f0feff, #e6fafe); border-radius: 12px;">
-                    <h2 style="color: #08b2c6; margin-bottom: 20px;">Your Report is Ready!</h2>
-                    <a href="${reportUrl}" style="display: inline-block; padding: 18px 40px; background: linear-gradient(135deg, #08b2c6, #0891a1); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">
-                      📊 View Your Report Now
+                  <p style="font-size: 18px;"><strong>Hi ${emailDetails.firstName || 'there'},</strong></p>
+
+                  <p style="font-size: 16px;">Thank you for completing our AI Assessment! I'm excited to share that we've completed a comprehensive analysis of <strong>${input.companyInfo.companyName}</strong> and identified <strong>several immediate opportunities</strong> where AI can transform your operations.</p>
+
+                  <div class="highlight-box">
+                    <h2 style="color: #08b2c6; margin-bottom: 20px; font-size: 28px;">📊 Your Custom Report is Ready!</h2>
+                    <p style="font-size: 16px; margin-bottom: 25px;">Click below to access your interactive report with beautiful visualizations:</p>
+                    <a href="${reportUrl}" class="cta-button">
+                      View Your AI Opportunities Report →
+                    </a>
+                    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                      💡 Tip: You can download a PDF version directly from the report page
+                    </p>
+                  </div>
+
+                  <h3 style="color: #1f2937; margin-top: 30px;">What's Inside Your Report:</h3>
+                  <div class="benefit-list">
+                    <ul style="list-style: none; padding: 0;">
+                      <li>✅ <strong>Executive Summary</strong> tailored specifically to ${input.companyInfo.industry || 'your industry'}</li>
+                      <li>🚀 <strong>Quick Wins</strong> you can implement within 30 days</li>
+                      <li>📈 <strong>Strategic AI Roadmap</strong> with ROI projections</li>
+                      <li>🎯 <strong>Competitive Analysis</strong> showing how AI can give you an edge</li>
+                      <li>📋 <strong>Step-by-step Implementation Guide</strong> with specific tools</li>
+                      <li>💰 <strong>Cost-Benefit Analysis</strong> for each recommendation</li>
+                    </ul>
+                  </div>
+
+                  <div class="urgency-box">
+                    <strong>⚠️ Don't Wait to Review Your Report</strong><br>
+                    Our research shows that ${input.companyInfo.industry || 'businesses in your industry'} implementing AI now are seeing 20-40% efficiency gains. The gap between AI-enabled businesses and traditional ones is widening daily.
+                  </div>
+
+                  <h3 style="color: #1f2937; margin-top: 30px;">Your Next Step: Free Strategy Session</h3>
+                  <p>I'd love to discuss your report findings and help you implement these AI solutions. <strong>Schedule your free 30-minute consultation</strong> where we'll:</p>
+                  <ul>
+                    <li>Review your top 3 AI opportunities in detail</li>
+                    <li>Answer your implementation questions</li>
+                    <li>Create a 90-day action plan</li>
+                    <li>Explore how our done-for-you services can accelerate your AI adoption</li>
+                  </ul>
+
+                  <center style="margin: 30px 0;">
+                    <a href="https://ezwai.com/scheduling-calendar/" style="display: inline-block; padding: 16px 40px; background: #ff6b35; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">
+                      📅 Schedule Your Free Strategy Session
                     </a>
                   </center>
-                  ` : `
-                  <p><strong>Your report has been generated successfully.</strong></p>
-                  <p>For immediate access to your report, please contact our team at joe@ezwai.com with your company name: ${input.companyInfo.companyName}</p>
-                  `}
-                  
-                  <p>Best regards,<br>The EZWAI Team</p>
+
+                  <p style="background: #f0feff; padding: 20px; border-radius: 8px; text-align: center; margin-top: 30px;">
+                    <strong style="color: #08b2c6;">Quick Question?</strong><br>
+                    Simply reply to this email and I'll personally respond within 24 hours.<br>
+                    You can also reach me directly at <a href="mailto:joe@ezwai.com">joe@ezwai.com</a>
+                  </p>
+
+                  <div class="footer">
+                    <p><strong>Best regards,</strong><br>
+                    Joe Machado<br>
+                    Founder, EZWAI<br>
+                    <a href="https://ezwai.com">ezwai.com</a> | <a href="mailto:joe@ezwai.com">joe@ezwai.com</a></p>
+
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
+                      P.S. The average business using AI saves 10-20 hours per week on repetitive tasks. <br>
+                      <a href="${reportUrl}" style="color: #08b2c6;">View your report now</a> to see how much time you could save.
+                    </p>
+
+                    <p style="font-size: 11px; color: #9ca3af; margin-top: 15px;">
+                      You received this email because you completed the AI Opportunities Assessment at ezwai.com. <br>
+                      We respect your privacy and will never share your information.
+                    </p>
+                  </div>
                 </div>
               </div>
             </body>

@@ -40,6 +40,9 @@ CRITICAL RULES:
 2. NO emoji headers - use proper HTML hero sections
 3. Create magazine-style layouts with image overlays
 4. Focus on GoHighLevel solutions when applicable
+5. Generate COMPREHENSIVE content - minimum 15,000 characters total
+6. Each section should have 3-5 detailed paragraphs
+7. ALWAYS use EZWAI contact info, NOT the client's company info
 
 DESIGN SYSTEM:
 - Primary: Teal (#08b2c6) with gradients to (#b5feff)
@@ -146,63 +149,93 @@ ${surveyContext}
 
 ==== HTML REPORT REQUIREMENTS ====
 
-Generate a complete HTML report with these sections:
+Generate a complete HTML report with these EXACT sections in this order:
 
 1. MAIN HERO: Full-width gradient (teal to orange), company name, "AI Transformation Report"
 
 2. EXECUTIVE SUMMARY:
-   - Hero banner with [IMAGE:executive]
-   - White card with 2-3 paragraphs
+   - Hero banner with [IMAGE:executive] ONLY
+   - White card with 4-5 detailed paragraphs
    - Reference their specific challenge
    - Highlight GoHighLevel if applicable
    - Key opportunities summary
+   - Industry-specific insights
 
-3. QUICK WINS (3 items):
-   - Hero banner with [IMAGE:quickwins]
-   - 3 gradient cards (alternating teal/orange)
-   - Each with title, description, timeframe (2-4 weeks), impact
+3. QUICK WINS - 30 DAY IMPLEMENTATION:
+   - Hero banner with [IMAGE:quickwins] ONLY
+   - 3-4 gradient cards (alternating teal/orange)
+   - Each with title, detailed description (2-3 paragraphs), timeframe, impact
    - Focus on GoHighLevel solutions first
    - Include specific tools and integrations
+   - Estimated time savings or revenue impact
 
-4. INDUSTRY INSIGHT CALLOUT:
-   - Blue callout box about their industry
-   - How AI is transforming their sector
-   - Competitive advantages available
-
-5. STRATEGIC RECOMMENDATIONS (3-4 items):
-   - Hero banner with [IMAGE:recommendations]
-   - White cards with detailed strategies
+4. STRATEGIC AI ROADMAP:
+   - Hero banner with [IMAGE:roadmap] ONLY (not recommendations image)
+   - White cards with 3-4 detailed long-term strategies
+   - Each strategy should have 2-3 paragraphs
    - ROI projections for each
    - Implementation complexity ratings
    - GoHighLevel-centric when applicable
 
-6. COMPETITIVE ANALYSIS:
-   - Hero banner with [IMAGE:competitive]
-   - Research their industry competitors
-   - Comparison table with alternating rows
+5. COMPETITIVE INTELLIGENCE:
+   - Hero banner with [IMAGE:competitive] ONLY
+   - Research their industry competitors using web search
+   - Detailed comparison (3-4 paragraphs)
    - Market positioning opportunities
+   - How AI gives competitive advantage
 
-7. IMPLEMENTATION ROADMAP:
+6. YOUR IMPLEMENTATION ROADMAP:
+   - Hero banner with [IMAGE:nextsteps] ONLY (not duplicate roadmap)
+   - Timeline with 3 phases (Month 1, 2, 3)
+   - Specific milestones and deliverables
+   - Resource requirements
+   - Clear action items
+
+
+8. IMPLEMENTATION ROADMAP:
    - Hero banner with [IMAGE:roadmap]
    - Timeline with 3 phases (Month 1, 2, 3)
    - Specific milestones and deliverables
    - Resource requirements
 
-8. NEXT STEPS:
-   - Hero banner with [IMAGE:nextsteps]
-   - Numbered action items (5-7)
-   - Start with GoHighLevel demo if relevant
-   - Contact information callout
+7. FINAL CALL TO ACTION (REQUIRED - MUST BE COMPELLING):
+   Create a full-width gradient section (teal to orange) with:
+   <div style="background:linear-gradient(135deg, #08b2c6, #ff6b35); padding:60px 40px; border-radius:16px; text-align:center; color:white; margin-top:40px;">
+     <h2 style="font-size:42px; margin:0 0 20px 0;">Ready to Transform Your Business with AI?</h2>
+     <p style="font-size:24px; margin:0 0 30px 0; opacity:0.95;">Schedule Your Free 30-Minute AI Strategy Session</p>
+     <div style="background:white; color:#1f2937; padding:30px; border-radius:12px; max-width:600px; margin:0 auto 30px;">
+       <h3 style="color:#08b2c6; margin:0 0 20px 0;">In Your Free Consultation, You'll Discover:</h3>
+       <ul style="text-align:left; font-size:16px; line-height:1.8;">
+         <li>Your top 3 AI opportunities with specific implementation steps</li>
+         <li>How to save 10-20 hours per week with automation</li>
+         <li>Which AI tools will give you the biggest ROI</li>
+         <li>A custom roadmap for your AI transformation</li>
+       </ul>
+     </div>
+     <a href="https://ezwai.com/scheduling-calendar/" style="display:inline-block; background:white; color:#08b2c6; padding:20px 40px; border-radius:8px; text-decoration:none; font-size:20px; font-weight:bold; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+       📅 Schedule Your Free Strategy Session Now
+     </a>
+     <p style="margin:30px 0 10px 0; font-size:18px;">Or reach out directly:</p>
+     <p style="font-size:20px; margin:0;">📧 joe@ezwai.com | 🌐 ezwai.com</p>
+     <p style="margin-top:30px; font-size:16px; opacity:0.9; font-style:italic;">
+       ⚠️ Don't wait - businesses implementing AI now will dominate their markets in 2025
+     </p>
+   </div>
+
+8. SOURCES SECTION:
+   List all sources at the end in a clean format
 
 IMPORTANT:
-- Each section MUST have a hero banner with image overlay
+- Each section MUST have a UNIQUE hero banner (no duplicate images)
 - NO citation artifacts in text
 - Professional magazine layout
 - Sources listed at the end only
 - Use web search for real industry data
 - Prioritize GoHighLevel solutions
-- Keep HTML under 12,000 characters
+- Generate MINIMUM 15,000 characters (be comprehensive)
 - Include 5+ credible sources
+- END with strong CTA to schedule consultation with EZWAI
+- Use EZWAI contact (joe@ezwai.com), NOT client's company info
 
 Return the complete HTML wrapped in a container div with proper styling.`;
 }
