@@ -727,20 +727,51 @@ export default function Page() {
   const handleSkipWait = async () => {
     try {
       setSkipWaitMode(true);
-      
+
       // With HTML reports, the report is automatically saved and emailed
       // Just close the overlay and inform the user
       console.log("Report generation in progress with automatic email delivery");
-      
+
       // Close the overlay and show success message
       setLoading(false);
       setIsGeneratingVisuals(false);
-      
+
       alert(`Perfect! Your AI Opportunities Report is being generated and will be sent to ${email}.\n\nThis professionally designed report includes:\n• Executive Summary tailored to ${companyInfo.companyName}\n• Quick wins you can implement immediately\n• Strategic roadmap for AI transformation\n• Competitive analysis and benchmarks\n\nYou'll receive an email with a link to view your interactive report online.\n\nYou can safely close this page - the report will arrive in 5-10 minutes.`);
-      
-      // Don't reset - let the existing request continue
+
+      // Reset app to start screen to prevent duplicate submissions
+      setStep(0);
+      setSubStep(0);
+      setEnhancedReport(null);
+      setReport(null);
+      setAnswers({});
+      setQuestions([]);
+      setSummary("");
+      setQSources([]);
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPhone("");
+      setCompanyInfo({
+        companyName: "",
+        websiteURL: "",
+        industry: "",
+        employees: "",
+        revenue: ""
+      });
+      setTechStack({
+        crmSystem: "",
+        aiTools: "",
+        biggestChallenge: ""
+      });
+      setSocialMedia({
+        channels: [],
+        contentTime: ""
+      });
+      setSkipWaitMode(false);
+
+      // Report generation continues in the background
       return;
-      
+
     } catch (error) {
       console.error('Error sending email:', error);
       alert('Failed to send email. Please try again.');
