@@ -246,7 +246,7 @@ IMPORTANT:
 - Sources listed at the end only
 - Use web search for real industry data
 - Prioritize GoHighLevel solutions
-- Generate MINIMUM 15,000 characters (be comprehensive)
+- Generate MINIMUM 10,000 characters (be comprehensive)
 - Include 5+ credible sources
 - END with strong CTA to schedule consultation with EZWAI
 - Use EZWAI contact (joe@ezwai.com), NOT client's company info

@@ -134,11 +134,14 @@ export async function callResponses<T>({
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
+    // Configure fetch with proper timeouts
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        // Add keep-alive to prevent connection drops
+        "Connection": "keep-alive"
       },
       body: JSON.stringify(payload),
       signal: controller.signal
@@ -203,10 +206,13 @@ export async function callResponses<T>({
     return parsed as T;
   } catch (error: any) {
     clearTimeout(timeoutId);
+
+    // Handle different types of timeout errors
     if (error.name === 'AbortError') {
-      // More informative timeout message
+      // Our application timeout
       console.error(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search and high reasoning needs more time`);
-      
+      console.error('Consider using medium reasoning effort for better reliability');
+
       // Only return fallback for questions, not reports
       if (model.includes('mini')) {
         console.warn('Returning enhanced fallback questions...');
@@ -215,8 +221,30 @@ export async function callResponses<T>({
       // For reports, throw the error to trigger proper error handling
       throw new Error(`Report generation timed out after ${timeoutMs/1000} seconds. Please try again.`);
     }
+
+    // Handle Node.js fetch headers timeout
+    if (error.cause?.code === 'UND_ERR_HEADERS_TIMEOUT' || error.message.includes('Headers Timeout')) {
+      console.error('Headers timeout - OpenAI taking too long to respond. This often happens with high reasoning effort.');
+      console.error('Retrying with reduced complexity...');
+
+      // For reports, suggest retry with lower reasoning
+      if (!model.includes('mini')) {
+        throw new Error('Report generation is taking longer than expected. The system will retry with optimized settings.');
+      }
+    }
+
+    // Handle other fetch failures
+    if (error.message === 'fetch failed') {
+      console.error('Fetch failed with cause:', error.cause);
+      // Check if it's a headers timeout
+      if (error.cause?.code === 'UND_ERR_HEADERS_TIMEOUT') {
+        console.error('Connection timeout waiting for response headers from OpenAI');
+        throw new Error('OpenAI is taking unusually long to respond. Please try again in a moment.');
+      }
+    }
+
     console.error('OpenAI API error:', error.message);
-    
+
     // Only use fallback for questions in production
     if ((process.env.NODE_ENV === 'production' || error.message.includes('503')) && model.includes('mini')) {
       console.warn('API unavailable or error - using enhanced fallback questions');

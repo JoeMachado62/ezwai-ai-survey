@@ -148,7 +148,7 @@ export async function POST(req: Request) {
         schema: HtmlReportJsonSchema,
         tools: [{ type: "web_search" }],
         model: process.env.OPENAI_MODEL_REPORT || "gpt-5",  // Use full GPT-5 for production
-        reasoning_effort: "high",  // High effort for comprehensive analysis and report quality
+        reasoning_effort: "medium",  // Medium effort for balance between quality and response time
         verbosity: "medium"  // Balanced output
       });
 
