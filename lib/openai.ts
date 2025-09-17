@@ -95,10 +95,9 @@ export async function callResponses<T>({
 
   // Add GPT-5 specific parameters
   if (model.includes('gpt-5')) {
-    // Use low effort for web_search compatibility while keeping speed
-    // Web_search requires at least "low" reasoning effort
+    // Use reasoning effort parameter passed in, defaulting to "low" if not specified
     payload.reasoning = { effort: reasoning_effort || "low" };
-    
+
     // Add verbosity control for better output (merge with existing text object)
     payload.text.verbosity = verbosity || "medium";
   }
@@ -110,8 +109,8 @@ export async function callResponses<T>({
   // CRITICAL: Extended timeout for GPT-5 with web search and reasoning
   // GPT-5 generating comprehensive 15,000+ character reports needs more time
   const timeoutMs = process.env.RAILWAY_ENVIRONMENT
-    ? 600000  // 10 minutes on Railway (production) for comprehensive reports
-    : 300000; // 5 minutes for local development
+    ? 720000  // 12 minutes on Railway (production) for comprehensive reports with high reasoning
+    : 360000; // 6 minutes for local development
     
   console.log(`Starting GPT-5 API call with ${timeoutMs/1000}s timeout...`);
   
@@ -206,8 +205,7 @@ export async function callResponses<T>({
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       // More informative timeout message
-      console.error(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search needs more time`);
-      console.error('Consider reducing reasoning effort or verbosity for faster responses');
+      console.error(`OpenAI API timeout after ${timeoutMs/1000}s - GPT-5 with web search and high reasoning needs more time`);
       
       // Only return fallback for questions, not reports
       if (model.includes('mini')) {

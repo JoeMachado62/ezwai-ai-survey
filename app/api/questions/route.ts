@@ -103,7 +103,8 @@ Example of a BAD generic question:
       ],
       schema: QuestionsJsonSchema,
       tools: [{ type: "web_search" }],
-      model: process.env.OPENAI_MODEL || "gpt-5-mini"  // Use GPT-5-mini for fast, cost-optimized reasoning
+      model: process.env.OPENAI_MODEL || "gpt-5-mini",  // Use GPT-5-mini for fast, cost-optimized reasoning
+      reasoning_effort: "medium"  // Use medium effort for better quality questions
     });
     
     const duration = Date.now() - startTime;
